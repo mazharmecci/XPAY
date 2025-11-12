@@ -221,3 +221,11 @@ header {
     inset -2px -2px 5px rgba(255,255,255,0.6),
     6px 6px 12px rgba(0,0,0,0.2);
 }
+
+.optional-caption {
+  display: block;
+  font-size: 0.8rem;
+  color: #666; /* subtle grey text */
+  margin-top: 4px;
+  font-style: italic;
+}
