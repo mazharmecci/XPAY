@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XPAY</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>XPAY</h1>
+    <p>Submit your office expenses</p>
+  </header>
+
+  <main>
+    <form id="expenseForm">
+      <!-- Expense Categories -->
+      <div class="expense-category">
+        <img src="images/fuel.png" alt="Fuel" class="icon">
+        <label>Fuel Expense</label>
+        <input type="number" name="fuelAmount" placeholder="Enter amount" required>
+        <input type="date" name="fuelDate" required>
+        <input type="file" name="fuelReceipt" accept="image/*,.pdf">
+      </div>
+
+      <div class="expense-category">
+        <img src="images/travel.png" alt="Travel" class="icon">
+        <label>Travel Expense</label>
+        <input type="number" name="travelAmount" placeholder="Enter amount" required>
+        <input type="date" name="travelDate" required>
+        <input type="file" name="travelReceipt" accept="image/*,.pdf">
+      </div>
+
+      <div class="expense-category">
+        <img src="images/vehicle.png" alt="Vehicle Service" class="icon">
+        <label>Vehicle Service Expense</label>
+        <input type="number" name="vehicleAmount" placeholder="Enter amount" required>
+        <input type="date" name="vehicleDate" required>
+        <input type="file" name="vehicleReceipt" accept="image/*,.pdf">
+      </div>
+
+
+      <div class="expense-category">
+        <img src="images/hotel.png" alt="Hotel" class="icon">
+        <label>Hotel Expense</label>
+        <input type="number" name="hotelAmount" placeholder="Enter amount" required>
+        <input type="date" name="hotelDate" required>
+        <input type="file" name="hotelReceipt" accept="image/*,.pdf">
+      </div>
+
+      <div class="expense-category">
+        <img src="images/food.png" alt="Food" class="icon">
+        <label>Food Expense</label>
+        <input type="number" name="foodAmount" placeholder="Enter amount" required>
+        <input type="date" name="foodDate" required>
+        <input type="file" name="foodReceipt" accept="image/*,.pdf">
+      </div>
+
+      <div class="expense-category">
+        <img src="images/cash.png" alt="Advance Cash" class="icon">
+        <label>Advance Cash</label>
+        <input type="number" name="cashAmount" placeholder="Enter amount" required>
+        <input type="date" name="cashDate" required>
+        <input type="file" name="cashReceipt" accept="image/*,.pdf">
+      </div>
+
+      <button type="submit" class="submit-btn">Submit Expense</button>
+    </form>
+  </main>
+
+  <footer>
+    <p>XPAY © 2025</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
