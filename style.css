@@ -13,13 +13,54 @@ body {
   color: var(--text-dark);
 }
 
-header {
-  background: var(--biscuit-mid);
-  color: white;
+/* Form Header */
+.form-header {
   text-align: center;
-  padding: 1rem;
+  margin-bottom: 20px;
 }
 
+.form-logo {
+  max-width: 150px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  margin-bottom: 10px;
+}
+
+.form-title {
+  font-size: 1.8rem;
+  margin: 0;
+  color: var(--text-dark);
+}
+
+.form-subtitle {
+  font-size: 1rem;
+  color: #555;
+}
+
+/* Embossed Form */
+#expenseForm {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 800px;
+  box-shadow: 
+    inset 2px 2px 5px rgba(0,0,0,0.1),
+    inset -2px -2px 5px rgba(255,255,255,0.6),
+    4px 4px 10px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+#expenseForm:hover {
+  transform: scale(1.01);
+  box-shadow: 
+    inset 2px 2px 5px rgba(0,0,0,0.1),
+    inset -2px -2px 5px rgba(255,255,255,0.6),
+    6px 6px 12px rgba(0,0,0,0.2);
+}
+
+/* Tabs */
 .tabs {
   display: flex;
   flex-wrap: wrap;
@@ -28,7 +69,6 @@ header {
   padding: 10px;
 }
 
-/* Tab Buttons - 30% smaller */
 .tab-btn {
   background: var(--biscuit-mid);
   border: none;
@@ -38,7 +78,7 @@ header {
   border-radius: 5px;
   font-weight: bold;
   color: white;
-  flex: 0 0 40%;
+  flex: 0 0 30%;
   text-align: center;
   font-size: 0.9rem;
   transition: background 0.3s ease, transform 0.2s ease;
@@ -54,6 +94,7 @@ header {
   background: var(--text-dark);
 }
 
+/* Tab Content */
 .tab-content {
   display: none;
   margin-top: 20px;
@@ -63,24 +104,35 @@ header {
   display: block;
 }
 
+/* Expense Card Layout */
 .expense-card {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
   background: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  text-align: center;
-  max-width: 500px;
-  margin: auto;
+  box-shadow:
+    inset 2px 2px 5px rgba(0,0,0,0.1),
+    inset -2px -2px 5px rgba(255,255,255,0.6),
+    4px 4px 10px rgba(0,0,0,0.15);
+  max-width: 600px;
+  margin: 20px auto;
 }
 
 .icon {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 10px;
+  flex: 0 0 60px;
+  height: 60px;
 }
 
-/* Input Fields - 50% width */
+.form-fields {
+  flex: 1 1 100%;
+  text-align: center;
+}
 
+/* Input Fields */
 input[type="number"],
 input[type="date"],
 input[type="file"] {
@@ -99,8 +151,16 @@ input:focus {
   outline: none;
 }
 
-/* Submit Button - 50% width */
+/* Optional Caption */
+.optional-caption {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 4px;
+  font-style: italic;
+}
 
+/* Submit Button */
 .submit-btn {
   background: var(--biscuit-dark);
   color: white;
@@ -134,8 +194,18 @@ input:focus {
   }
 
   .expense-card {
+    flex-direction: column;
+    align-items: center;
     padding: 15px;
     width: 95%;
+  }
+
+  .form-logo {
+    max-width: 120px;
+  }
+
+  .form-title {
+    font-size: 1.5rem;
   }
 
   input {
@@ -154,78 +224,20 @@ input:focus {
     height: 40px;
   }
 
-  header h1 {
-    font-size: 1.2rem;
+  .form-logo {
+    max-width: 100px;
+  }
+
+  .form-title {
+    font-size: 1.4rem;
+  }
+
+  .form-subtitle {
+    font-size: 0.95rem;
   }
 
   .tab-btn {
     font-size: 0.9rem;
     padding: 8px;
   }
-}
-
-header {
-  background: white; /* Top frame background */
-  color: black;       /* Text color */
-  text-align: center;
-  padding: 1rem;
-}
-
-/* Header image reduced by 25% */
-.header-img {
-  display: block;
-  margin: 0 auto 10px auto;
-  max-width: 150px; /* Previously 200px, now reduced by 25% */
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-
-/* Responsive tweak */
-@media (max-width: 480px) {
-  .header-img {
-    max-width: 110px;
-  }
-
-  header h1 {
-    font-size: 1.4rem;
-  }
-
-  header p {
-    font-size: 0.95rem;
-  }
-}
-
-/* Embossed effect for the form */
-#expenseForm {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin: 20px auto;
-  max-width: 800px;
-
-  /* Embossed look */
-  box-shadow: 
-    inset 2px 2px 5px rgba(0,0,0,0.1),   /* inner shadow for depth */
-    inset -2px -2px 5px rgba(255,255,255,0.6), /* highlight edges */
-    4px 4px 10px rgba(0,0,0,0.15);       /* outer shadow for lift */
-
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-}
-
-/* Hover/tap effect for extra polish */
-#expenseForm:hover {
-  transform: scale(1.01);
-  box-shadow: 
-    inset 2px 2px 5px rgba(0,0,0,0.1),
-    inset -2px -2px 5px rgba(255,255,255,0.6),
-    6px 6px 12px rgba(0,0,0,0.2);
-}
-
-.optional-caption {
-  display: block;
-  font-size: 0.8rem;
-  color: #666; /* subtle grey text */
-  margin-top: 4px;
-  font-style: italic;
 }
