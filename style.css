@@ -32,15 +32,22 @@ header {
 .tab-btn {
   background: var(--biscuit-mid);
   border: none;
-  padding: 8px 12px; /* reduced padding */
+  padding: 8px 12px;
   margin: 5px;
   cursor: pointer;
   border-radius: 5px;
   font-weight: bold;
   color: white;
-  flex: 0 0 30%; /* reduced width */
+  flex: 0 0 30%;
   text-align: center;
   font-size: 0.9rem;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.tab-btn:hover,
+.tab-btn:focus {
+  background: var(--text-dark);
+  transform: scale(1.05);
 }
 
 .tab-btn.active {
@@ -78,12 +85,18 @@ input[type="number"],
 input[type="date"],
 input[type="file"] {
   display: block;
-  width: 50%; /* reduced from 100% */
+  width: 50%;
   margin: 10px auto;
   padding: 10px;
   border: 1px solid var(--biscuit-mid);
   border-radius: 5px;
   font-size: 0.95rem;
+  transition: box-shadow 0.3s ease;
+}
+
+input:focus {
+  box-shadow: 0 0 5px var(--biscuit-mid);
+  outline: none;
 }
 
 /* Submit Button - 50% width */
@@ -98,12 +111,15 @@ input[type="file"] {
   font-size: 1rem;
   margin: 20px auto;
   display: block;
-  width: 50%; /* reduced from 90% */
+  width: 50%;
   text-align: center;
+  transition: background 0.3s ease, transform 0.2s ease;
 }
 
-.submit-btn:hover {
+.submit-btn:hover,
+.submit-btn:focus {
   background: var(--text-dark);
+  transform: scale(1.05);
 }
 
 /* Responsive */
