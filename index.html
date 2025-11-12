@@ -3,65 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>XPAY</title>
+  <title>XPAY - Expense Submission</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
     <h1>XPAY</h1>
-    <p>Submit your office expenses</p>
+    <p>Submit your office expenses easily</p>
   </header>
 
+  <!-- Tabs Navigation -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="fuel">Fuel</button>
+    <button class="tab-btn" data-tab="travel">Travel</button>
+    <button class="tab-btn" data-tab="vehicle">Vehicle Service</button>
+    <button class="tab-btn" data-tab="hotel">Hotel</button>
+    <button class="tab-btn" data-tab="food">Food</button>
+    <button class="tab-btn" data-tab="cash">Advance Cash</button>
+  </div>
+
+  <!-- Tab Content -->
   <main>
     <form id="expenseForm">
-      <!-- Expense Categories -->
-      <div class="expense-category">
-        <img src="images/fuel.png" alt="Fuel" class="icon">
-        <label>Fuel Expense</label>
-        <input type="number" name="fuelAmount" placeholder="Enter amount" required>
-        <input type="date" name="fuelDate" required>
-        <input type="file" name="fuelReceipt" accept="image/*,.pdf">
+
+      <!-- Fuel -->
+      <div class="tab-content active" id="fuel">
+        <div class="expense-card">
+          <img src="images/fuel.png" alt="Fuel" class="icon">
+          <h3>Fuel Expense</h3>
+          <input type="number" name="fuelAmount" placeholder="Enter amount" required>
+          <input type="date" name="fuelDate" required>
+          <input type="file" name="fuelReceipt" accept="image/*,.pdf">
+        </div>
       </div>
 
-      <div class="expense-category">
-        <img src="images/travel.png" alt="Travel" class="icon">
-        <label>Travel Expense</label>
-        <input type="number" name="travelAmount" placeholder="Enter amount" required>
-        <input type="date" name="travelDate" required>
-        <input type="file" name="travelReceipt" accept="image/*,.pdf">
+      <!-- Travel -->
+      <div class="tab-content" id="travel">
+        <div class="expense-card">
+          <img src="images/travel.png" alt="Travel" class="icon">
+          <h3>Travel Expense</h3>
+          <input type="number" name="travelAmount" placeholder="Enter amount" required>
+          <input type="date" name="travelDate" required>
+          <input type="file" name="travelReceipt" accept="image/*,.pdf">
+        </div>
       </div>
 
-      <div class="expense-category">
-        <img src="images/vehicle.png" alt="Vehicle Service" class="icon">
-        <label>Vehicle Service Expense</label>
-        <input type="number" name="vehicleAmount" placeholder="Enter amount" required>
-        <input type="date" name="vehicleDate" required>
-        <input type="file" name="vehicleReceipt" accept="image/*,.pdf">
+      <!-- Vehicle Service -->
+      <div class="tab-content" id="vehicle">
+        <div class="expense-card">
+          <img src="images/vehicle.png" alt="Vehicle Service" class="icon">
+          <h3>Vehicle Service Expense</h3>
+          <input type="number" name="vehicleAmount" placeholder="Enter amount" required>
+          <input type="date" name="vehicleDate" required>
+          <input type="file" name="vehicleReceipt" accept="image/*,.pdf">
+        </div>
       </div>
 
-
-      <div class="expense-category">
-        <img src="images/hotel.png" alt="Hotel" class="icon">
-        <label>Hotel Expense</label>
-        <input type="number" name="hotelAmount" placeholder="Enter amount" required>
-        <input type="date" name="hotelDate" required>
-        <input type="file" name="hotelReceipt" accept="image/*,.pdf">
+      <!-- Hotel -->
+      <div class="tab-content" id="hotel">
+        <div class="expense-card">
+          <img src="images/hotel.png" alt="Hotel" class="icon">
+          <h3>Hotel Expense</h3>
+          <input type="number" name="hotelAmount" placeholder="Enter amount" required>
+          <input type="date" name="hotelDate" required>
+          <input type="file" name="hotelReceipt" accept="image/*,.pdf">
+        </div>
       </div>
 
-      <div class="expense-category">
-        <img src="images/food.png" alt="Food" class="icon">
-        <label>Food Expense</label>
-        <input type="number" name="foodAmount" placeholder="Enter amount" required>
-        <input type="date" name="foodDate" required>
-        <input type="file" name="foodReceipt" accept="image/*,.pdf">
+      <!-- Food -->
+      <div class="tab-content" id="food">
+        <div class="expense-card">
+          <img src="images/food.png" alt="Food" class="icon">
+          <h3>Food Expense</h3>
+          <input type="number" name="foodAmount" placeholder="Enter amount" required>
+          <input type="date" name="foodDate" required>
+          <input type="file" name="foodReceipt" accept="image/*,.pdf">
+        </div>
       </div>
 
-      <div class="expense-category">
-        <img src="images/cash.png" alt="Advance Cash" class="icon">
-        <label>Advance Cash</label>
-        <input type="number" name="cashAmount" placeholder="Enter amount" required>
-        <input type="date" name="cashDate" required>
-        <input type="file" name="cashReceipt" accept="image/*,.pdf">
+      <!-- Advance Cash -->
+      <div class="tab-content" id="cash">
+        <div class="expense-card">
+          <img src="images/cash.png" alt="Advance Cash" class="icon">
+          <h3>Advance Cash</h3>
+          <input type="number" name="cashAmount" placeholder="Enter amount" required>
+          <input type="date" name="cashDate" required>
+          <input type="file" name="cashReceipt" accept="image/*,.pdf">
+        </div>
       </div>
 
       <button type="submit" class="submit-btn">Submit Expense</button>
