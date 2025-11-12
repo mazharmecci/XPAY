@@ -1,85 +1,50 @@
+:root {
+  --biscuit-light: #f5e3c0;
+  --biscuit-mid: #ddad75;
+  --biscuit-dark: #a67845;
+  --text-dark: #4b3b2a;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  background: #f9f9f9;
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--biscuit-light);
   margin: 0;
   padding: 0;
+  color: var(--text-dark);
 }
 
 header {
-  background: #4CAF50;
+  background: var(--biscuit-mid);
   color: white;
   text-align: center;
   padding: 1rem;
 }
 
-.expense-category {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 15px 0;
-  padding: 10px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.icon {
-  width: 40px;
-  height: 40px;
-}
-
-input[type="number"], input[type="date"], input[type="file"] {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-.submit-btn {
-  background: #4CAF50;
-  color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-top: 20px;
-}
-
-.submit-btn:hover {
-  background: #45a049;
-}
-
-
-/* Base styles remain the same */
-
-/* Tabs */
 .tabs {
   display: flex;
-  flex-wrap: wrap; /* allow wrapping on small screens */
+  flex-wrap: wrap;
   justify-content: center;
-  background: #eee;
+  background: var(--biscuit-dark);
   padding: 10px;
 }
 
 .tab-btn {
-  background: #ddd;
+  background: var(--biscuit-mid);
   border: none;
   padding: 10px 15px;
   margin: 5px;
   cursor: pointer;
   border-radius: 5px;
   font-weight: bold;
-  flex: 1 1 auto; /* tabs shrink/grow */
+  color: white;
+  flex: 1 1 auto;
   text-align: center;
 }
 
 .tab-btn.active {
-  background: #4CAF50;
-  color: white;
+  background: var(--text-dark);
 }
 
-/* Tab Content */
 .tab-content {
   display: none;
   margin-top: 20px;
@@ -90,7 +55,7 @@ input[type="number"], input[type="date"], input[type="file"] {
 }
 
 .expense-card {
-  background: #fff;
+  background: white;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -99,7 +64,7 @@ input[type="number"], input[type="date"], input[type="file"] {
   margin: auto;
 }
 
-.expense-card .icon {
+.icon {
   width: 50px;
   height: 50px;
   margin-bottom: 10px;
@@ -109,14 +74,14 @@ input[type="number"], input[type="date"], input[type="file"] {
   display: block;
   width: 100%;
   margin: 10px 0;
-  padding: 12px; /* larger tap area */
-  border: 1px solid #ddd;
+  padding: 12px;
+  border: 1px solid var(--biscuit-mid);
   border-radius: 5px;
   font-size: 1rem;
 }
 
 .submit-btn {
-  background: #4CAF50;
+  background: var(--biscuit-dark);
   color: white;
   padding: 14px 22px;
   border: none;
@@ -125,21 +90,17 @@ input[type="number"], input[type="date"], input[type="file"] {
   font-size: 1rem;
   margin: 20px auto;
   display: block;
-  width: 90%; /* full-width on mobile */
+  width: 90%;
 }
 
 .submit-btn:hover {
-  background: #45a049;
+  background: var(--text-dark);
 }
 
-/* Responsive tweaks */
+/* Responsive */
 @media (max-width: 768px) {
-  header h1 {
-    font-size: 1.5rem;
-  }
-
   .tabs {
-    flex-direction: column; /* stack tabs vertically */
+    flex-direction: column;
   }
 
   .tab-btn {
@@ -152,7 +113,7 @@ input[type="number"], input[type="date"], input[type="file"] {
     width: 95%;
   }
 
-  input[type="number"], input[type="date"], input[type="file"] {
+  input {
     font-size: 0.95rem;
   }
 
@@ -163,7 +124,7 @@ input[type="number"], input[type="date"], input[type="file"] {
 }
 
 @media (max-width: 480px) {
-  .expense-card .icon {
+  .icon {
     width: 40px;
     height: 40px;
   }
