@@ -38,7 +38,7 @@ header {
   border-radius: 5px;
   font-weight: bold;
   color: white;
-  flex: 0 0 30%;
+  flex: 0 0 40%;
   text-align: center;
   font-size: 0.9rem;
   transition: background 0.3s ease, transform 0.2s ease;
