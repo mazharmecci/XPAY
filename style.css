@@ -195,3 +195,29 @@ header {
     font-size: 0.95rem;
   }
 }
+
+/* Embossed effect for the form */
+#expenseForm {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 800px;
+
+  /* Embossed look */
+  box-shadow: 
+    inset 2px 2px 5px rgba(0,0,0,0.1),   /* inner shadow for depth */
+    inset -2px -2px 5px rgba(255,255,255,0.6), /* highlight edges */
+    4px 4px 10px rgba(0,0,0,0.15);       /* outer shadow for lift */
+
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+/* Hover/tap effect for extra polish */
+#expenseForm:hover {
+  transform: scale(1.01);
+  box-shadow: 
+    inset 2px 2px 5px rgba(0,0,0,0.1),
+    inset -2px -2px 5px rgba(255,255,255,0.6),
+    6px 6px 12px rgba(0,0,0,0.2);
+}
