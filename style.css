@@ -50,9 +50,13 @@ input[type="number"], input[type="date"], input[type="file"] {
   background: #45a049;
 }
 
+
+/* Base styles remain the same */
+
 /* Tabs */
 .tabs {
   display: flex;
+  flex-wrap: wrap; /* allow wrapping on small screens */
   justify-content: center;
   background: #eee;
   padding: 10px;
@@ -61,11 +65,13 @@ input[type="number"], input[type="date"], input[type="file"] {
 .tab-btn {
   background: #ddd;
   border: none;
-  padding: 10px 20px;
-  margin: 0 5px;
+  padding: 10px 15px;
+  margin: 5px;
   cursor: pointer;
   border-radius: 5px;
   font-weight: bold;
+  flex: 1 1 auto; /* tabs shrink/grow */
+  text-align: center;
 }
 
 .tab-btn.active {
@@ -89,6 +95,8 @@ input[type="number"], input[type="date"], input[type="file"] {
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   text-align: center;
+  max-width: 500px;
+  margin: auto;
 }
 
 .expense-card .icon {
@@ -101,23 +109,71 @@ input[type="number"], input[type="date"], input[type="file"] {
   display: block;
   width: 100%;
   margin: 10px 0;
-  padding: 8px;
+  padding: 12px; /* larger tap area */
   border: 1px solid #ddd;
   border-radius: 5px;
+  font-size: 1rem;
 }
 
 .submit-btn {
   background: #4CAF50;
   color: white;
-  padding: 12px 20px;
+  padding: 14px 22px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 1rem;
-  margin-top: 20px;
+  margin: 20px auto;
+  display: block;
+  width: 90%; /* full-width on mobile */
 }
 
 .submit-btn:hover {
   background: #45a049;
 }
 
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  .tabs {
+    flex-direction: column; /* stack tabs vertically */
+  }
+
+  .tab-btn {
+    width: 100%;
+    margin: 5px 0;
+  }
+
+  .expense-card {
+    padding: 15px;
+    width: 95%;
+  }
+
+  input[type="number"], input[type="date"], input[type="file"] {
+    font-size: 0.95rem;
+  }
+
+  .submit-btn {
+    font-size: 1rem;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .expense-card .icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  header h1 {
+    font-size: 1.2rem;
+  }
+
+  .tab-btn {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+}
