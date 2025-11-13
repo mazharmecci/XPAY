@@ -3,6 +3,14 @@ import {
   doc, getDoc, collection, getDocs, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
+// ✅ Role-aware logout label
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  const role = userDoc.data().role;
+  document.querySelector('.logout-btn').textContent = `🚪 Logout ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+});
+
 // ✅ Toast Alert
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
