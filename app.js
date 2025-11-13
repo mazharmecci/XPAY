@@ -34,3 +34,34 @@ document.getElementById('expenseForm').addEventListener('submit', function(e) {
   alert("Expense submitted successfully!");
   // Later: integrate Firebase submission here
 });
+
+// Login form logic - Firebase Auth + Role Detection
+
+const loginForm = document.getElementById('loginForm');
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = email.value;
+  const password = password.value;
+
+  try {
+    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+    const uid = userCredential.user.uid;
+
+    // Fetch role from Firestore
+    const userDoc = await firebase.firestore().collection('users').doc(uid).get();
+    const role = userDoc.data().role;
+
+    // Redirect based on role
+    if (role === 'employee') {
+      window.location.href = 'employee.html';
+    } else if (role === 'accountant') {
+      window.location.href = 'accountant.html';
+    } else if (role === 'manager') {
+      window.location.href = 'manager.html';
+    } else {
+      document.getElementById('loginError').textContent = 'Role not assigned. Contact admin.';
+    }
+  } catch (error) {
+    document.getElementById('loginError').textContent = error.message;
+  }
+});
