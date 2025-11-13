@@ -96,33 +96,38 @@ if (expenseForm) {
   });
 }
 
-// 🗂️ Tab Switching Logic with Required Field Management
+// 🧼 Utility: Toggle required attributes
+function toggleRequired(container, isRequired) {
+  container.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
+    input.required = isRequired;
+  });
+}
+
+// 🗂️ Tab Switching Logic
 const tabs = document.querySelectorAll('.tab-btn');
 const contents = document.querySelectorAll('.tab-content');
 
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
-    // Remove active class from all tabs and contents
+    // Deactivate all tabs and contents
     tabs.forEach(t => t.classList.remove('active'));
     contents.forEach(c => {
       c.classList.remove('active');
-
-      // Remove required from all inputs in hidden tabs
-      c.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
-        input.required = false;
-      });
+      toggleRequired(c, false); // 🔁 Remove required from hidden tabs
     });
 
     // Activate clicked tab and its content
     tab.classList.add('active');
     const activeContent = document.getElementById(tab.dataset.tab);
     activeContent.classList.add('active');
-
-    // Add required to inputs in the active tab only
-    activeContent.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
-      input.required = true;
-    });
+    toggleRequired(activeContent, true); // ✅ Add required to visible tab
   });
+});
+
+// 🚀 Auto-activate first tab on page load
+document.addEventListener("DOMContentLoaded", () => {
+  const firstTab = tabs[0];
+  if (firstTab) firstTab.click();
 });
 
 
