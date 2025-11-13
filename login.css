@@ -1,4 +1,4 @@
-/* Reset & Base */
+/* Base Reset */
 * {
   margin: 0;
   padding: 0;
@@ -6,40 +6,43 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
-/* Login Container */
-.login-container {
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-  width: 100%;
-  max-width: 360px;
-  margin: auto;
-  text-align: center;
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* Body Background */
 body {
-  background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+  background: linear-gradient(135deg, #f0f4ff, #e0e7ff);
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Logo */
-.login-logo {
-  width: 80px;
-  margin-bottom: 1rem;
+/* Wrapper */
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* Login Box */
+.login-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
 }
 
 /* Title */
-.login-container h2 {
-  font-size: 1.8rem;
+.login-title {
+  font-size: 2rem;
   color: #1e3a8a;
+  margin-bottom: 1rem;
+}
+
+/* Logo */
+.login-logo {
+  width: 60px;
   margin-bottom: 1.5rem;
 }
 
@@ -63,7 +66,6 @@ body {
   outline: none;
 }
 
-/* Button */
 #loginForm button {
   padding: 0.75rem;
   background: #3b82f6;
@@ -86,41 +88,3 @@ body {
   font-size: 0.9rem;
   margin-top: 0.5rem;
 }
-
-/* Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.welcome-banner {
-  background: #e0f2fe;
-  color: #1e3a8a;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.logout-btn {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.logout-btn:hover {
-  background: #dc2626;
-}
-
