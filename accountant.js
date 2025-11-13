@@ -1,6 +1,6 @@
 import { auth, db } from './firebase.js';
 import {
-  doc, getDoc, collection, query, getDocs, updateDoc
+  doc, getDoc, collection, getDocs, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 // ✅ Toast Alert
@@ -12,52 +12,81 @@ function showToast(message, type = 'success') {
   setTimeout(() => toast.style.display = 'none', 3000);
 }
 
-// 📊 Render expenses with approval buttons
+// 🧾 Expense Type Icon Generator
+function getTypeIcon(type) {
+  const icons = {
+    food: '🍽️', fuel: '⛽', hotel: '🏨', travel: '✈️',
+    cash: '💵', vehicle: '🚗', service: '🛠️', advance: '📦'
+  };
+  return icons[type?.toLowerCase()] || '🧾';
+}
+
+// 🏷️ Badge Generator
+function getStatusBadge(exp) {
+  if (exp.approvedByManager) {
+    return `<span class="badge badge-final">✅ Final Approval</span>`;
+  } else if (exp.approvedByAccountant) {
+    return `<span class="badge badge-accountant">🧾 Approved by Accountant</span>`;
+  } else {
+    return `<span class="badge badge-pending">⏳ Pending</span>`;
+  }
+}
+
+// 📊 Render Expenses into Table
 function renderExpenses(expenses) {
   const tbody = document.querySelector('#reviewTable tbody');
   tbody.innerHTML = '';
 
   expenses.forEach(exp => {
+    const badge = getStatusBadge(exp);
+    const icon = getTypeIcon(exp.type);
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${exp.userId}</td>
-      <td>${exp.type}</td>
+      <td>${icon} ${exp.type}</td>
       <td>₹${exp.amount}</td>
       <td>${exp.date}</td>
-      <td>${exp.status}</td>
+      <td>${badge}</td>
       <td>
-        <button class="approve-btn" data-id="${exp.id}">✅ Approve</button>
+        ${!exp.approvedByAccountant
+          ? `<button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Approve</button>`
+          : `<span class="badge badge-approved">✅ Approved</span>`
+        }
       </td>
     `;
     tbody.appendChild(row);
   });
 
-// 🔘 Attach approval logic
-document.querySelectorAll('.approve-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const expenseId = btn.dataset.id;
-    const expenseType = btn.dataset.type || 'Expense'; // optional for overlay
+  attachApprovalLogic();
+}
 
-    try {
-      await updateDoc(doc(db, 'expenses', expenseId), {
-        approvedByAccountant: true,
-        status: 'accountant-approved'
-      });
+// 🔘 Attach Approval Logic
+function attachApprovalLogic() {
+  document.querySelectorAll('.approve-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const expenseId = btn.dataset.id;
+      const expenseType = btn.dataset.type || 'Expense';
 
-      showToast("Expense approved successfully!");
-      showApprovalOverlay('Accountant', expenseType); // optional branded feedback
+      try {
+        await updateDoc(doc(db, 'expenses', expenseId), {
+          approvedByAccountant: true,
+          status: 'accountant-approved'
+        });
 
-      btn.disabled = true;
-      btn.textContent = "✅ Approved";
-    } catch (error) {
-      console.error("Approval error:", error);
-      showToast("Approval failed. Try again.", 'error');
-    }
+        showToast("Expense approved successfully!");
+        showApprovalOverlay('Accountant', expenseType);
+
+        btn.disabled = true;
+        btn.textContent = "✅ Approved";
+      } catch (error) {
+        console.error("Approval error:", error);
+        showToast("Approval failed. Try again.", 'error');
+      }
+    });
   });
-});
+}
 
-
-// 🚀 On load: fetch all expenses
+// 🚀 On Load: Fetch All Expenses
 document.addEventListener('DOMContentLoaded', async () => {
   const user = auth.currentUser;
   if (!user) return;
@@ -71,6 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderExpenses(expenses);
 });
 
+// ✨ Branded Overlay
 function showApprovalOverlay(role, expenseType) {
   const overlay = document.createElement('div');
   overlay.className = 'approval-overlay';
