@@ -18,6 +18,7 @@
 
     <!-- 🌰 Form Wrapper for Biscuit Background -->
     <div class="form-wrapper">
+        <button onclick="logoutUser()" class="logout-btn inside-form">🚪 Logout</button>
       
       <hr class="section-divider" />
     
@@ -161,12 +162,7 @@
         console.error("Logout failed:", error);
       }
     };
-  </script>
-  
-    <!-- Logout Button -->
-    <div class="dashboard-wrapper" style="position: relative;">
-      <button onclick="logoutUser()" class="logout-btn">Logout</button>
-      
+  </script>     
 
   <section id="expenseReport" class="report-section">
     <h2>Your Submitted Expenses</h2>
