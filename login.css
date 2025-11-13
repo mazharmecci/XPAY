@@ -1,4 +1,3 @@
-
 /* Base Reset */
 * {
   margin: 0;
@@ -7,7 +6,7 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
-body {
+body.login-page {
   background: linear-gradient(135deg, #f0f4ff, #e0e7ff);
   height: 100vh;
   display: flex;
@@ -35,13 +34,6 @@ body {
   text-align: center;
 }
 
-/* Title */
-.login-title {
-  font-size: 2rem;
-  color: #1e3a8a;
-  margin-bottom: 1rem;
-}
-
 /* Logo */
 .login-logo {
   width: 75px;
@@ -49,13 +41,14 @@ body {
 }
 
 /* Form */
-#loginForm {
+.login-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-#loginForm input {
+.login-form input {
+  width: 100%;
   padding: 0.75rem;
   border: 1px solid #cbd5e1;
   border-radius: 0.5rem;
@@ -63,14 +56,15 @@ body {
   transition: border 0.3s;
 }
 
-#loginForm input:focus {
+.login-form input:focus {
   border-color: #3b82f6;
   outline: none;
 }
 
-#loginForm button {
+.login-form button {
+  width: 100%;
   padding: 0.75rem;
-  background: #3b82f6;
+  background-color: #3b82f6;
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -80,35 +74,18 @@ body {
   transition: background 0.3s;
 }
 
-#loginForm button:hover {
-  background: #2563eb;
+.login-form button:hover {
+  background-color: #2563eb;
 }
 
 /* Error Message */
-.error-msg {
+.login-error-msg {
   color: #dc2626;
   font-size: 0.9rem;
   margin-top: 0.5rem;
 }
 
-.login-card input {
-  width: 100%;
-  padding: 0.8rem;
-  margin: 0.5rem 0;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-.login-card button {
-  width: 100%;
-  padding: 0.8rem;
-  background-color: #4a6cf7;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
+/* Logout Button */
 .logout-btn {
   position: absolute;
   top: 1rem;
@@ -136,18 +113,14 @@ body {
     border-radius: 0.75rem;
   }
 
-  .login-title {
-    font-size: 1.6rem;
+  .login-logo {
+    width: 60px;
+    margin-bottom: 1rem;
   }
 
-  #loginForm input,
-  #loginForm button {
+  .login-form input,
+  .login-form button {
     font-size: 0.95rem;
     padding: 0.65rem;
-  }
-
-  .login-logo {
-    width: 75px;
-    margin-bottom: 1rem;
   }
 }
