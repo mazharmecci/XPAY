@@ -1,90 +1,102 @@
-
+// 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import {
+  signInWithEmailAndPassword,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import {
+  doc,
+  getDoc,
+  collection,
+  addDoc
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
+// 🧑‍💼 Login Form Logic
 const loginForm = document.getElementById('loginForm');
-loginForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = email.value;
-  const password = password.value;
+if (loginForm) {
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const uid = userCredential.user.uid;
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+      const userDoc = await getDoc(doc(db, "users", uid));
+      const userData = userDoc.data();
+      const role = userData?.role;
+      const name = userData?.name || "User";
 
-    const userDoc = await getDoc(doc(db, "users", uid));
-    const role = userDoc.data().role;
+      let emoji = "👋";
+      let redirect = "login.html";
 
-    if (role === 'employee') {
-      window.location.href = 'employee.html';
-    } else if (role === 'accountant') {
-      window.location.href = 'accountant.html';
-    } else if (role === 'manager') {
-      window.location.href = 'manager.html';
-    } else {
-      alert("Role not assigned. Contact admin.");
+      if (role === "employee") {
+        emoji = "🧑‍💼";
+        redirect = "employee.html";
+      } else if (role === "accountant") {
+        emoji = "📊";
+        redirect = "accountant.html";
+      } else if (role === "manager") {
+        emoji = "🧭";
+        redirect = "manager.html";
+      } else {
+        document.getElementById('loginError').textContent = "Role not assigned. Contact admin.";
+        return;
+      }
+
+      localStorage.setItem("welcomeMessage", `${emoji} Welcome ${name}, you're logged in as ${role}.`);
+      window.location.href = redirect;
+
+    } catch (error) {
+      document.getElementById('loginError').textContent = error.message;
     }
-  } catch (error) {
-    alert(error.message);
-  }
-});
+  });
+}
 
+// 💸 Expense Submission Logic
+const expenseForm = document.getElementById('expenseForm');
+if (expenseForm) {
+  expenseForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
 
+    const user = auth.currentUser;
+    if (!user) {
+      alert("You must be logged in to submit expenses.");
+      return;
+    }
 
-import { db, auth } from './firebase.js';
-import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    const activeTab = document.querySelector('.tab-content.active');
+    const expenseType = activeTab.id;
+    const amount = activeTab.querySelector('input[type="number"]').value;
+    const date = activeTab.querySelector('input[type="date"]').value;
+    const receiptInput = activeTab.querySelector('input[type="file"]');
+    const receiptFile = receiptInput?.files[0];
+    const receiptName = receiptFile ? receiptFile.name : null;
 
-document.getElementById('expenseForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
+    const expenseData = {
+      userId: user.uid,
+      type: expenseType,
+      amount: parseFloat(amount),
+      date,
+      receiptName,
+      status: 'pending',
+      approvedByAccountant: false,
+      approvedByManager: false,
+      submittedAt: new Date().toISOString()
+    };
 
-  const user = auth.currentUser;
-  if (!user) {
-    alert("You must be logged in to submit expenses.");
-    return;
-  }
+    try {
+      await addDoc(collection(db, 'expenses'), expenseData);
+      alert("Expense submitted successfully!");
+      expenseForm.reset();
+    } catch (error) {
+      console.error("Error submitting expense:", error);
+      alert("Failed to submit expense. Please try again.");
+    }
+  });
+}
 
-  // Detect active tab
-  const activeTab = document.querySelector('.tab-content.active');
-  const expenseType = activeTab.id;
-
-  // Extract fields
-  const amount = activeTab.querySelector('input[type="number"]').value;
-  const date = activeTab.querySelector('input[type="date"]').value;
-  const receiptInput = activeTab.querySelector('input[type="file"]');
-  const receiptFile = receiptInput?.files[0];
-
-  // Optional: Store receipt name or base64 preview
-  const receiptName = receiptFile ? receiptFile.name : null;
-
-  // Prepare Firestore payload
-  const expenseData = {
-    userId: user.uid,
-    type: expenseType,
-    amount: parseFloat(amount),
-    date,
-    receiptName,
-    status: 'pending',
-    approvedByAccountant: false,
-    approvedByManager: false,
-    submittedAt: new Date().toISOString()
-  };
-
-  try {
-    await addDoc(collection(db, 'expenses'), expenseData);
-    alert("Expense submitted successfully!");
-    document.getElementById('expenseForm').reset();
-  } catch (error) {
-    console.error("Error submitting expense:", error);
-    alert("Failed to submit expense. Please try again.");
-  }
-});
-
-
-
-
-// Tab switching
-
+// 🗂️ Tab Switching Logic
 const tabs = document.querySelectorAll('.tab-btn');
 const contents = document.querySelectorAll('.tab-content');
 
@@ -98,48 +110,13 @@ tabs.forEach(tab => {
   });
 });
 
-document.getElementById('expenseForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  alert("Expense submitted successfully!");
-  // Firebase logic will go here
-});
-
-
-// Form submission
-
-document.getElementById('expenseForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  alert("Expense submitted successfully!");
-  // Later: integrate Firebase submission here
-});
-
-// Login form logic - Firebase Auth + Role Detection
-
-const loginForm = document.getElementById('loginForm');
-loginForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = email.value;
-  const password = password.value;
-
+// 🔐 Optional: Logout Logic
+window.logoutUser = async function () {
   try {
-    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-    const uid = userCredential.user.uid;
-
-    // Fetch role from Firestore
-    const userDoc = await firebase.firestore().collection('users').doc(uid).get();
-    const role = userDoc.data().role;
-
-    // Redirect based on role
-    if (role === 'employee') {
-      window.location.href = 'employee.html';
-    } else if (role === 'accountant') {
-      window.location.href = 'accountant.html';
-    } else if (role === 'manager') {
-      window.location.href = 'manager.html';
-    } else {
-      document.getElementById('loginError').textContent = 'Role not assigned. Contact admin.';
-    }
+    await signOut(auth);
+    localStorage.removeItem("welcomeMessage");
+    window.location.href = "login.html";
   } catch (error) {
-    document.getElementById('loginError').textContent = error.message;
+    console.error("Logout failed:", error);
   }
-});
+};
