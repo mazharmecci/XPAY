@@ -30,11 +30,57 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
-document.getElementById('expenseForm').addEventListener('submit', function(e) {
+
+
+import { db, auth } from './firebase.js';
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+document.getElementById('expenseForm').addEventListener('submit', async function(e) {
   e.preventDefault();
-  alert("Expense submitted successfully!"); 
-  // Later: integrate Firebase submission here
+
+  const user = auth.currentUser;
+  if (!user) {
+    alert("You must be logged in to submit expenses.");
+    return;
+  }
+
+  // Detect active tab
+  const activeTab = document.querySelector('.tab-content.active');
+  const expenseType = activeTab.id;
+
+  // Extract fields
+  const amount = activeTab.querySelector('input[type="number"]').value;
+  const date = activeTab.querySelector('input[type="date"]').value;
+  const receiptInput = activeTab.querySelector('input[type="file"]');
+  const receiptFile = receiptInput?.files[0];
+
+  // Optional: Store receipt name or base64 preview
+  const receiptName = receiptFile ? receiptFile.name : null;
+
+  // Prepare Firestore payload
+  const expenseData = {
+    userId: user.uid,
+    type: expenseType,
+    amount: parseFloat(amount),
+    date,
+    receiptName,
+    status: 'pending',
+    approvedByAccountant: false,
+    approvedByManager: false,
+    submittedAt: new Date().toISOString()
+  };
+
+  try {
+    await addDoc(collection(db, 'expenses'), expenseData);
+    alert("Expense submitted successfully!");
+    document.getElementById('expenseForm').reset();
+  } catch (error) {
+    console.error("Error submitting expense:", error);
+    alert("Failed to submit expense. Please try again.");
+  }
 });
+
+
 
 
 // Tab switching
