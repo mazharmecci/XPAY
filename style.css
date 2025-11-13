@@ -24,29 +24,6 @@ body.employee-page {
   margin: 2rem auto;
 }
 
-/* 🚪 Logout button inside form */
-
-.logout-container {
-  margin-top: 1rem; /* 1 line gap */
-  text-align: center;
-}
-
-.logout-btn.inside-form {
-  background: #d9534f;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  font-size: 0.9rem;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  transition: background 0.3s ease;
-}
-.logout-btn.inside-form:hover {
-  background: #c9302c;
-}
-
 body {
   font-family: 'Segoe UI', sans-serif;
   background: var(--biscuit-light);
@@ -467,6 +444,27 @@ body.employee-page {
   text-align: center;
 }
 
+.welcome-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.welcome-banner {
+  background-color: #fdf6e3;
+  color: #5c3d1c;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* 🚪 Logout button inside form */
+
 .logout-container {
   margin-top: 1rem;
   text-align: center;
@@ -483,18 +481,6 @@ body.employee-page {
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   transition: background 0.3s ease;
-}
-
-.welcome-banner {
-  background-color: #fdf6e3;
-  color: #5c3d1c;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .section-divider {
