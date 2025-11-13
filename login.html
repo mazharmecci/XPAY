@@ -3,25 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <title>XPAY Login</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="login.css" />
 </head>
 <body>
   <main class="login-container">
     <div class="login-card">
       <img src="images/x.png" alt="XPAY Logo" class="login-logo" />
-      <h2>XPAY</h2>
+      <h2>Login to XPAY</h2>
+
       <form id="loginForm">
         <input type="email" id="email" placeholder="Email" required />
         <input type="password" id="password" placeholder="Password" required />
         <button type="submit">Login</button>
       </form>
+
       <p id="loginError" class="error-msg"></p>
     </div>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -47,19 +49,41 @@
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const uid = userCredential.user.uid;
         const userDoc = await getDoc(doc(db, "users", uid));
-        const role = userDoc.data()?.role;
+        const userData = userDoc.data();
+        const role = userData?.role;
+        const name = userData?.name || "User";
 
-        if (role === "employee") window.location.href = "employee.html";
-        else if (role === "accountant") window.location.href = "accountant.html";
-        else if (role === "manager") window.location.href = "manager.html";
-        else document.getElementById('loginError').textContent = "Role not assigned. Contact admin.";
+        let emoji = "👋";
+        let redirect = "login.html";
+
+        if (role === "employee") {
+          emoji = "🧑‍💼";
+          redirect = "employee.html";
+        } else if (role === "accountant") {
+          emoji = "📊";
+          redirect = "accountant.html";
+        } else if (role === "manager") {
+          emoji = "🧭";
+          redirect = "manager.html";
+        } else {
+          document.getElementById('loginError').textContent = "Role not assigned. Contact admin.";
+          return;
+        }
+
+        localStorage.setItem("welcomeMessage", `${emoji} Welcome ${name}, you're logged in as ${role}.`);
+        window.location.href = redirect;
+
       } catch (error) {
         document.getElementById('loginError').textContent = error.message;
       }
     });
+
+    // Optional: Logout logic (can be reused in dashboard pages)
+    window.logoutUser = async function () {
+      await signOut(auth);
+      localStorage.removeItem("welcomeMessage");
+      window.location.href = "login.html";
+    };
   </script>
-
-  <link rel="stylesheet" href="login.css" />
-
 </body>
 </html>
