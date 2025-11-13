@@ -18,21 +18,35 @@ async function fetchExpenses(user) {
 }
 
 // 📊 Render expenses into table
+
 function renderExpenses(expenses) {
   const tbody = document.querySelector('#reportTable tbody');
   tbody.innerHTML = '';
 
   expenses.forEach(exp => {
+    const badge = getStatusBadge(exp);
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${exp.type}</td>
       <td>₹${exp.amount}</td>
       <td>${exp.date}</td>
-      <td>${exp.status}</td>
+      <td>${badge}</td>
     `;
     tbody.appendChild(row);
   });
 }
+
+// 🏷️ Badge generator
+function getStatusBadge(exp) {
+  if (exp.approvedByManager) {
+    return `<span class="badge badge-final">✅ Final Approval</span>`;
+  } else if (exp.approvedByAccountant) {
+    return `<span class="badge badge-accountant">🧾 Approved by Accountant</span>`;
+  } else {
+    return `<span class="badge badge-pending">⏳ Pending</span>`;
+  }
+}
+
 
 // 🚀 On page load, fetch user and render report
 document.addEventListener('DOMContentLoaded', async () => {
