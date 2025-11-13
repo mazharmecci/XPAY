@@ -2,30 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>XPAY - Expense Submission</title>
+  <title>XPAY - Employee Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
-  
-  <!-- Firebase Core -->
-<script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
-
-<!-- Firebase Auth -->
-<script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js"></script>
-
-<!-- Firebase Firestore -->
-<script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
-
-  <!-- Firebase Storage - if planned later -->
-<script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js"></script>
-
 </head>
 <body>
   <main>
+    <!-- Welcome Banner -->
+    <div id="welcomeBanner" class="welcome-banner"></div>
 
-      <div id="welcomeBanner" class="welcome-banner"></div>
-        <div class="dashboard-wrapper" style="position: relative;">
-          <button onclick="logoutUser()" class="logout-btn">Logout</button>        
-   
+    <!-- Logout Button -->
+    <div class="dashboard-wrapper" style="position: relative;">
+      <button onclick="logoutUser()" class="logout-btn">Logout</button>
+
       <!-- Tabs -->
       <div class="tabs">
         <button class="tab-btn active" data-tab="fuel">Fuel</button>
@@ -35,109 +24,142 @@
         <button class="tab-btn" data-tab="food">Food</button>
         <button class="tab-btn" data-tab="cash">Advance Cash</button>
       </div>
-    
-    <form id="expenseForm">
-      <!-- Logo and Title inside the form -->
-      <div class="form-header">
-        <img src="images/x.png" alt="XPAY Logo" class="form-logo" />
-        <h1 class="form-title">XPAY</h1>        
-      </div>
 
-      <!-- Tab Content -->
-      <div class="tab-content active" id="fuel">
-        <div class="expense-card">
-          <img src="images/fuel.png" alt="Fuel" class="icon" />
-          <div class="form-fields">
-            <h3>Fuel Expense</h3>
-            <input type="number" name="fuelAmount" placeholder="Amount" required />
-            <input type="date" name="fuelDate" required />
-            <input type="file" name="fuelReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
+      <!-- Expense Form -->
+      <form id="expenseForm">
+        <div class="form-header">
+          <img src="images/x.png" alt="XPAY Logo" class="form-logo" />
+          <h1 class="form-title">XPAY</h1>
+        </div>
+
+        <!-- Tab Content Sections -->
+        <div class="tab-content active" id="fuel">
+          <div class="expense-card">
+            <img src="images/fuel.png" alt="Fuel" class="icon" />
+            <div class="form-fields">
+              <h3>Fuel Expense</h3>
+              <input type="number" name="fuelAmount" placeholder="Amount" required />
+              <input type="date" name="fuelDate" required />
+              <input type="file" name="fuelReceipt" accept="image/*,.pdf" />
+              <small class="optional-caption">* Upload receipt (optional)</small>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="tab-content" id="travel">
-        <div class="expense-card">
-          <img src="images/travel.png" alt="Travel" class="icon" />
-          <div class="form-fields">
-            <h3>Travel Expense</h3>
-            <input type="number" name="travelAmount" placeholder="Amount" required />
-            <input type="date" name="travelDate" required />
-            <input type="file" name="travelReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
+        <!-- Repeat for other tabs -->
+        <div class="tab-content" id="travel">
+          <div class="expense-card">
+            <img src="images/travel.png" alt="Travel" class="icon" />
+            <div class="form-fields">
+              <h3>Travel Expense</h3>
+              <input type="number" name="travelAmount" placeholder="Amount" required />
+              <input type="date" name="travelDate" required />
+              <input type="file" name="travelReceipt" accept="image/*,.pdf" />
+              <small class="optional-caption">* Upload receipt (optional)</small>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="tab-content" id="vehicle">
-        <div class="expense-card">
-          <img src="images/vehicle.png" alt="Vehicle" class="icon" />
-          <div class="form-fields">
-            <h3>Vehicle Service</h3>
-            <input type="number" name="vehicleAmount" placeholder="Amount" required />
-            <input type="date" name="vehicleDate" required />
-            <input type="file" name="vehicleReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
+        <div class="tab-content" id="vehicle">
+          <div class="expense-card">
+            <img src="images/vehicle.png" alt="Vehicle" class="icon" />
+            <div class="form-fields">
+              <h3>Vehicle Service</h3>
+              <input type="number" name="vehicleAmount" placeholder="Amount" required />
+              <input type="date" name="vehicleDate" required />
+              <input type="file" name="vehicleReceipt" accept="image/*,.pdf" />
+              <small class="optional-caption">* Upload receipt (optional)</small>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="tab-content" id="hotel">
-        <div class="expense-card">
-          <img src="images/hotel.png" alt="Hotel" class="icon" />
-          <div class="form-fields">
-            <h3>Hotel Expense</h3>
-            <input type="number" name="hotelAmount" placeholder="Amount" required />
-            <input type="date" name="hotelDate" required />
-            <input type="file" name="hotelReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
+        <div class="tab-content" id="hotel">
+          <div class="expense-card">
+            <img src="images/hotel.png" alt="Hotel" class="icon" />
+            <div class="form-fields">
+              <h3>Hotel Expense</h3>
+              <input type="number" name="hotelAmount" placeholder="Amount" required />
+              <input type="date" name="hotelDate" required />
+              <input type="file" name="hotelReceipt" accept="image/*,.pdf" />
+              <small class="optional-caption">* Upload receipt (optional)</small>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="tab-content" id="food">
-        <div class="expense-card">
-          <img src="images/food.png" alt="Food" class="icon" />
-          <div class="form-fields">
-            <h3>Food Expense</h3>
-            <input type="number" name="foodAmount" placeholder="Amount" required />
-            <input type="date" name="foodDate" required />
-            <input type="file" name="foodReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
+        <div class="tab-content" id="food">
+          <div class="expense-card">
+            <img src="images/food.png" alt="Food" class="icon" />
+            <div class="form-fields">
+              <h3>Food Expense</h3>
+              <input type="number" name="foodAmount" placeholder="Amount" required />
+              <input type="date" name="foodDate" required />
+              <input type="file" name="foodReceipt" accept="image/*,.pdf" />
+              <small class="optional-caption">* Upload receipt (optional)</small>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="tab-content" id="cash">
-        <div class="expense-card">
-          <img src="images/cash.png" alt="Advance Cash" class="icon" />
-          <div class="form-fields">
-            <h3>Advance Cash</h3>
-            <input type="number" name="cashAmount" placeholder="Amount" required />
-            <input type="date" name="cashDate" required />
-            <input type="file" name="cashReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
+        <div class="tab-content" id="cash">
+          <div class="expense-card">
+            <img src="images/cash.png" alt="Advance Cash" class="icon" />
+            <div class="form-fields">
+              <h3>Advance Cash</h3>
+              <input type="number" name="cashAmount" placeholder="Amount" required />
+              <input type="date" name="cashDate" required />
+              <input type="file" name="cashReceipt" accept="image/*,.pdf" />
+              <small class="optional-caption">* Upload receipt (optional)</small>
+            </div>
           </div>
         </div>
-      </div>     
+
+        <button type="submit" class="submit-btn">Submit Expense</button>
+      </form>
     </div>
-      
-      <button type="submit" class="submit-btn">Submit Expense</button>
-    </form>
   </main>
 
   <footer>
     <p>XPAY © 2025</p>
   </footer>
 
-<script>
-  const message = localStorage.getItem("welcomeMessage");
-  if (message) {
-    document.getElementById("welcomeBanner").textContent = message;
-  }
-</script>
+  <!-- Welcome Message Script -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const message = localStorage.getItem("welcomeMessage");
+      if (message) {
+        document.getElementById("welcomeBanner").textContent = message;
+      }
+    });
+  </script>
 
+  <!-- Firebase Logout Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC-heT_dKo-O6523VVNPKW_Q-D6qxW8_HY",
+      authDomain: "xpay-b0298.firebaseapp.com",
+      projectId: "xpay-b0298",
+      storageBucket: "xpay-b0298.firebasestorage.app",
+      messagingSenderId: "518708112275",
+      appId: "1:518708112275:web:0ea8d94b4c3734d1895666"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.logoutUser = async function () {
+      try {
+        await signOut(auth);
+        localStorage.removeItem("welcomeMessage");
+        window.location.href = "login.html";
+      } catch (error) {
+        console.error("Logout failed:", error);
+      }
+    };
+  </script>
+
+  <!-- Tab Switching Logic -->
   <script src="app.js"></script>
 </body>
 </html>
