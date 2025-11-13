@@ -22,6 +22,10 @@
 <body>
   <main>
 
+      <div id="welcomeBanner" class="welcome-banner"></div>
+        <div class="dashboard-wrapper" style="position: relative;">
+          <button onclick="logoutUser()" class="logout-btn">Logout</button>        
+   
       <!-- Tabs -->
       <div class="tabs">
         <button class="tab-btn active" data-tab="fuel">Fuel</button>
@@ -117,6 +121,7 @@
           </div>
         </div>
       </div>     
+    </div>
       
       <button type="submit" class="submit-btn">Submit Expense</button>
     </form>
@@ -125,9 +130,6 @@
   <footer>
     <p>XPAY © 2025</p>
   </footer>
-
-  <div id="welcomeBanner" class="welcome-banner"></div>
-<button onclick="logoutUser()" class="logout-btn">Logout</button>
 
 <script>
   const message = localStorage.getItem("welcomeMessage");
