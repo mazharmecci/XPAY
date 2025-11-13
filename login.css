@@ -12,14 +12,15 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 1rem;
 }
 
 /* Wrapper */
 .login-wrapper {
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
 }
 
 /* Login Box */
@@ -87,4 +88,27 @@ body {
   color: #dc2626;
   font-size: 0.9rem;
   margin-top: 0.5rem;
+}
+
+/* Responsive Tweaks */
+@media screen and (max-width: 480px) {
+  .login-box {
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+  }
+
+  .login-title {
+    font-size: 1.6rem;
+  }
+
+  #loginForm input,
+  #loginForm button {
+    font-size: 0.95rem;
+    padding: 0.65rem;
+  }
+
+  .login-logo {
+    width: 50px;
+    margin-bottom: 1rem;
+  }
 }
