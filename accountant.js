@@ -1,6 +1,6 @@
 import { auth, db } from './firebase.js';
 import {
-  doc, getDoc, collection, getDocs, updateDoc
+  doc, getDoc, collection, getDocs, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 
@@ -43,7 +43,6 @@ function getStatusBadge(exp) {
 }
 
 // 🔘 Action Cell Renderer
-
 function renderActionCell(exp, role) {
   const approvedBadge = role === 'manager'
     ? `<span class="badge badge-final">✅ Final Approval</span>`
@@ -60,9 +59,6 @@ function renderActionCell(exp, role) {
   `;
 }
 
-<td>${renderActionCell(exp, role)}</td>
-
-
 // 👥 Fetch Employee Names
 async function fetchUserNames() {
   const snapshot = await getDocs(collection(db, 'users'));
@@ -75,7 +71,7 @@ async function fetchUserNames() {
 }
 
 // 📊 Render Expenses into Table
-function renderExpenses(expenses, userNames) {
+function renderExpenses(expenses, userNames, role) {
   const tbody = document.querySelector('#reviewTable tbody');
   tbody.innerHTML = '';
 
@@ -86,34 +82,15 @@ function renderExpenses(expenses, userNames) {
       <td>${formatDate(exp.date)}</td>
       <td>${employeeName}</td>
       <td>${getTypeIcon(exp.type)} ${exp.type}</td>
-      <td>₹${exp.amount}</td>      
+      <td>₹${exp.amount}</td>
       <td>${getStatusBadge(exp)}</td>
-      <td>${renderActionCell(exp)}</td>
+      <td>${renderActionCell(exp, role)}</td>
     `;
     tbody.appendChild(row);
   });
 
   attachApprovalLogic();
-}
-
-// 🔘 Attach delete expense Logic
-function attachDeleteLogic() {
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const expenseId = btn.dataset.id;
-      const confirmed = confirm("Are you sure you want to delete this expense?");
-      if (!confirmed) return;
-
-      try {
-        await deleteDoc(doc(db, 'expenses', expenseId));
-        showToast("Expense deleted successfully!");
-        btn.closest('tr').remove();
-      } catch (error) {
-        console.error("Delete error:", error);
-        showToast("Delete failed. Try again.", 'error');
-      }
-    });
-  });
+  attachDeleteLogic();
 }
 
 // 🔘 Attach Approval Logic
@@ -138,6 +115,26 @@ function attachApprovalLogic() {
       } catch (error) {
         console.error("Approval error:", error);
         showToast("Approval failed. Try again.", 'error');
+      }
+    });
+  });
+}
+
+// 🗑️ Attach Delete Logic
+function attachDeleteLogic() {
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const expenseId = btn.dataset.id;
+      const confirmed = confirm("Are you sure you want to delete this expense?");
+      if (!confirmed) return;
+
+      try {
+        await deleteDoc(doc(db, 'expenses', expenseId));
+        showToast("Expense deleted successfully!");
+        btn.closest('tr').remove();
+      } catch (error) {
+        console.error("Delete error:", error);
+        showToast("Delete failed. Try again.", 'error');
       }
     });
   });
@@ -174,7 +171,7 @@ onAuthStateChanged(auth, async (user) => {
   ]);
 
   const expenses = expenseSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  renderExpenses(expenses, userNames);
+  renderExpenses(expenses, userNames, role);
 });
 
 // 🚪 Logout Logic
