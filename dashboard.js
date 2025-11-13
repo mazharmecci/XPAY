@@ -19,6 +19,21 @@ async function fetchExpenses(user) {
 
 // 📊 Render expenses into table
 
+function getTypeIcon(type) {
+  const icons = {
+    food: '🍽️',
+    fuel: '⛽',
+    hotel: '🏨',
+    travel: '✈️',
+    cash: '💵',
+    vehicle: '🚗',
+    service: '🛠️',
+    advance: '📦'
+  };
+  return icons[type.toLowerCase()] || '🧾';
+}
+
+
 function renderExpenses(expenses) {
   const tbody = document.querySelector('#reportTable tbody');
   tbody.innerHTML = '';
