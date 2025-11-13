@@ -33,11 +33,25 @@ function getStatusBadge(exp) {
 }
 
 // 📊 Render Expenses into Table
+
 function renderExpenses(expenses) {
   const tbody = document.querySelector('#reviewTable tbody');
   tbody.innerHTML = '';
 
-  expenses.forEach(exp => {
+  console.log("🔍 Total expenses fetched:", expenses.length);
+
+  expenses.forEach((exp, index) => {
+    console.log(`📄 Expense #${index + 1}`, {
+      id: exp.id,
+      userId: exp.userId,
+      type: exp.type,
+      amount: exp.amount,
+      date: exp.date,
+      status: exp.status,
+      approvedByAccountant: exp.approvedByAccountant,
+      approvedByManager: exp.approvedByManager
+    });
+
     const badge = getStatusBadge(exp);
     const icon = getTypeIcon(exp.type);
     const row = document.createElement('tr');
@@ -57,10 +71,13 @@ function renderExpenses(expenses) {
     tbody.appendChild(row);
   });
 
+  console.log("✅ Expense table rendered.");
   attachApprovalLogic();
 }
 
+
 // 🔘 Attach Approval Logic
+
 function attachApprovalLogic() {
   document.querySelectorAll('.approve-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -87,6 +104,7 @@ function attachApprovalLogic() {
 }
 
 // 🚀 On Load: Fetch All Expenses
+
 document.addEventListener('DOMContentLoaded', async () => {
   const user = auth.currentUser;
   if (!user) return;
@@ -101,6 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ✨ Branded Overlay
+
 function showApprovalOverlay(role, expenseType) {
   const overlay = document.createElement('div');
   overlay.className = 'approval-overlay';
