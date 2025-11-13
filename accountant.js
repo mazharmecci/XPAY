@@ -73,10 +73,10 @@ function renderExpenses(expenses, userNames) {
     const employeeName = userNames[exp.userId] || 'Unknown';
     const row = document.createElement('tr');
     row.innerHTML = `
+      <td>${formatDate(exp.date)}</td>
       <td>${employeeName}</td>
       <td>${getTypeIcon(exp.type)} ${exp.type}</td>
-      <td>₹${exp.amount}</td>
-      <td>${formatDate(exp.date)}</td>
+      <td>₹${exp.amount}</td>      
       <td>${getStatusBadge(exp)}</td>
       <td>${renderActionCell(exp)}</td>
     `;
