@@ -1,12 +1,62 @@
-<main class="login-container">
-  <div class="login-card">
-    <img src="images/x.png" alt="XPAY Logo" class="login-logo" />
-    <h2>Login to XPAY</h2>
-    <form id="loginForm">
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit">Login</button>
-    </form>
-    <p id="loginError" class="error-msg"></p>
-  </div>
-</main>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>XPAY Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="login-container">
+    <div class="login-card">
+      <img src="images/x.png" alt="XPAY Logo" class="login-logo" />
+      <h2>Login to XPAY</h2>
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+      <p id="loginError" class="error-msg"></p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC-heT_dKo-O6523VVNPKW_Q-D6qxW8_HY",
+      authDomain: "xpay-b0298.firebaseapp.com",
+      projectId: "xpay-b0298",
+      storageBucket: "xpay-b0298.firebasestorage.app",
+      messagingSenderId: "518708112275",
+      appId: "1:518708112275:web:0ea8d94b4c3734d1895666"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const loginForm = document.getElementById('loginForm');
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
+        const userDoc = await getDoc(doc(db, "users", uid));
+        const role = userDoc.data()?.role;
+
+        if (role === "employee") window.location.href = "employee.html";
+        else if (role === "accountant") window.location.href = "accountant.html";
+        else if (role === "manager") window.location.href = "manager.html";
+        else document.getElementById('loginError').textContent = "Role not assigned. Contact admin.";
+      } catch (error) {
+        document.getElementById('loginError').textContent = error.message;
+      }
+    });
+  </script>
+</body>
+</html>
