@@ -50,7 +50,10 @@ function renderActionCell(exp) {
   if (exp.approvedByAccountant) {
     return `<span class="badge badge-approved">✅ Approved</span>`;
   }
-  return `<button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Approve</button>`;
+  return `
+    <button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Approve</button>
+    <button class="delete-btn" data-id="${exp.id}">🗑️ Delete</button>
+  `;
 }
 
 // 👥 Fetch Employee Names
@@ -84,6 +87,26 @@ function renderExpenses(expenses, userNames) {
   });
 
   attachApprovalLogic();
+}
+
+// 🔘 Attach delete expense Logic
+function attachDeleteLogic() {
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const expenseId = btn.dataset.id;
+      const confirmed = confirm("Are you sure you want to delete this expense?");
+      if (!confirmed) return;
+
+      try {
+        await deleteDoc(doc(db, 'expenses', expenseId));
+        showToast("Expense deleted successfully!");
+        btn.closest('tr').remove();
+      } catch (error) {
+        console.error("Delete error:", error);
+        showToast("Delete failed. Try again.", 'error');
+      }
+    });
+  });
 }
 
 // 🔘 Attach Approval Logic
