@@ -2,16 +2,9 @@ import { auth, db } from './firebase.js';
 import {
   doc, getDoc, collection, getDocs, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 
-// ✅ Role-aware logout label
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-  const userDoc = await getDoc(doc(db, 'users', user.uid));
-  const role = userDoc.data().role;
-  document.querySelector('.logout-btn').textContent = `🚪 Logout ${role.charAt(0).toUpperCase() + role.slice(1)}`;
-});
-
-// ✅ Toast Alert
+// 🧾 Toast Alert
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
   toast.textContent = message;
@@ -20,7 +13,7 @@ function showToast(message, type = 'success') {
   setTimeout(() => toast.style.display = 'none', 3000);
 }
 
-// 🧾 Expense Type Icon Generator
+// 🧾 Expense Type Icon
 function getTypeIcon(type) {
   const icons = {
     food: '🍽️', fuel: '⛽', hotel: '🏨', travel: '✈️',
@@ -29,45 +22,38 @@ function getTypeIcon(type) {
   return icons[type?.toLowerCase()] || '🧾';
 }
 
-// 🏷️ Badge Generator
+// 🏷️ Status Badge
 function getStatusBadge(exp) {
-  if (exp.approvedByManager) {
-    return `<span class="badge badge-final">✅ Final Approval</span>`;
-  } else if (exp.approvedByAccountant) {
-    return `<span class="badge badge-accountant">🧾 Approved by Accountant</span>`;
-  } else {
-    return `<span class="badge badge-pending">⏳ Pending</span>`;
-  }
+  if (exp.approvedByManager) return `<span class="badge badge-final">✅ Final Approval</span>`;
+  if (exp.approvedByAccountant) return `<span class="badge badge-accountant">🧾 Approved</span>`;
+  return `<span class="badge badge-pending">⏳ Pending</span>`;
 }
 
-// 📊 Render Expenses into Table
+// 📅 Format Date
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+}
 
+// 📊 Render Expenses
 function renderExpenses(expenses) {
   const tbody = document.querySelector('#reviewTable tbody');
   tbody.innerHTML = '';
 
-  console.log("🔍 Total expenses fetched:", expenses.length);
-
   expenses.forEach((exp, index) => {
-    console.log(`📄 Expense #${index + 1}`, {
-      id: exp.id,
-      userId: exp.userId,
-      type: exp.type,
-      amount: exp.amount,
-      date: exp.date,
-      status: exp.status,
-      approvedByAccountant: exp.approvedByAccountant,
-      approvedByManager: exp.approvedByManager
-    });
-
     const badge = getStatusBadge(exp);
     const icon = getTypeIcon(exp.type);
+    const formattedDate = formatDate(exp.date);
+
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${exp.userId}</td>
       <td>${icon} ${exp.type}</td>
       <td>₹${exp.amount}</td>
-      <td>${exp.date}</td>
+      <td>${formattedDate}</td>
       <td>${badge}</td>
       <td>
         ${!exp.approvedByAccountant
@@ -79,13 +65,10 @@ function renderExpenses(expenses) {
     tbody.appendChild(row);
   });
 
-  console.log("✅ Expense table rendered.");
   attachApprovalLogic();
 }
 
-
-// 🔘 Attach Approval Logic
-
+// 🔘 Approval Logic
 function attachApprovalLogic() {
   document.querySelectorAll('.approve-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -111,23 +94,7 @@ function attachApprovalLogic() {
   });
 }
 
-// 🚀 On Load: Fetch All Expenses
-
-document.addEventListener('DOMContentLoaded', async () => {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const userDoc = await getDoc(doc(db, 'users', user.uid));
-  const userData = userDoc.data();
-  if (userData.role !== 'accountant') return;
-
-  const snapshot = await getDocs(collection(db, 'expenses'));
-  const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  renderExpenses(expenses);
-});
-
 // ✨ Branded Overlay
-
 function showApprovalOverlay(role, expenseType) {
   const overlay = document.createElement('div');
   overlay.className = 'approval-overlay';
@@ -142,18 +109,27 @@ function showApprovalOverlay(role, expenseType) {
   setTimeout(() => overlay.remove(), 3000);
 }
 
+// 🚀 Auth + Expense Fetch
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
 
-// ✨ Logout logic
+  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  const role = userDoc.data().role;
+  if (role !== 'accountant') return;
 
-import { signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+  document.querySelector('.logout-btn').textContent = `🚪 Logout ${role.charAt(0).toUpperCase() + role.slice(1)}`;
 
+  const snapshot = await getDocs(collection(db, 'expenses'));
+  const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  renderExpenses(expenses);
+});
+
+// 🚪 Logout Logic
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   try {
     await signOut(auth);
     showToast("Logged out successfully!");
-    setTimeout(() => {
-      window.location.href = 'index.html'; // or login.html
-    }, 1500);
+    setTimeout(() => window.location.href = 'login.html', 1500);
   } catch (error) {
     console.error("Logout error:", error);
     showToast("Logout failed. Try again.", 'error');
