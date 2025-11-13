@@ -40,25 +40,21 @@ function renderExpenses(expenses) {
 document.querySelectorAll('.approve-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     const expenseId = btn.dataset.id;
-    const expenseType = btn.dataset.type || 'Expense'; // optional for overlay
-
     try {
       await updateDoc(doc(db, 'expenses', expenseId), {
         approvedByAccountant: true,
         status: 'accountant-approved'
       });
-
       showToast("Expense approved successfully!");
-      showApprovalOverlay('Accountant', expenseType); // optional branded feedback
-
       btn.disabled = true;
       btn.textContent = "✅ Approved";
     } catch (error) {
-      console.error("Approval error:", error);
       showToast("Approval failed. Try again.", 'error');
+      console.error("Approval error:", error);
     }
   });
 });
+}
 
 
 // 🚀 On load: fetch all expenses
