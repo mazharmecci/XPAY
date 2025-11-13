@@ -53,9 +53,24 @@ body {
 }
 
 /* Form Header */
-.form-header {
+
+.welcome-banner {
+  background-color: #fdf6e3;
+  color: #5c3d1c;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .form-logo {
