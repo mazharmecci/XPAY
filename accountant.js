@@ -21,13 +21,77 @@ function getTypeIcon(type) {
   };
   return icons[type?.toLowerCase()] || '🧾';
 }
+// 🏷️ Status Badge Renderer
 
-// 🏷️ Status Badge
 function getStatusBadge(exp) {
-  if (exp.approvedByManager) return `<span class="badge badge-final">✅ Final Approval</span>`;
-  if (exp.approvedByAccountant) return `<span class="badge badge-accountant">🧾 Approved</span>`;
+  if (exp.approvedByManager) {
+    return `<span class="badge badge-final">✅ Final Approval</span>`;
+  }
+  if (exp.approvedByAccountant) {
+    return `<span class="badge badge-accountant">🧾 Approved by Accountant</span>`;
+  }
   return `<span class="badge badge-pending">⏳ Pending</span>`;
 }
+
+// 🔘 Action Cell Renderer
+function renderActionCell(exp) {
+  if (exp.approvedByManager) {
+    return `<span class="badge badge-final">✅ Final Approval</span>`;
+  }
+  if (exp.approvedByAccountant) {
+    return `<span class="badge badge-approved">✅ Approved</span>`;
+  }
+  return `<button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Approve</button>`;
+}
+
+// 📊 Render Expenses into Table
+function renderExpenses(expenses) {
+  const tbody = document.querySelector('#reviewTable tbody');
+  tbody.innerHTML = '';
+
+  expenses.forEach(exp => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${exp.userId}</td>
+      <td>${getTypeIcon(exp.type)} ${exp.type}</td>
+      <td>₹${exp.amount}</td>
+      <td>${formatDate(exp.date)}</td>
+      <td>${getStatusBadge(exp)}</td>
+      <td>${renderActionCell(exp)}</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  attachApprovalLogic();
+}
+
+// 🔘 Attach Approval Logic
+function attachApprovalLogic() {
+  document.querySelectorAll('.approve-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const expenseId = btn.dataset.id;
+      const expenseType = btn.dataset.type || 'Expense';
+
+      try {
+        await updateDoc(doc(db, 'expenses', expenseId), {
+          approvedByAccountant: true,
+          status: 'accountant-approved'
+        });
+
+        showToast("Expense approved successfully!");
+        showApprovalOverlay("Accountant", expenseType);
+
+        btn.disabled = true;
+        btn.textContent = "✅ Approved";
+        btn.classList.add("badge", "badge-approved");
+      } catch (error) {
+        console.error("Approval error:", error);
+        showToast("Approval failed. Try again.", 'error');
+      }
+    });
+  });
+}
+
 
 // 📅 Format Date
 function formatDate(dateStr) {
