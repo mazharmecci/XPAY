@@ -611,3 +611,18 @@ body.employee-page {
   font-size: 0.85rem;
 }
 
+.delete-btn {
+  background-color: #e74c3c; /* 🔴 Rich red */
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.3s ease;
+}
+
+.delete-btn:hover {
+  background-color: #c0392b; /* 🔴 Darker red on hover */
+}
+
