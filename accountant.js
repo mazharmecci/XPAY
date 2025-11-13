@@ -65,3 +65,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   renderExpenses(expenses);
 });
+
+function showApprovalOverlay(role, expenseType) {
+  const overlay = document.createElement('div');
+  overlay.className = 'approval-overlay';
+  overlay.innerHTML = `
+    <div class="overlay-content">
+      <img src="images/x.png" class="overlay-logo" />
+      <h2>✅ ${role} Approval</h2>
+      <p>${expenseType} expense has been approved and logged.</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 3000);
+}
