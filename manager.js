@@ -1,14 +1,17 @@
 import { auth, db } from './firebase.js';
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import {
+  doc,
+  getDoc,
+  collection,
+  getDocs,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// ✅ Role-aware logout label
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-  const userDoc = await getDoc(doc(db, 'users', user.uid));
-  const role = userDoc.data().role;
-  document.querySelector('.logout-btn').textContent = `🚪 Logout ${role.charAt(0).toUpperCase() + role.slice(1)}`;
-});
-
-// ✅ Toast Alert
+// 🧾 Toast Alert
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
   toast.textContent = message;
@@ -17,103 +20,16 @@ function showToast(message, type = 'success') {
   setTimeout(() => toast.style.display = 'none', 3000);
 }
 
-// 📊 Render expenses with manager approval
-function renderExpenses(expenses) {
-  const tbody = document.querySelector('#managerTable tbody');
-  tbody.innerHTML = '';
-
-  expenses.forEach(exp => {
-    const isReady = exp.approvedByAccountant && !exp.approvedByManager;
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${exp.userId}</td>
-      <td>${exp.type}</td>
-      <td>₹${exp.amount}</td>
-      <td>${exp.date}</td>
-      <td>${exp.status}</td>
-      <td>
-        ${isReady
-          ? `<button class="approve-btn" data-id="${exp.id}">✅ Final Approve</button>`
-          : `<span class="badge">${exp.approvedByManager ? '✅ Approved' : '⏳ Awaiting Accountant'}</span>`
-        }
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
-
-function renderActionCell(exp, role) {
-  const approvedBadge = role === 'manager'
-    ? `<span class="badge badge-final">✅ Final Approval</span>`
-    : `<span class="badge badge-approved">✅ Approved</span>`;
-
-  if ((role === 'manager' && exp.approvedByManager) ||
-      (role === 'accountant' && exp.approvedByAccountant)) {
-    return approvedBadge;
-  }
-
-  return `
-    <button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Approve</button>
-    <button class="delete-btn" data-id="${exp.id}">🗑️ Delete</button>
-  `;
+// 📅 Format Date
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
 }
 
-<td>${renderActionCell(exp, role)}</td>
-
-// 🔘 Attach delete expense Logic
-function attachDeleteLogic() {
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const expenseId = btn.dataset.id;
-      const confirmed = confirm("Are you sure you want to delete this expense?");
-      if (!confirmed) return;
-
-      try {
-        await deleteDoc(doc(db, 'expenses', expenseId));
-        showToast("Expense deleted successfully!");
-        btn.closest('tr').remove();
-      } catch (error) {
-        console.error("Delete error:", error);
-        showToast("Delete failed. Try again.", 'error');
-      }
-    });
-  });
-}
-  
-// 🔘 Attach approval logic
-document.querySelectorAll('.approve-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const expenseId = btn.dataset.id;
-    try {
-      await updateDoc(doc(db, 'expenses', expenseId), {
-        approvedByAccountant: true,
-        status: 'accountant-approved'
-      });
-      showToast("Expense approved successfully!");
-      btn.disabled = true;
-      btn.textContent = "✅ Approved";
-    } catch (error) {
-      showToast("Approval failed. Try again.", 'error');
-      console.error("Approval error:", error);
-    }
-  });
-});
-}
-
-
-// 🚀 On load: fetch all expenses
-document.addEventListener('DOMContentLoaded', async () => {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const userDoc = await getDoc(doc(db, 'users', user.uid));
-  const userData = userDoc.data();
-  if (userData.role !== 'manager') return;
-
-  const snapshot = await getDocs(collection(db, 'expenses'));
-  const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  renderExpenses(expenses);
-});
-
+// ✨ Branded Overlay
 function showApprovalOverlay(role, expenseType) {
   const overlay = document.createElement('div');
   overlay.className = 'approval-overlay';
@@ -127,6 +43,96 @@ function showApprovalOverlay(role, expenseType) {
   document.body.appendChild(overlay);
   setTimeout(() => overlay.remove(), 3000);
 }
+
+// 🔘 Render Action Cell
+function renderActionCell(exp) {
+  const isReady = exp.approvedByAccountant && !exp.approvedByManager;
+
+  if (isReady) {
+    return `<button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Final Approve</button>`;
+  }
+
+  return `<span class="badge">${exp.approvedByManager ? '✅ Approved' : '⏳ Awaiting Accountant'}</span>`;
+}
+
+// 📊 Render Expenses into Table
+function renderExpenses(expenses, userNames) {
+  const tbody = document.querySelector('#managerTable tbody');
+  tbody.innerHTML = '';
+
+  expenses.forEach(exp => {
+    const employeeName = userNames[exp.userId] || 'Unknown';
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${employeeName}</td>
+      <td>${exp.type}</td>
+      <td>₹${exp.amount}</td>
+      <td>${formatDate(exp.date)}</td>
+      <td>${exp.status}</td>
+      <td>${renderActionCell(exp)}</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  attachApprovalLogic();
+}
+
+// 🔘 Attach Approval Logic
+function attachApprovalLogic() {
+  document.querySelectorAll('.approve-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const expenseId = btn.dataset.id;
+      const expenseType = btn.dataset.type || 'Expense';
+
+      try {
+        await updateDoc(doc(db, 'expenses', expenseId), {
+          approvedByManager: true,
+          status: 'manager-approved'
+        });
+
+        showToast("Expense approved successfully!");
+        showApprovalOverlay("Manager", expenseType);
+
+        btn.disabled = true;
+        btn.textContent = "✅ Approved";
+        btn.classList.add("badge", "badge-final");
+      } catch (error) {
+        console.error("Approval error:", error);
+        showToast("Approval failed. Try again.", 'error');
+      }
+    });
+  });
+}
+
+// 👥 Fetch Employee Names
+async function fetchUserNames() {
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userNames = {};
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    userNames[doc.id] = data.name || 'Unknown';
+  });
+  return userNames;
+}
+
+// 🚀 Auth + Expense Fetch
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+
+  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  const role = userDoc.data().role;
+  if (role !== 'manager') return;
+
+  document.querySelector('.logout-btn').textContent = `🔒 Logout ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+
+  const [expenseSnapshot, userNames] = await Promise.all([
+    getDocs(collection(db, 'expenses')),
+    fetchUserNames()
+  ]);
+
+  const expenses = expenseSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  renderExpenses(expenses, userNames);
+});
 
 // 🚪 Logout Logic
 document.getElementById('logoutBtn').addEventListener('click', async () => {
