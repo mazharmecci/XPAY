@@ -332,3 +332,11 @@ button {
 .toast.error {
   background: #f44336;
 }
+
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #ddd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
