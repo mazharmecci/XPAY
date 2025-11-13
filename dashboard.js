@@ -17,8 +17,7 @@ async function fetchExpenses(user) {
   return expenses;
 }
 
-// 📊 Render expenses into table
-
+// 🧾 Expense Type Icon Generator
 function getTypeIcon(type) {
   const icons = {
     food: '🍽️',
@@ -33,25 +32,7 @@ function getTypeIcon(type) {
   return icons[type.toLowerCase()] || '🧾';
 }
 
-
-function renderExpenses(expenses) {
-  const tbody = document.querySelector('#reportTable tbody');
-  tbody.innerHTML = '';
-
-  expenses.forEach(exp => {
-    const badge = getStatusBadge(exp);
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${exp.type}</td>
-      <td>₹${exp.amount}</td>
-      <td>${exp.date}</td>
-      <td>${badge}</td>
-    `;
-    tbody.appendChild(row);
-  });
-}
-
-// 🏷️ Badge generator
+// 🏷️ Badge Generator
 function getStatusBadge(exp) {
   if (exp.approvedByManager) {
     return `<span class="badge badge-final">✅ Final Approval</span>`;
@@ -60,6 +41,25 @@ function getStatusBadge(exp) {
   } else {
     return `<span class="badge badge-pending">⏳ Pending</span>`;
   }
+}
+
+// 📊 Render Expenses into Table
+function renderExpenses(expenses) {
+  const tbody = document.querySelector('#reportTable tbody');
+  tbody.innerHTML = '';
+
+  expenses.forEach(exp => {
+    const badge = getStatusBadge(exp);
+    const icon = getTypeIcon(exp.type);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${icon} ${exp.type}</td>
+      <td>₹${exp.amount}</td>
+      <td>${exp.date}</td>
+      <td>${badge}</td>
+    `;
+    tbody.appendChild(row);
+  });
 }
 
 
