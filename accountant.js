@@ -1,0 +1,67 @@
+import { auth, db } from './firebase.js';
+import {
+  doc, getDoc, collection, query, getDocs, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+// ✅ Toast Alert
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `toast ${type}`;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+// 📊 Render expenses with approval buttons
+function renderExpenses(expenses) {
+  const tbody = document.querySelector('#reviewTable tbody');
+  tbody.innerHTML = '';
+
+  expenses.forEach(exp => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${exp.userId}</td>
+      <td>${exp.type}</td>
+      <td>₹${exp.amount}</td>
+      <td>${exp.date}</td>
+      <td>${exp.status}</td>
+      <td>
+        <button class="approve-btn" data-id="${exp.id}">✅ Approve</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  // 🔘 Attach approval logic
+  document.querySelectorAll('.approve-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const expenseId = btn.dataset.id;
+      try {
+        await updateDoc(doc(db, 'expenses', expenseId), {
+          approvedByAccountant: true,
+          status: 'accountant-approved'
+        });
+        showToast("Expense approved successfully!");
+        btn.disabled = true;
+        btn.textContent = "✅ Approved";
+      } catch (error) {
+        showToast("Approval failed. Try again.", 'error');
+        console.error("Approval error:", error);
+      }
+    });
+  });
+}
+
+// 🚀 On load: fetch all expenses
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  const userData = userDoc.data();
+  if (userData.role !== 'accountant') return;
+
+  const snapshot = await getDocs(collection(db, 'expenses'));
+  const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  renderExpenses(expenses);
+});
