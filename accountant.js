@@ -3,6 +3,14 @@ import {
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import {
+  doc,
+  getDoc,
+  collection,
+  getDocs,
+  updateDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 
 // 🧾 Toast Alert
