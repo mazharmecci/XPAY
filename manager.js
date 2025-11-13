@@ -1,7 +1,4 @@
 import { auth, db } from './firebase.js';
-import {
-  doc, getDoc, collection, query, getDocs, updateDoc
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 // ✅ Role-aware logout label
 onAuthStateChanged(auth, async (user) => {
