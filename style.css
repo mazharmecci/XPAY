@@ -26,6 +26,11 @@ body.employee-page {
 
 /* 🚪 Logout button inside form */
 
+.logout-container {
+  margin-top: 1rem; /* 1 line gap */
+  text-align: center;
+}
+
 .logout-btn.inside-form {
   background: #d9534f;
   color: white;
