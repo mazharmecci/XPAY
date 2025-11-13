@@ -294,3 +294,23 @@ button {
   width: 80%;
 }
 
+/* Dashboard reports */
+
+.report-section {
+  margin-top: 2rem;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+#reportTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#reportTable th, #reportTable td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
