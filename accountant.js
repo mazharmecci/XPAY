@@ -1,4 +1,9 @@
 import { auth, db } from './firebase.js';
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+
 
 // 🧾 Toast Alert
 function showToast(message, type = 'success') {
