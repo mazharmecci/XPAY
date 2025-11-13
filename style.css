@@ -495,3 +495,43 @@ body.employee-page {
   border-top: 2px solid #ccc;
   margin: 1rem 0;
 }
+
+/* 📊 Table Layout */
+#reviewTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* Ensures consistent column widths */
+}
+
+#reviewTable th,
+#reviewTable td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.95rem;
+}
+
+/* 🧭 Column-Specific Alignment */
+#reviewTable th:nth-child(3),
+#reviewTable td:nth-child(3) {
+  text-align: right; /* Amount column */
+}
+
+#reviewTable th:nth-child(4),
+#reviewTable td:nth-child(4) {
+  text-align: center; /* Date column */
+}
+
+#reviewTable th:nth-child(6),
+#reviewTable td:nth-child(6) {
+  text-align: center; /* Actions column */
+}
+
+/* 🧾 Header Styling */
+#reviewTable thead {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  color: #333;
+}
+
