@@ -44,6 +44,44 @@ function renderExpenses(expenses) {
     tbody.appendChild(row);
   });
 
+function renderActionCell(exp, role) {
+  const approvedBadge = role === 'manager'
+    ? `<span class="badge badge-final">✅ Final Approval</span>`
+    : `<span class="badge badge-approved">✅ Approved</span>`;
+
+  if ((role === 'manager' && exp.approvedByManager) ||
+      (role === 'accountant' && exp.approvedByAccountant)) {
+    return approvedBadge;
+  }
+
+  return `
+    <button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Approve</button>
+    <button class="delete-btn" data-id="${exp.id}">🗑️ Delete</button>
+  `;
+}
+
+<td>${renderActionCell(exp, role)}</td>
+
+// 🔘 Attach delete expense Logic
+function attachDeleteLogic() {
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const expenseId = btn.dataset.id;
+      const confirmed = confirm("Are you sure you want to delete this expense?");
+      if (!confirmed) return;
+
+      try {
+        await deleteDoc(doc(db, 'expenses', expenseId));
+        showToast("Expense deleted successfully!");
+        btn.closest('tr').remove();
+      } catch (error) {
+        console.error("Delete error:", error);
+        showToast("Delete failed. Try again.", 'error');
+      }
+    });
+  });
+}
+  
 // 🔘 Attach approval logic
 document.querySelectorAll('.approve-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
