@@ -96,19 +96,35 @@ if (expenseForm) {
   });
 }
 
-// 🗂️ Tab Switching Logic
+// 🗂️ Tab Switching Logic with Required Field Management
 const tabs = document.querySelectorAll('.tab-btn');
 const contents = document.querySelectorAll('.tab-content');
 
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
+    // Remove active class from all tabs and contents
     tabs.forEach(t => t.classList.remove('active'));
-    contents.forEach(c => c.classList.remove('active'));
+    contents.forEach(c => {
+      c.classList.remove('active');
 
+      // Remove required from all inputs in hidden tabs
+      c.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
+        input.required = false;
+      });
+    });
+
+    // Activate clicked tab and its content
     tab.classList.add('active');
-    document.getElementById(tab.dataset.tab).classList.add('active');
+    const activeContent = document.getElementById(tab.dataset.tab);
+    activeContent.classList.add('active');
+
+    // Add required to inputs in the active tab only
+    activeContent.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
+      input.required = true;
+    });
   });
 });
+
 
 // 🔐 Optional: Logout Logic
 window.logoutUser = async function () {
