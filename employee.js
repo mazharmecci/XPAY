@@ -33,6 +33,15 @@ function getStatusBadge(exp) {
   }
 }
 
+// 📅 Date Formatter
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
 // 📊 Render Employee Expenses
 function renderExpenses(expenses) {
   const tbody = document.querySelector('#reportTable tbody');
@@ -49,7 +58,7 @@ function renderExpenses(expenses) {
     row.innerHTML = `
       <td>${icon} ${exp.type}</td>
       <td>₹${exp.amount}</td>
-      <td>${exp.date}</td>
+      <td>${formatDate(exp.date)}</td>
       <td>${badge}</td>
     `;
     tbody.appendChild(row);
