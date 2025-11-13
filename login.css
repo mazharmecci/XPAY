@@ -6,24 +6,28 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
-body {
-  background: linear-gradient(135deg, #f0f4ff, #e0e7ff);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
 /* Login Container */
 .login-container {
   background: white;
-  padding: 2.5rem 2rem;
+  padding: 2rem;
   border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   width: 100%;
-  max-width: 400px;
+  max-width: 360px;
+  margin: auto;
   text-align: center;
-  animation: fadeIn 0.6s ease-out;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Body Background */
+body {
+  background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Logo */
