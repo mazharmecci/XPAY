@@ -558,3 +558,56 @@ body.employee-page {
     padding: 8px 12px;
   }
 }
+
+.site-footer {
+  background-color: #f5f5f5;
+  color: #333;
+  padding: 2rem 1rem;
+  font-size: 0.9rem;
+  border-top: 1px solid #ddd;
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.footer-brand,
+.footer-links,
+.footer-legal {
+  flex: 1 1 300px;
+}
+
+.footer-logo {
+  width: 60px;
+  margin-bottom: 0.5rem;
+}
+
+.footer-links ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-links a {
+  color: #333;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}
+
+.footer-legal {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+
