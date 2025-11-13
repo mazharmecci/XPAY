@@ -14,12 +14,7 @@
       <div class="form-header centered-logo">
         <img src="images/x.png" alt="XPAY Logo" class="form-logo" />
         <p class="tagline">ISTOS XPAY APP</p>
-      </div>
-      
-      <!-- ✅ Logout button on its own line with spacing -->
-      <div class="logout-container">
-        <button onclick="logoutUser()" class="logout-btn inside-form">🚪 Logout</button>
-      </div>
+      </div>   
 
       <!-- 🎉 Welcome Banner inside frame -->
       <div id="welcomeBanner" class="welcome-banner">Welcome back!</div>
@@ -163,20 +158,24 @@
       </script>     
     
       <section id="expenseReport" class="report-section">
-        <h2>Your Submitted Expenses</h2>
+        <h2>View Your Expenses</h2>
         <table id="reportTable">
           <thead>
             <tr>
+              <th>Date</th>
               <th>Type</th>
               <th>Amount</th>
-              <th>Date</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
       </section>
-    
+
+      <!-- ✅ Logout button on its own line with spacing -->
+      <div class="logout-container">
+        <button onclick="logoutUser()" class="logout-btn inside-form">🚪 Logout</button>
+      </div>
           
     <script type="module" src="app.js"></script>
     <script type="module" src="dashboard.js"></script>
