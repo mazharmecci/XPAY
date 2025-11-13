@@ -36,25 +36,30 @@ function renderExpenses(expenses) {
     tbody.appendChild(row);
   });
 
-  // 🔘 Final approval logic
-  document.querySelectorAll('.approve-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const expenseId = btn.dataset.id;
-      try {
-        await updateDoc(doc(db, 'expenses', expenseId), {
-          approvedByManager: true,
-          status: 'manager-approved'
-        });
-        showToast("Final approval successful!");
-        btn.disabled = true;
-        btn.textContent = "✅ Approved";
-      } catch (error) {
-        showToast("Approval failed. Try again.", 'error');
-        console.error("Manager approval error:", error);
-      }
-    });
+// 🔘 Attach approval logic
+document.querySelectorAll('.approve-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const expenseId = btn.dataset.id;
+    const expenseType = btn.dataset.type || 'Expense'; // optional for overlay
+
+    try {
+      await updateDoc(doc(db, 'expenses', expenseId), {
+        approvedByAccountant: true,
+        status: 'accountant-approved'
+      });
+
+      showToast("Expense approved successfully!");
+      showApprovalOverlay('Accountant', expenseType); // optional branded feedback
+
+      btn.disabled = true;
+      btn.textContent = "✅ Approved";
+    } catch (error) {
+      console.error("Approval error:", error);
+      showToast("Approval failed. Try again.", 'error');
+    }
   });
-}
+});
+
 
 // 🚀 On load: fetch all expenses
 document.addEventListener('DOMContentLoaded', async () => {
