@@ -286,3 +286,11 @@ button {
   color: red;
   margin-top: 1rem;
 }
+
+.section-divider {
+  border: none;
+  border-top: 2px dashed var(--biscuit-mid);
+  margin: 1rem auto;
+  width: 80%;
+}
+
