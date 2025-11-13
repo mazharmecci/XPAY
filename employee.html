@@ -126,6 +126,16 @@
     <p>XPAY © 2025</p>
   </footer>
 
+  <div id="welcomeBanner" class="welcome-banner"></div>
+<button onclick="logoutUser()" class="logout-btn">Logout</button>
+
+<script>
+  const message = localStorage.getItem("welcomeMessage");
+  if (message) {
+    document.getElementById("welcomeBanner").textContent = message;
+  }
+</script>
+
   <script src="app.js"></script>
 </body>
 </html>
