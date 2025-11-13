@@ -13,6 +13,15 @@ function showToast(message, type = 'success') {
   setTimeout(() => toast.style.display = 'none', 3000);
 }
 
+// 📅 Format Date
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
 // 🧾 Expense Type Icon
 function getTypeIcon(type) {
   const icons = {
@@ -21,8 +30,8 @@ function getTypeIcon(type) {
   };
   return icons[type?.toLowerCase()] || '🧾';
 }
-// 🏷️ Status Badge Renderer
 
+// 🏷️ Status Badge Renderer
 function getStatusBadge(exp) {
   if (exp.approvedByManager) {
     return `<span class="badge badge-final">✅ Final Approval</span>`;
@@ -44,15 +53,27 @@ function renderActionCell(exp) {
   return `<button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Approve</button>`;
 }
 
+// 👥 Fetch Employee Names
+async function fetchUserNames() {
+  const snapshot = await getDocs(collection(db, 'users'));
+  const userNames = {};
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    userNames[doc.id] = data.name || 'Unknown';
+  });
+  return userNames;
+}
+
 // 📊 Render Expenses into Table
-function renderExpenses(expenses) {
+function renderExpenses(expenses, userNames) {
   const tbody = document.querySelector('#reviewTable tbody');
   tbody.innerHTML = '';
 
   expenses.forEach(exp => {
+    const employeeName = userNames[exp.userId] || 'Unknown';
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${exp.userId}</td>
+      <td>${employeeName}</td>
       <td>${getTypeIcon(exp.type)} ${exp.type}</td>
       <td>₹${exp.amount}</td>
       <td>${formatDate(exp.date)}</td>
@@ -92,72 +113,6 @@ function attachApprovalLogic() {
   });
 }
 
-
-// 📅 Format Date
-function formatDate(dateStr) {
-  const date = new Date(dateStr);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-}
-
-// 📊 Render Expenses
-function renderExpenses(expenses) {
-  const tbody = document.querySelector('#reviewTable tbody');
-  tbody.innerHTML = '';
-
-  expenses.forEach((exp, index) => {
-    const badge = getStatusBadge(exp);
-    const icon = getTypeIcon(exp.type);
-    const formattedDate = formatDate(exp.date);
-
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${exp.userId}</td>
-      <td>${icon} ${exp.type}</td>
-      <td>₹${exp.amount}</td>
-      <td>${formattedDate}</td>
-      <td>${badge}</td>
-      <td>
-        ${!exp.approvedByAccountant
-          ? `<button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Approve</button>`
-          : `<span class="badge badge-approved">✅ Approved</span>`
-        }
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
-
-  attachApprovalLogic();
-}
-
-// 🔘 Approval Logic
-function attachApprovalLogic() {
-  document.querySelectorAll('.approve-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const expenseId = btn.dataset.id;
-      const expenseType = btn.dataset.type || 'Expense';
-
-      try {
-        await updateDoc(doc(db, 'expenses', expenseId), {
-          approvedByAccountant: true,
-          status: 'accountant-approved'
-        });
-
-        showToast("Expense approved successfully!");
-        showApprovalOverlay('Accountant', expenseType);
-
-        btn.disabled = true;
-        btn.textContent = "✅ Approved";
-      } catch (error) {
-        console.error("Approval error:", error);
-        showToast("Approval failed. Try again.", 'error');
-      }
-    });
-  });
-}
-
 // ✨ Branded Overlay
 function showApprovalOverlay(role, expenseType) {
   const overlay = document.createElement('div');
@@ -181,11 +136,15 @@ onAuthStateChanged(auth, async (user) => {
   const role = userDoc.data().role;
   if (role !== 'accountant') return;
 
-  document.querySelector('.logout-btn').textContent = `🚪 Logout ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+  document.querySelector('.logout-btn').textContent = `🔒 Logout ${role.charAt(0).toUpperCase() + role.slice(1)}`;
 
-  const snapshot = await getDocs(collection(db, 'expenses'));
-  const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  renderExpenses(expenses);
+  const [expenseSnapshot, userNames] = await Promise.all([
+    getDocs(collection(db, 'expenses')),
+    fetchUserNames()
+  ]);
+
+  const expenses = expenseSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  renderExpenses(expenses, userNames);
 });
 
 // 🚪 Logout Logic
