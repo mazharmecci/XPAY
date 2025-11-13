@@ -19,5 +19,4 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ─── Export Modules ──────────────────────────────────────────────────────
-import { auth, db } from './firebase.js';
-
+export { auth, db };
