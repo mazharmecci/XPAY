@@ -481,6 +481,13 @@ body.employee-page {
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   transition: background 0.3s ease;
+  width: 25%; /* 🔽 Reduced to 25% of container */
+  min-width: 120px; /* ✅ Ensures it doesn't get too small */
+  text-align: center;
+}
+
+.logout-btn.inside-form:hover {
+  background: #c9302c;
 }
 
 .section-divider {
