@@ -44,7 +44,7 @@ if (loginForm) {
         return;
       }
 
-      localStorage.setItem("welcomeMessage", `${emoji} Welcome ${name}, you're logged in as ${role}.`);
+      localStorage.setItem("welcomeMessage", `${emoji} Welcome ${name}, ISTOS ${role}.`);
       window.location.href = redirect;
 
     } catch (error) {
