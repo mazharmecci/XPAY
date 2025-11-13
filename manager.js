@@ -127,3 +127,15 @@ function showApprovalOverlay(role, expenseType) {
   document.body.appendChild(overlay);
   setTimeout(() => overlay.remove(), 3000);
 }
+
+// 🚪 Logout Logic
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+    showToast("Logged out successfully!");
+    setTimeout(() => window.location.href = 'login.html', 1500);
+  } catch (error) {
+    console.error("Logout error:", error);
+    showToast("Logout failed. Try again.", 'error');
+  }
+});
