@@ -64,9 +64,9 @@ function renderExpenses(expenses) {
     const icon = getTypeIcon(exp.type);
     const row = document.createElement('tr');
     row.innerHTML = `
+      <td>${formatDate(exp.date)}</td>
       <td>${icon} ${exp.type}</td>
       <td>₹${exp.amount}</td>
-      <td>${formatDate(exp.date)}</td>
       <td>${badge}</td>
     `;
     tbody.appendChild(row);
