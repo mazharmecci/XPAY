@@ -43,18 +43,25 @@ function getStatusBadge(exp) {
 }
 
 // 🔘 Action Cell Renderer
-function renderActionCell(exp) {
-  if (exp.approvedByManager) {
-    return `<span class="badge badge-final">✅ Final Approval</span>`;
+
+function renderActionCell(exp, role) {
+  const approvedBadge = role === 'manager'
+    ? `<span class="badge badge-final">✅ Final Approval</span>`
+    : `<span class="badge badge-approved">✅ Approved</span>`;
+
+  if ((role === 'manager' && exp.approvedByManager) ||
+      (role === 'accountant' && exp.approvedByAccountant)) {
+    return approvedBadge;
   }
-  if (exp.approvedByAccountant) {
-    return `<span class="badge badge-approved">✅ Approved</span>`;
-  }
+
   return `
     <button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Approve</button>
     <button class="delete-btn" data-id="${exp.id}">🗑️ Delete</button>
   `;
 }
+
+<td>${renderActionCell(exp, role)}</td>
+
 
 // 👥 Fetch Employee Names
 async function fetchUserNames() {
