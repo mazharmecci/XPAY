@@ -5,6 +5,23 @@
   --text-dark: #4b3b2a;
 }
 
+/* 🌰 Biscuit background for full page */
+body.employee-page {
+  background-color: #d2b48c; /* dark biscuit tone */
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* 🧾 Form container stays white */
+.form-wrapper {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  max-width: 500px;
+  margin: 2rem auto;
+}
+
 body {
   font-family: 'Segoe UI', sans-serif;
   background: var(--biscuit-light);
