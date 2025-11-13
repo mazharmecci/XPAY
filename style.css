@@ -497,10 +497,19 @@ body.employee-page {
 }
 
 /* 📊 Table Layout */
+
+/* 📱 Responsive Table Wrapper */
+.table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* 📊 Table Layout */
 #reviewTable {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed; /* Ensures consistent column widths */
+  min-width: 600px; /* Ensures table doesn't shrink too much */
+  table-layout: fixed;
 }
 
 #reviewTable th,
@@ -510,28 +519,42 @@ body.employee-page {
   vertical-align: middle;
   border-bottom: 1px solid #ddd;
   font-size: 0.95rem;
+  word-wrap: break-word;
 }
 
 /* 🧭 Column-Specific Alignment */
 #reviewTable th:nth-child(3),
 #reviewTable td:nth-child(3) {
-  text-align: right; /* Amount column */
+  text-align: right;
 }
 
 #reviewTable th:nth-child(4),
-#reviewTable td:nth-child(4) {
-  text-align: center; /* Date column */
-}
-
+#reviewTable td:nth-child(4),
 #reviewTable th:nth-child(6),
 #reviewTable td:nth-child(6) {
-  text-align: center; /* Actions column */
+  text-align: center;
 }
 
-/* 🧾 Header Styling */
-#reviewTable thead {
-  background-color: #f5f5f5;
-  font-weight: 600;
-  color: #333;
-}
+/* 📱 Mobile Adjustments */
+@media screen and (max-width: 768px) {
+  .form-wrapper {
+    padding: 1rem;
+  }
 
+  #reviewTable th,
+  #reviewTable td {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+  }
+
+  .logout-btn.inside-form {
+    width: auto;
+    font-size: 0.8rem;
+    padding: 5px 10px;
+  }
+
+  .welcome-banner {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+}
