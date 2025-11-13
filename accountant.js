@@ -114,3 +114,21 @@ function showApprovalOverlay(role, expenseType) {
   document.body.appendChild(overlay);
   setTimeout(() => overlay.remove(), 3000);
 }
+
+
+// ✨ Logout logic
+
+import { signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+    showToast("Logged out successfully!");
+    setTimeout(() => {
+      window.location.href = 'index.html'; // or login.html
+    }, 1500);
+  } catch (error) {
+    console.error("Logout error:", error);
+    showToast("Logout failed. Try again.", 'error');
+  }
+});
