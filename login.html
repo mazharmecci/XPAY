@@ -6,17 +6,15 @@
   <link rel="stylesheet" href="login.css" />
 </head>
 <body>
-  <main class="login-container">
-    <div class="login-card">
+  <main class="login-wrapper">
+    <div class="login-box">
+      <h2 class="login-title">XPAY</h2>
       <img src="images/x.png" alt="XPAY Logo" class="login-logo" />
-      <h2>Login to XPAY</h2>
-
       <form id="loginForm">
         <input type="email" id="email" placeholder="Email" required />
         <input type="password" id="password" placeholder="Password" required />
         <button type="submit">Login</button>
       </form>
-
       <p id="loginError" class="error-msg"></p>
     </div>
   </main>
@@ -85,5 +83,7 @@
       window.location.href = "login.html";
     };
   </script>
+  
+    <script type="module" src="login.js"></script>
 </body>
 </html>
