@@ -19,162 +19,160 @@
       <!-- 🎉 Welcome Banner inside frame -->
       <div id="welcomeBanner" class="welcome-banner">Welcome back!</div>
 
-      <!-- Workflow Selector -->
-      <div class="workflow-selector">
-        <label for="workflowType"><strong>Select Workflow:</strong></label>
-        <select id="workflowType" name="workflowType" required>
-          <option value="" disabled selected>-- Choose --</option>
-          <option value="sales">Sales</option>
-          <option value="service">Service</option>
-        </select>
-      </div>
+<form id="expenseForm">
+  <!-- Workflow Selector -->
+  <div class="workflow-selector">
+    <label for="workflowType"><strong>Select Workflow:</strong></label>
+    <select id="workflowType" name="workflowType" required>
+      <option value="" disabled selected>-- Choose --</option>
+      <option value="sales">Sales</option>
+      <option value="service">Service</option>
+    </select>
+  </div>
 
-      <!-- Tabs -->
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="fuel">Fuel</button>
-        <button class="tab-btn" data-tab="travel">Travel</button>
-        <button class="tab-btn" data-tab="hotel">Boarding</button>
-        <button class="tab-btn" data-tab="food">Food</button>
-        <button class="tab-btn" data-tab="localconveyance">Local Conveyance</button>
-        <button class="tab-btn" data-tab="misc">Misc</button>
-        <button class="tab-btn" data-tab="cash">Advance Cash</button>
-        <button class="tab-btn" data-tab="monthlyconveyance">Monthly Conveyance</button>
-        <button class="tab-btn" data-tab="phone">Hand Phone</button>      
-      </div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="fuel">Fuel</button>
+    <button class="tab-btn" data-tab="travel">Travel</button>
+    <button class="tab-btn" data-tab="hotel">Boarding</button>
+    <button class="tab-btn" data-tab="food">Food</button>
+    <button class="tab-btn" data-tab="localconveyance">Local Conveyance</button>
+    <button class="tab-btn" data-tab="misc">Misc</button>
+    <button class="tab-btn" data-tab="cash">Advance Cash</button>
+    <button class="tab-btn" data-tab="monthlyconveyance">Monthly Conveyance</button>
+    <button class="tab-btn" data-tab="phone">Hand Phone</button>
+  </div>
 
-    <!-- Expense Form -->
-    <form id="expenseForm">
-      
-      <!-- Fuel -->
-      <div class="tab-content active" id="fuel">
-        <div class="expense-card">
-          <img src="images/fuel.png" alt="Fuel" class="icon" />
-          <div class="form-fields">
-            <h3>Fuel Expense</h3>
-            <input type="number" name="fuelAmount" placeholder="Amount" required />
-            <input type="date" name="fuelDate" required />
-            <input type="file" name="fuelReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
-          </div>
-        </div>
+  <!-- Fuel -->
+  <div class="tab-content active" id="fuel">
+    <div class="expense-card">
+      <img src="images/fuel.png" alt="Fuel" class="icon" />
+      <div class="form-fields">
+        <h3>Fuel Expense</h3>
+        <input type="number" name="fuelAmount" placeholder="Amount" required />
+        <input type="date" name="fuelDate" required />
+        <input type="file" name="fuelReceipt" accept="image/*,.pdf" />
+        <small class="optional-caption">* Upload receipt (optional)</small>
       </div>
+    </div>
+  </div>
 
-      <!-- Travel -->
-      <div class="tab-content" id="travel">
-        <div class="expense-card">
-          <img src="images/travel.png" alt="Travel" class="icon" />
-          <div class="form-fields">
-            <h3>Travel Expense</h3>
-            <input type="text" name="travelPlace" placeholder="Place visited" required />
-            <input type="number" name="travelAmount" placeholder="Fare Amount" required />
-            <input type="date" name="travelDate" required />
-            <input type="file" name="travelReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
-          </div>
-        </div>
+  <!-- Travel -->
+  <div class="tab-content" id="travel">
+    <div class="expense-card">
+      <img src="images/travel.png" alt="Travel" class="icon" />
+      <div class="form-fields">
+        <h3>Travel Expense</h3>
+        <input type="text" name="travelPlace" placeholder="Place visited" required />
+        <input type="number" name="travelAmount" placeholder="Fare Amount" required />
+        <input type="date" name="travelDate" required />
+        <input type="file" name="travelReceipt" accept="image/*,.pdf" />
+        <small class="optional-caption">* Upload receipt (optional)</small>
       </div>
+    </div>
+  </div>
 
-      <!-- Boarding -->
-      <div class="tab-content" id="hotel">
-        <div class="expense-card">
-          <img src="images/hotel.png" alt="Boarding" class="icon" />
-          <div class="form-fields">
-            <h3>Boarding Expense</h3>
-            <input type="number" name="hotelAmount" placeholder="Boarding Amount" required />
-            <input type="date" name="hotelDate" required />
-            <input type="file" name="hotelReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
-          </div>
-        </div>
+  <!-- Boarding -->
+  <div class="tab-content" id="hotel">
+    <div class="expense-card">
+      <img src="images/hotel.png" alt="Boarding" class="icon" />
+      <div class="form-fields">
+        <h3>Boarding Expense</h3>
+        <input type="number" name="hotelAmount" placeholder="Boarding Amount" required />
+        <input type="date" name="hotelDate" required />
+        <input type="file" name="hotelReceipt" accept="image/*,.pdf" />
+        <small class="optional-caption">* Upload receipt (optional)</small>
       </div>
+    </div>
+  </div>
 
-      <!-- Food -->
-      <div class="tab-content" id="food">
-        <div class="expense-card">
-          <img src="images/food.png" alt="Food" class="icon" />
-          <div class="form-fields">
-            <h3>Food Expense</h3>
-            <input type="number" name="foodAmount" placeholder="Amount" required />
-            <input type="date" name="foodDate" required />
-            <input type="file" name="foodReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
-          </div>
-        </div>
+  <!-- Food -->
+  <div class="tab-content" id="food">
+    <div class="expense-card">
+      <img src="images/food.png" alt="Food" class="icon" />
+      <div class="form-fields">
+        <h3>Food Expense</h3>
+        <input type="number" name="foodAmount" placeholder="Amount" required />
+        <input type="date" name="foodDate" required />
+        <input type="file" name="foodReceipt" accept="image/*,.pdf" />
+        <small class="optional-caption">* Upload receipt (optional)</small>
       </div>
+    </div>
+  </div>
 
-      <!-- Local Conveyance -->
-      <div class="tab-content" id="localconveyance">
-        <div class="expense-card">
-          <img src="images/move.png" alt="Conveyance" class="icon" />
-          <div class="form-fields">
-            <h3>Local Conveyance Expense</h3>
-            <input type="number" name="localConveyanceAmount" placeholder="Local Conveyance Amount" required />
-            <input type="date" name="localConveyanceDate" required />
-            <input type="file" name="localConveyanceReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
-          </div>
-        </div>
+  <!-- Local Conveyance -->
+  <div class="tab-content" id="localconveyance">
+    <div class="expense-card">
+      <img src="images/move.png" alt="Local Conveyance" class="icon" />
+      <div class="form-fields">
+        <h3>Local Conveyance Expense</h3>
+        <input type="number" name="localConveyanceAmount" placeholder="Local Conveyance Amount" required />
+        <input type="date" name="localConveyanceDate" required />
+        <input type="file" name="localConveyanceReceipt" accept="image/*,.pdf" />
+        <small class="optional-caption">* Upload receipt (optional)</small>
       </div>
-      
-      <!-- Misc -->
-      <div class="tab-content" id="misc">
-        <div class="expense-card">
-          <img src="images/misc.png" alt="Misc" class="icon" />
-          <div class="form-fields">
-            <h3>Miscellaneous Expense</h3>
-            <input type="number" name="miscAmount" placeholder="Misc Amount" required />
-            <input type="date" name="miscDate" required />
-            <input type="file" name="miscReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
-          </div>
-        </div>
-      </div>
+    </div>
+  </div>
 
-      <!-- Advance Cash -->
-      <div class="tab-content" id="cash">
-        <div class="expense-card">
-          <img src="images/cash.png" alt="Advance Cash" class="icon" />
-          <div class="form-fields">
-            <h3>Advance Cash</h3>
-            <input type="number" name="cashAmount" placeholder="Advance Amount" required />
-            <input type="date" name="cashDate" required />
-            <input type="file" name="cashReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
-          </div>
-        </div>
+  <!-- Misc -->
+  <div class="tab-content" id="misc">
+    <div class="expense-card">
+      <img src="images/misc.png" alt="Misc" class="icon" />
+      <div class="form-fields">
+        <h3>Miscellaneous Expense</h3>
+        <input type="number" name="miscAmount" placeholder="Misc Amount" required />
+        <input type="date" name="miscDate" required />
+        <input type="file" name="miscReceipt" accept="image/*,.pdf" />
+        <small class="optional-caption">* Upload receipt (optional)</small>
       </div>
+    </div>
+  </div>
 
-      <!-- Monthly Conveyance -->
-      <div class="tab-content" id="monthlyconveyance">
-        <div class="expense-card">
-          <img src="images/move.png" alt="Conveyance" class="icon" />
-          <div class="form-fields">
-            <h3>Monthly Conveyance Expense</h3>
-            <input type="number" name="monthlyConveyanceAmount" placeholder="Monthly Conveyance Amount" required />
-            <input type="date" name="monthlyConveyanceDate" required />
-            <input type="file" name="monthlyConveyanceReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
-          </div>
-        </div>
+  <!-- Advance Cash -->
+  <div class="tab-content" id="cash">
+    <div class="expense-card">
+      <img src="images/cash.png" alt="Advance Cash" class="icon" />
+      <div class="form-fields">
+        <h3>Advance Cash</h3>
+        <input type="number" name="cashAmount" placeholder="Advance Amount" required />
+        <input type="date" name="cashDate" required />
+        <input type="file" name="cashReceipt" accept="image/*,.pdf" />
+        <small class="optional-caption">* Upload receipt (optional)</small>
       </div>
+    </div>
+  </div>
 
-      <!-- Hand Phone -->
-      <div class="tab-content" id="phone">
-        <div class="expense-card">
-          <img src="images/mobile.png" alt="Hand Phone" class="icon" />
-          <div class="form-fields">
-            <h3>Hand Phone Expense</h3>
-            <input type="number" name="phoneAmount" placeholder="Hand Phone Amount" required />
-            <input type="date" name="phoneDate" required />
-            <input type="file" name="phoneReceipt" accept="image/*,.pdf" />
-            <small class="optional-caption">* Upload receipt (optional)</small>
-          </div>
-        </div>
+  <!-- Monthly Conveyance -->
+  <div class="tab-content" id="monthlyconveyance">
+    <div class="expense-card">
+      <img src="images/move.png" alt="Monthly Conveyance" class="icon" />
+      <div class="form-fields">
+        <h3>Monthly Conveyance Expense</h3>
+        <input type="number" name="monthlyConveyanceAmount" placeholder="Monthly Conveyance Amount" required />
+        <input type="date" name="monthlyConveyanceDate" required />
+        <input type="file" name="monthlyConveyanceReceipt" accept="image/*,.pdf" />
+        <small class="optional-caption">* Upload receipt (optional)</small>
       </div>
-          
-            <button type="submit" class="submit-btn">Submit Expense</button>
-          </form>
-      </main>
+    </div>
+  </div>
+
+  <!-- Hand Phone -->
+  <div class="tab-content" id="phone">
+    <div class="expense-card">
+      <img src="images/mobile.png" alt="Hand Phone" class="icon" />
+      <div class="form-fields">
+        <h3>Hand Phone Expense</h3>
+        <input type="number" name="phoneAmount" placeholder="Hand Phone Amount" required />
+        <input type="date" name="phoneDate" required />
+        <input type="file" name="phoneReceipt" accept="image/*,.pdf" />
+        <small class="optional-caption">* Upload receipt (optional)</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <button type="submit" class="submit-btn">Submit Expense</button>
+</form>
     
       <!-- Welcome Message Script -->
       <script>
