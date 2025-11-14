@@ -21,13 +21,13 @@ function showToast(message, type = "info") {
   }
 
   toast.textContent = message;
-  toast.className = `toast toast-${type}`; // e.g., toast-info, toast-error
-  toast.classList.add("visible");
+  toast.className = `toast toast-${type} visible`;
 
   setTimeout(() => {
     toast.classList.remove("visible");
   }, 3000);
 }
+
 
 // 🧾 Expense Type Icon Generator
 function getTypeIcon(type) {
