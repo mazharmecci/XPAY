@@ -70,35 +70,67 @@
 
   <!-- 📊 Expense Report -->
     <section id="expenseReport" class="report-section">
-      <h2>View Your Expenses</h2>
-          <table id="reportTable">
+  <h2>View Your Expenses</h2>
+
+  <!-- Trip Info Claims -->
+  <div class="expense-group">
+    <div class="expense-group-header">Trip Info Claims</div>
+    <table id="tripInfoTable">
       <thead>
         <tr>
-          <!-- Trip Info -->
           <th>Date</th>
           <th>Workflow</th>
           <th>Place Visited</th>
-    
-          <!-- Travel Costs -->
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Render trip info claims dynamically here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Travel Costs Claims -->
+  <div class="expense-group">
+    <div class="expense-group-header">Travel Costs Claims</div>
+    <table id="travelCostTable">
+      <thead>
+        <tr>
+          <th>Date</th>
           <th>Fuel</th>
           <th>Fare</th>
           <th>Boarding</th>
           <th>Food</th>
           <th>Local Conveyance</th>
           <th>Misc</th>
-    
-          <!-- Monthly Claims -->
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Render travel cost claims dynamically here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Monthly Claims -->
+  <div class="expense-group">
+    <div class="expense-group-header">Monthly Claims</div>
+    <table id="monthlyClaimsTable">
+      <thead>
+        <tr>
+          <th>Date</th>
           <th>Advance Cash</th>
           <th>Monthly Conveyance</th>
           <th>Monthly Phone</th>
-    
-          <!-- Status -->
           <th>Status</th>
         </tr>
-     </thead>
-      <tbody></tbody>
+      </thead>
+      <tbody>
+        <!-- Render monthly claims dynamically here -->
+      </tbody>
     </table>
-    </section>
+  </div>
+</section>
 
     <!-- 🚪 Logout Button -->
     <div class="logout-container">
