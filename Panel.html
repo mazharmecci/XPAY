@@ -16,15 +16,15 @@
   <link rel="stylesheet" href="style.css" />
   
   <style>
+    /* Base biscuit theme */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #fff3e6, #fbe8d2);
+      background: linear-gradient(135deg, #fdf6f0, #f7e9dc); /* biscuit tones */
       margin: 0;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      height: 100vh;
       animation: fadeInBody 1.2s ease-in;
     }
 
@@ -37,7 +37,7 @@
       background: #fff8f2;
       padding: 2rem 3rem;
       border-radius: 14px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
       text-align: center;
       max-width: 420px;
       width: 100%;
@@ -88,26 +88,15 @@
       box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
+    /* Biscuit‑flavored role colors */
     .employee-btn { background: #d9a066; }
     .accountant-btn { background: #c97c5d; }
     .manager-btn { background: #a97142; }
 
-    .site-footer {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 0.85rem;
+    .footer-note {
+      font-size: 0.8rem;
       color: #7a6a58;
-      animation: fadeInUp 1.6s ease-out;
-    }
-
-    .footer-logo {
-      width: 60px;
-      margin-bottom: 0.5rem;
-    }
-
-    .footer-content p {
-      margin: 4px 0;
-      line-height: 1.4;
+      margin-top: 1.5rem;
     }
   </style>
 </head>
