@@ -21,10 +21,12 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
+  // ✅ FIXED: removed invalid TypeScript non-null assertion (!)
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) {
     logoutBtn.textContent = `🚪 Logout ${role}`;
   }
+});
 
 // 📝 Form Submission
 document.getElementById("expenseForm")?.addEventListener("submit", async (e) => {
@@ -48,16 +50,16 @@ document.getElementById("expenseForm")?.addEventListener("submit", async (e) => 
     workflowType: data.workflowType,
     date: data.date,
     fields: {
-      placeVisited: data.placeVisited || null,
+      placeVisited: data.place || null, // ✅ matches your form field name
       fuel: parseFloat(data.fuel) || null,
       fare: parseFloat(data.fare) || null,
       boarding: parseFloat(data.boarding) || null,
       food: parseFloat(data.food) || null,
-      localConveyance: parseFloat(data.localConveyance) || null,
+      localConveyance: parseFloat(data.local) || null,
       misc: parseFloat(data.misc) || null,
-      advanceCash: parseFloat(data.advanceCash) || null,
-      monthlyConveyance: parseFloat(data.monthlyConveyance) || null,
-      monthlyPhone: parseFloat(data.monthlyPhone) || null
+      advanceCash: parseFloat(data.advance) || null,
+      monthlyConveyance: parseFloat(data["monthly-conveyance"]) || null,
+      monthlyPhone: parseFloat(data["monthly-phone"]) || null
     },
     status: "pending",
     submittedAt: new Date().toISOString()
@@ -82,6 +84,7 @@ function showToast(message, type = "info") {
   setTimeout(() => toast.classList.remove("visible"), 3000);
 }
 
+// 📊 Render Expenses
 function renderExpenses(expenses = []) {
   const tbody = document.querySelector('#reportTable tbody');
   if (!tbody) return;
@@ -109,3 +112,13 @@ function renderExpenses(expenses = []) {
   });
 }
 
+// 🗓️ Helper: format date safely
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
