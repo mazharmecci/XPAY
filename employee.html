@@ -2,21 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>XPAY - Employee Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
 </head>
+  
 <body class="employee-page">
   <main>
-    <!-- Workflow Selector -->
-    <div class="workflow-selector">
-      <label for="workflowType"><strong>Select Workflow:</strong></label>
-      <select id="workflowType" name="workflowType" required>
-        <option value="" disabled selected>-- Choose --</option>
-        <option value="sales">Sales</option>
-        <option value="service">Service</option>
-      </select>
-    </div>
+    <!-- 🌰 Form Wrapper for Biscuit Background -->
+    <div class="form-wrapper">
+      <div class="form-header centered-logo">
+        <img src="images/x.png" alt="XPAY Logo" class="form-logo" />
+        <p class="tagline">ISTOS XPAY APP</p>
+      </div>   
+
+      <!-- 🎉 Welcome Banner inside frame -->
+      <div id="welcomeBanner" class="welcome-banner">Welcome back!</div>
+
+      <!-- Workflow Selector -->
+      <div class="workflow-selector">
+        <label for="workflowType"><strong>Select Workflow:</strong></label>
+        <select id="workflowType" name="workflowType" required>
+          <option value="" disabled selected>-- Choose --</option>
+          <option value="sales">Sales</option>
+          <option value="service">Service</option>
+        </select>
+      </div>
 
     <!-- Tabs -->
     <div class="tabs">
