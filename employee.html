@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>XPAY - Employee Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="XPAY Employee Dashboard - Submit and view expense reports easily." />
+  <link rel="icon" href="images/favicon.ico" />
   <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -20,97 +22,120 @@
       <div id="welcomeBanner" class="welcome-banner">Welcome back!</div>
 
       <!-- 🧾 Expense Form -->
-      <form id="expenseForm">
-  <label for="workflowType">Workflow Type:</label>
-  <select name="workflowType" required>
-    <option value="" disabled selected>-- Choose --</option>
-    <option value="sales">Sales</option>
-    <option value="service">Service</option>
-  </select>
+      <form id="expenseForm" class="employee-form">
+        <!-- Workflow Type -->
+        <div class="form-row">
+          <label for="workflowType">Workflow Type:</label>
+          <select id="workflowType" name="workflowType" required data-field-type="select">
+            <option value="" disabled selected>-- Choose --</option>
+            <option value="sales">Sales</option>
+            <option value="service">Service</option>
+          </select>
+        </div>
 
-  <fieldset>
-    <legend>Group Fields</legend>
+        <fieldset>
+          <legend>Group Fields</legend>
 
-    <form class="employee-form">
+          <!-- Place Visited -->
+          <div class="form-row">
+            <label for="place">Place Visited 🏙️</label>
+            <input type="text" id="place" name="place"
+                   placeholder="Place 🏙️"
+                   data-tooltip="Enter text value"
+                   data-field-type="text">
+          </div>
 
-  <!-- Place Visited -->
-  <div class="form-row">
-    <label for="place">Place Visited 🏙️</label>
-    <input type="text" id="place" name="place" placeholder="Place 🏙️" data-tooltip="Enter text value">
-  </div>
-      
-  <!-- Fuel -->
-  <div class="form-row">
-    <label for="fuel">Fuel ⛽</label>
-    <input type="number" id="fuel" name="fuel" placeholder="Fuel ⛽" data-tooltip="Enter numeric value">
-  </div>
+          <!-- Fuel -->
+          <div class="form-row">
+            <label for="fuel">Fuel ⛽</label>
+            <input type="number" id="fuel" name="fuel"
+                   placeholder="Fuel ⛽"
+                   data-tooltip="Enter numeric value"
+                   data-field-type="numeric">
+          </div>
 
-  <!-- Fare -->
-  <div class="form-row">
-    <label for="fare">Fare 💰</label>
-    <input type="number" id="fare" name="fare" placeholder="Fare 💰" data-tooltip="Enter numeric value">
-  </div>
+          <!-- Fare -->
+          <div class="form-row">
+            <label for="fare">Fare 💰</label>
+            <input type="number" id="fare" name="fare"
+                   placeholder="Fare 💰"
+                   data-tooltip="Enter numeric value"
+                   data-field-type="numeric">
+          </div>
 
-  <!-- Boarding -->
-  <div class="form-row">
-    <label for="boarding">Boarding 🛏️</label>
-    <input type="number" id="boarding" name="boarding" placeholder="Boarding 🛏️" data-tooltip="Enter numeric value">
-  </div>
+          <!-- Boarding -->
+          <div class="form-row">
+            <label for="boarding">Boarding 🛏️</label>
+            <input type="number" id="boarding" name="boarding"
+                   placeholder="Boarding 🛏️"
+                   data-tooltip="Enter numeric value"
+                   data-field-type="numeric">
+          </div>
 
-  <!-- Food -->
-  <div class="form-row">
-    <label for="food">Food 🍽️</label>
-    <input type="number" id="food" name="food" placeholder="Food 🍽️" data-tooltip="Enter numeric value">
-  </div>
+          <!-- Food -->
+          <div class="form-row">
+            <label for="food">Food 🍽️</label>
+            <input type="number" id="food" name="food"
+                   placeholder="Food 🍽️"
+                   data-tooltip="Enter numeric value"
+                   data-field-type="numeric">
+          </div>
 
-  <!-- Local Conveyance -->
-  <div class="form-row">
-    <label for="local">Local Conveyance 🚖</label>
-    <input type="number" id="local" name="local" placeholder="Local Conveyance 🚖" data-tooltip="Enter numeric value">
-  </div>
+          <!-- Local Conveyance -->
+          <div class="form-row">
+            <label for="local">Local Conveyance 🚖</label>
+            <input type="number" id="local" name="local"
+                   placeholder="Local Conveyance 🚖"
+                   data-tooltip="Enter numeric value"
+                   data-field-type="numeric">
+          </div>
 
-  <!-- Misc -->
-  <div class="form-row">
-    <label for="misc">Misc 📦</label>
-    <input type="number" id="misc" name="misc" placeholder="Misc 📦" data-tooltip="Enter numeric value">
-  </div>
+          <!-- Misc -->
+          <div class="form-row">
+            <label for="misc">Misc 📦</label>
+            <input type="number" id="misc" name="misc"
+                   placeholder="Misc 📦"
+                   data-tooltip="Enter numeric value"
+                   data-field-type="numeric">
+          </div>
 
-  <!-- Advance Cash -->
-  <div class="form-row">
-    <label for="advance">Advance Cash 💵</label>
-    <input type="number" id="advance" name="advance" placeholder="Advance Cash 💵" data-tooltip="Enter numeric value">
-  </div>
+          <!-- Advance Cash -->
+          <div class="form-row">
+            <label for="advance">Advance Cash 💵</label>
+            <input type="number" id="advance" name="advance"
+                   placeholder="Advance Cash 💵"
+                   data-tooltip="Enter numeric value"
+                   data-field-type="numeric">
+          </div>
 
-  <!-- Monthly Conveyance -->
-  <div class="form-row">
-    <label for="monthly-conveyance">Monthly Conveyance 🚌</label>
-    <input type="number" id="monthly-conveyance" name="monthly-conveyance" placeholder="Monthly Conveyance 🚌" data-tooltip="Enter numeric value">
-  </div>
+          <!-- Monthly Conveyance -->
+          <div class="form-row">
+            <label for="monthly-conveyance">Monthly Conveyance 🚌</label>
+            <input type="number" id="monthly-conveyance" name="monthly-conveyance"
+                   placeholder="Monthly Conveyance 🚌"
+                   data-tooltip="Enter numeric value"
+                   data-field-type="numeric">
+          </div>
 
-  <!-- Monthly Phone -->
-  <div class="form-row">
-    <label for="monthly-phone">Monthly Phone 📱</label>
-    <input type="number" id="monthly-phone" name="monthly-phone" placeholder="Monthly Phone 📱" data-tooltip="Enter numeric value">
-  </div>
+          <!-- Monthly Phone -->
+          <div class="form-row">
+            <label for="monthly-phone">Monthly Phone 📱</label>
+            <input type="number" id="monthly-phone" name="monthly-phone"
+                   placeholder="Monthly Phone 📱"
+                   data-tooltip="Enter numeric value"
+                   data-field-type="numeric">
+          </div>
+        </fieldset>
 
-
-  <!-- Submit -->
-  <div class="form-row">
-    <button type="submit">Submit ✅</button>
-  </div>
-</form>
+        <!-- Submit -->
+        <div class="form-row">
+          <button type="submit">Submit ✅</button>
+        </div>
+      </form>
 
   <div id="toast" class="toast"></div>
 
-        <!-- Toast -->
-        <div id="toast" class="toast"></div>
-
-        <!-- Submit Button -->
-        <button type="submit" class="submit-btn">Submit Expense</button>
-      </form>
-    </div>
-
-    <!-- 📊 Expense Report -->
+  <!-- 📊 Expense Report -->
     <section id="expenseReport" class="report-section">
       <h2>View Your Expenses</h2>
       <table id="reportTable">
@@ -159,7 +184,6 @@
         </div>
       </div>
     </footer>   
->
 
   </main>
 </body>
