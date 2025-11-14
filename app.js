@@ -5,58 +5,74 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import {
-  doc,
-  getDoc,
-  collection,
-  addDoc
+  doc, getDoc, collection, addDoc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// 🧑‍💼 Login Form Logic
-const loginForm = document.getElementById('loginForm');
-if (loginForm) {
+// 🧩 Utility Functions
+function getEl(id) {
+  return document.getElementById(id);
+}
+
+function showError(id, message) {
+  const el = getEl(id);
+  if (el) el.textContent = message;
+}
+
+function toggleRequired(container, isRequired) {
+  container?.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
+    input.required = isRequired;
+  });
+}
+
+// 🧑‍💼 Login Handler
+function handleLogin() {
+  const loginForm = getEl('loginForm');
+  if (!loginForm) return;
+
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email = getEl('email')?.value;
+    const password = getEl('password')?.value;
+
+    if (!email || !password) {
+      showError('loginError', "Email and password are required.");
+      return;
+    }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const uid = userCredential.user.uid;
-      const userDoc = await getDoc(doc(db, "users", uid));
+      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.data();
+
       const role = userData?.role;
       const name = userData?.name || "User";
+      const emojiMap = { employee: "🧑‍💼", accountant: "📊", manager: "🧭" };
+      const redirectMap = {
+        employee: "employee.html",
+        accountant: "accountant.html",
+        manager: "manager.html"
+      };
 
-      let emoji = "👋";
-      let redirect = "login.html";
-
-      if (role === "employee") {
-        emoji = "🧑‍💼";
-        redirect = "employee.html";
-      } else if (role === "accountant") {
-        emoji = "📊";
-        redirect = "accountant.html";
-      } else if (role === "manager") {
-        emoji = "🧭";
-        redirect = "manager.html";
-      } else {
-        document.getElementById('loginError').textContent = "Role not assigned. Contact admin.";
+      if (!role || !redirectMap[role]) {
+        showError('loginError', "Role not assigned. Contact admin.");
         return;
       }
 
-      localStorage.setItem("welcomeMessage", `${emoji} Welcome ${name}, ISTOS ${role}.`);
-      window.location.href = redirect;
+      localStorage.setItem("welcomeMessage", `${emojiMap[role]} Welcome ${name}, ISTOS ${role}.`);
+      window.location.href = redirectMap[role];
 
     } catch (error) {
-      document.getElementById('loginError').textContent = error.message;
+      showError('loginError', error.message);
     }
   });
 }
 
-// 💸 Expense Submission Logic
-const expenseForm = document.getElementById('expenseForm');
-if (expenseForm) {
-  expenseForm.addEventListener('submit', async function (e) {
+// 💸 Expense Submission Handler
+function handleExpenseSubmission() {
+  const expenseForm = getEl('expenseForm');
+  if (!expenseForm) return;
+
+  expenseForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const user = auth.currentUser;
@@ -66,19 +82,26 @@ if (expenseForm) {
     }
 
     const activeTab = document.querySelector('.tab-content.active');
-    const expenseType = activeTab.id;
-    const amount = activeTab.querySelector('input[type="number"]').value;
-    const date = activeTab.querySelector('input[type="date"]').value;
-    const receiptInput = activeTab.querySelector('input[type="file"]');
-    const receiptFile = receiptInput?.files[0];
-    const receiptName = receiptFile ? receiptFile.name : null;
+    if (!activeTab) {
+      alert("No active expense tab found.");
+      return;
+    }
+
+    const amount = activeTab.querySelector('input[type="number"]')?.value;
+    const date = activeTab.querySelector('input[type="date"]')?.value;
+    const receiptFile = activeTab.querySelector('input[type="file"]')?.files[0];
+
+    if (!amount || !date) {
+      alert("Amount and date are required.");
+      return;
+    }
 
     const expenseData = {
       userId: user.uid,
-      type: expenseType,
+      type: activeTab.id,
       amount: parseFloat(amount),
       date,
-      receiptName,
+      receiptName: receiptFile?.name || null,
       status: 'pending',
       approvedByAccountant: false,
       approvedByManager: false,
@@ -96,42 +119,31 @@ if (expenseForm) {
   });
 }
 
-// 🧼 Utility: Toggle required attributes
-function toggleRequired(container, isRequired) {
-  container.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
-    input.required = isRequired;
+// 🗂️ Tab Switching Handler
+function setupTabs() {
+  const tabs = document.querySelectorAll('.tab-btn');
+  const contents = document.querySelectorAll('.tab-content');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => {
+        c.classList.remove('active');
+        toggleRequired(c, false);
+      });
+
+      tab.classList.add('active');
+      const activeContent = getEl(tab.dataset.tab);
+      activeContent?.classList.add('active');
+      toggleRequired(activeContent, true);
+    });
   });
+
+  // 🚀 Auto-activate first tab
+  if (tabs[0]) tabs[0].click();
 }
 
-// 🗂️ Tab Switching Logic
-const tabs = document.querySelectorAll('.tab-btn');
-const contents = document.querySelectorAll('.tab-content');
-
-tabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    // Deactivate all tabs and contents
-    tabs.forEach(t => t.classList.remove('active'));
-    contents.forEach(c => {
-      c.classList.remove('active');
-      toggleRequired(c, false); // 🔁 Remove required from hidden tabs
-    });
-
-    // Activate clicked tab and its content
-    tab.classList.add('active');
-    const activeContent = document.getElementById(tab.dataset.tab);
-    activeContent.classList.add('active');
-    toggleRequired(activeContent, true); // ✅ Add required to visible tab
-  });
-});
-
-// 🚀 Auto-activate first tab on page load
-document.addEventListener("DOMContentLoaded", () => {
-  const firstTab = tabs[0];
-  if (firstTab) firstTab.click();
-});
-
-
-// 🔐 Optional: Logout Logic
+// 🔐 Logout Handler
 window.logoutUser = async function () {
   try {
     await signOut(auth);
@@ -141,3 +153,10 @@ window.logoutUser = async function () {
     console.error("Logout failed:", error);
   }
 };
+
+// 🚦 Init
+document.addEventListener("DOMContentLoaded", () => {
+  handleLogin();
+  handleExpenseSubmission();
+  setupTabs();
+});
