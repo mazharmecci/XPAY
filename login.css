@@ -132,3 +132,8 @@ body.login-page {
     padding: 0.65rem;
   }
 }
+
+.toast-error {
+  background: #ef4444;
+  color: #fff;
+}
