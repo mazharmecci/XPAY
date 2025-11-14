@@ -5,19 +5,45 @@ import {
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 
 /* ---------------------------
-   🔑 Role-aware Logout Label
+   🔐 Auth Guard + Role Redirect
 ---------------------------- */
 onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
+  if (!user) {
+    alert("You must be logged in to access this page.");
+    window.location.href = "login.html";
+    return;
+  }
+
   try {
     const userDoc = await getDoc(doc(db, 'users', user.uid));
-    const role = userDoc.exists() ? userDoc.data().role : "User";
+    const role = userDoc.exists() ? userDoc.data().role : null;
+
+    if (role !== 'employee') {
+      alert("Access denied. Redirecting to your dashboard.");
+      const redirectMap = {
+        manager: "manager.html",
+        accountant: "accountant.html"
+      };
+      window.location.href = redirectMap[role] || "login.html";
+      return;
+    }
+
+    // ✅ Set logout label
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
       logoutBtn.textContent = `🚪 Logout ${capitalize(role)}`;
     }
+
+    // ✅ Fetch and render expenses
+    const snapshot = await getDocs(
+      query(collection(db, 'expenses'), where('userId', '==', user.uid))
+    );
+    const expenses = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderExpenses(expenses);
+
   } catch (err) {
-    console.error("Error fetching user role:", err);
+    console.error("Auth or role error:", err);
+    showToast("Authentication failed", "error");
   }
 });
 
@@ -36,15 +62,11 @@ function showToast(message, type = "info") {
   setTimeout(() => toast.classList.remove("visible"), 3000);
 }
 
-/* ---------------------------
-   🧾 Expense Type Icons
-   (aligned with employee.html tabs)
----------------------------- */
 function getTypeIcon(type = "") {
   const icons = {
     food: '🍽️',
     fuel: '⛽',
-    boarding: '🏨',        // hotel → boarding
+    boarding: '🏨',
     travel: '✈️',
     cash: '💵',
     localconveyance: '🚌',
@@ -55,18 +77,12 @@ function getTypeIcon(type = "") {
   return icons[type.toLowerCase()] || '🧾';
 }
 
-/* ---------------------------
-   🏷️ Status Badge Generator
----------------------------- */
 function getStatusBadge(exp = {}) {
   if (exp.approvedByManager) return `<span class="badge badge-final">✅ Final Approval</span>`;
   if (exp.approvedByAccountant) return `<span class="badge badge-accountant">🧾 Approved by Accountant</span>`;
   return `<span class="badge badge-pending">⏳ Pending</span>`;
 }
 
-/* ---------------------------
-   📅 Date Formatter
----------------------------- */
 function formatDate(dateStr) {
   if (!dateStr) return "-";
   const date = new Date(dateStr);
@@ -105,28 +121,7 @@ function renderExpenses(expenses = []) {
 }
 
 /* ---------------------------
-   🚀 On Load: Fetch Expenses
----------------------------- */
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-  try {
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    const userData = userDoc.exists() ? userDoc.data() : {};
-    if (userData.role !== 'employee') return;
-
-    const snapshot = await getDocs(
-      query(collection(db, 'expenses'), where('userId', '==', user.uid))
-    );
-    const expenses = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderExpenses(expenses);
-  } catch (err) {
-    console.error("Error fetching expenses:", err);
-    showToast("Failed to load expenses", "error");
-  }
-});
-
-/* ---------------------------
-   📝 Unified Expense Submission
+   📝 Expense Submission Handler
 ---------------------------- */
 document.getElementById("expenseForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -134,12 +129,17 @@ document.getElementById("expenseForm")?.addEventListener("submit", async (e) => 
   const workflowType = getVal("workflowType");
   if (!workflowType) return showToast("Please select a workflow type", "error");
 
-  const tabs = collectExpenseTabs();
+  const user = auth.currentUser;
+  if (!user) {
+    alert("You must be logged in to submit expenses.");
+    return;
+  }
 
+  const tabs = collectExpenseTabs();
   const expenseRecord = {
     workflowType,
     tabs,
-    userId: auth.currentUser?.uid,
+    userId: user.uid,
     date: new Date().toISOString(),
     status: "pending"
   };
@@ -165,7 +165,7 @@ function collectExpenseTabs() {
   const fields = [
     "fuelAmount", "fuelDate",
     "travelPlace", "travelAmount", "travelDate",
-    "boardingAmount", "boardingDate",   // hotel → boarding
+    "boardingAmount", "boardingDate",
     "foodAmount", "foodDate",
     "localConveyanceAmount", "localConveyanceDate",
     "miscAmount", "miscDate",
