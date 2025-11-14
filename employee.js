@@ -21,8 +21,10 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  document.querySelector('.logout-btn')!.textContent = `🚪 Logout ${role}`;
-});
+  const logoutBtn = document.querySelector('.logout-btn');
+  if (logoutBtn) {
+    logoutBtn.textContent = `🚪 Logout ${role}`;
+  }
 
 // 📝 Form Submission
 document.getElementById("expenseForm")?.addEventListener("submit", async (e) => {
