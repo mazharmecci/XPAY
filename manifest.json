@@ -1,0 +1,21 @@
+{
+  "name": "XPAY-Payment App",
+  "short_name": "XPAY",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2980b9",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "istos-logo.png",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "istos-logo.png",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
