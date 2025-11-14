@@ -5,14 +5,22 @@ import {
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 
 // 🚪 Logout function (MUST be on window for HTML onclick)
-window.logoutUser = function () {
+function logoutUser() {
   auth.signOut().then(() => {
     window.location.href = "login.html";
   }).catch((err) => {
     showToast("Logout failed", "error");
     console.error(err);
   });
-};
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const logoutBtn = document.querySelector('.logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logoutUser);
+  }
+});
+
 
 // 🔐 Auth Guard, role check and initial expense fetch
 onAuthStateChanged(auth, async (user) => {
