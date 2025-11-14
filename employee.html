@@ -21,143 +21,83 @@
       <!-- 🎉 Welcome Banner -->
       <div id="welcomeBanner" class="welcome-banner">Welcome back!</div>
 
-      <!-- 🧾 Expense Form -->
       <form id="expenseForm" class="employee-form">
-        <!-- Workflow Type -->
-        <div class="form-row">
-          <label for="workflowType">Workflow Type:</label>
-          <select id="workflowType" name="workflowType" required data-field-type="select">
-            <option value="" disabled selected>-- Choose --</option>
-            <option value="sales">Sales</option>
-            <option value="service">Service</option>
-          </select>
-        </div>
+  <!-- Workflow Type at top -->
+  <div class="form-row">
+    <select id="workflowType" name="workflowType" required data-field-type="select">
+      <option value="" disabled selected>-- Choose Workflow Type --</option>
+      <option value="sales">Sales</option>
+      <option value="service">Service</option>
+    </select>
+  </div>
 
-        <fieldset>
-          <legend>Group Fields</legend>
+  <fieldset>
+    <legend>Trip Info</legend>
+    <div class="form-row">
+      <label for="date">Date</label>
+      <input type="date" id="date" name="date" required data-field-type="date">
+    </div>
+    <div class="form-row">
+      <label for="place">Place Visited 🏙️</label>
+      <input type="text" id="place" name="place" placeholder="Place 🏙️" data-field-type="text">
+    </div>
+  </fieldset>
 
-          <!-- Place Visited -->
-          <div class="form-row">
-            <label for="place">Place Visited 🏙️</label>
-            <input type="text" id="place" name="place"
-                   placeholder="Place 🏙️"
-                   data-tooltip="Enter text value"
-                   data-field-type="text">
-          </div>
+  <fieldset>
+    <legend>Travel Costs</legend>
+    <div class="form-row"><input type="number" name="fuel" placeholder="Fuel ⛽" data-field-type="numeric"></div>
+    <div class="form-row"><input type="number" name="fare" placeholder="Fare 💰" data-field-type="numeric"></div>
+    <div class="form-row"><input type="number" name="boarding" placeholder="Boarding 🛏️" data-field-type="numeric"></div>
+    <div class="form-row"><input type="number" name="food" placeholder="Food 🍽️" data-field-type="numeric"></div>
+    <div class="form-row"><input type="number" name="local" placeholder="Local Conveyance 🚖" data-field-type="numeric"></div>
+    <div class="form-row"><input type="number" name="misc" placeholder="Misc 📦" data-field-type="numeric"></div>
+  </fieldset>
 
-          <!-- Fuel -->
-          <div class="form-row">
-            <label for="fuel">Fuel ⛽</label>
-            <input type="number" id="fuel" name="fuel"
-                   placeholder="Fuel ⛽"
-                   data-tooltip="Enter numeric value"
-                   data-field-type="numeric">
-          </div>
+  <fieldset>
+    <legend>Monthly Claims</legend>
+    <div class="form-row"><input type="number" name="advance" placeholder="Advance Cash 💵" data-field-type="numeric"></div>
+    <div class="form-row"><input type="number" name="monthly-conveyance" placeholder="Monthly Conveyance 🚌" data-field-type="numeric"></div>
+    <div class="form-row"><input type="number" name="monthly-phone" placeholder="Monthly Phone 📱" data-field-type="numeric"></div>
+  </fieldset>
 
-          <!-- Fare -->
-          <div class="form-row">
-            <label for="fare">Fare 💰</label>
-            <input type="number" id="fare" name="fare"
-                   placeholder="Fare 💰"
-                   data-tooltip="Enter numeric value"
-                   data-field-type="numeric">
-          </div>
-
-          <!-- Boarding -->
-          <div class="form-row">
-            <label for="boarding">Boarding 🛏️</label>
-            <input type="number" id="boarding" name="boarding"
-                   placeholder="Boarding 🛏️"
-                   data-tooltip="Enter numeric value"
-                   data-field-type="numeric">
-          </div>
-
-          <!-- Food -->
-          <div class="form-row">
-            <label for="food">Food 🍽️</label>
-            <input type="number" id="food" name="food"
-                   placeholder="Food 🍽️"
-                   data-tooltip="Enter numeric value"
-                   data-field-type="numeric">
-          </div>
-
-          <!-- Local Conveyance -->
-          <div class="form-row">
-            <label for="local">Local Conveyance 🚖</label>
-            <input type="number" id="local" name="local"
-                   placeholder="Local Conveyance 🚖"
-                   data-tooltip="Enter numeric value"
-                   data-field-type="numeric">
-          </div>
-
-          <!-- Misc -->
-          <div class="form-row">
-            <label for="misc">Misc 📦</label>
-            <input type="number" id="misc" name="misc"
-                   placeholder="Misc 📦"
-                   data-tooltip="Enter numeric value"
-                   data-field-type="numeric">
-          </div>
-
-          <!-- Advance Cash -->
-          <div class="form-row">
-            <label for="advance">Advance Cash 💵</label>
-            <input type="number" id="advance" name="advance"
-                   placeholder="Advance Cash 💵"
-                   data-tooltip="Enter numeric value"
-                   data-field-type="numeric">
-          </div>
-
-          <!-- Monthly Conveyance -->
-          <div class="form-row">
-            <label for="monthly-conveyance">Monthly Conveyance 🚌</label>
-            <input type="number" id="monthly-conveyance" name="monthly-conveyance"
-                   placeholder="Monthly Conveyance 🚌"
-                   data-tooltip="Enter numeric value"
-                   data-field-type="numeric">
-          </div>
-
-          <!-- Monthly Phone -->
-          <div class="form-row">
-            <label for="monthly-phone">Monthly Phone 📱</label>
-            <input type="number" id="monthly-phone" name="monthly-phone"
-                   placeholder="Monthly Phone 📱"
-                   data-tooltip="Enter numeric value"
-                   data-field-type="numeric">
-          </div>
-        </fieldset>
-
-        <!-- Submit -->
-        <div class="form-row">
-          <button type="submit">Submit ✅</button>
-        </div>
-      </form>
+  <!-- Submit at bottom -->
+  <div class="form-row">
+    <button type="submit">Submit ✅</button>
+  </div>
+</form>
 
   <div id="toast" class="toast"></div>
 
   <!-- 📊 Expense Report -->
     <section id="expenseReport" class="report-section">
       <h2>View Your Expenses</h2>
-      <table id="reportTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Workflow</th>
-            <th>Place Visited</th>
-            <th>Fuel</th>
-            <th>Fare</th>
-            <th>Boarding</th>
-            <th>Food</th>
-            <th>Local Conveyance</th>
-            <th>Misc</th>
-            <th>Advance Cash</th>
-            <th>Monthly Conveyance</th>
-            <th>Monthly Phone</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+          <table id="reportTable">
+      <thead>
+        <tr>
+          <!-- Trip Info -->
+          <th>Date</th>
+          <th>Workflow</th>
+          <th>Place Visited</th>
+    
+          <!-- Travel Costs -->
+          <th>Fuel</th>
+          <th>Fare</th>
+          <th>Boarding</th>
+          <th>Food</th>
+          <th>Local Conveyance</th>
+          <th>Misc</th>
+    
+          <!-- Monthly Claims -->
+          <th>Advance Cash</th>
+          <th>Monthly Conveyance</th>
+          <th>Monthly Phone</th>
+    
+          <!-- Status -->
+          <th>Status</th>
+        </tr>
+     </thead>
+      <tbody></tbody>
+    </table>
     </section>
 
     <!-- 🚪 Logout Button -->
