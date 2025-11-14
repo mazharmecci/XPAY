@@ -20,95 +20,54 @@
       <div id="welcomeBanner" class="welcome-banner">Welcome back!</div>
 
       <!-- 🧾 Expense Form -->
-      <form id="expenseForm" novalidate>
-        <!-- Workflow Selector -->
-        <div class="workflow-selector">
-          <label for="workflowType"><strong>Select Workflow:</strong></label>
-          <select id="workflowType" name="workflowType" required>
-            <option value="" disabled selected>-- Choose --</option>
-            <option value="sales">Sales</option>
-            <option value="service">Service</option>
-          </select>
-        </div>
+      <form id="expenseForm">
+  <label for="workflowType">Workflow Type:</label>
+  <select name="workflowType" required>
+    <option value="" disabled selected>-- Choose --</option>
+    <option value="sales">Sales</option>
+    <option value="service">Service</option>
+  </select>
 
-        <!-- Tabs -->
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="fuel">Fuel</button>
-          <button class="tab-btn" data-tab="travel">Travel</button>
-          <button class="tab-btn" data-tab="hotel">Boarding</button>
-          <button class="tab-btn" data-tab="food">Food</button>
-          <button class="tab-btn" data-tab="localconveyance">Local Conveyance</button>
-          <button class="tab-btn" data-tab="misc">Misc</button>
-          <button class="tab-btn" data-tab="cash">Advance Cash</button>
-          <button class="tab-btn" data-tab="monthlyconveyance">Monthly Conveyance</button>
-          <button class="tab-btn" data-tab="phone">Hand Phone</button>
-        </div>
+  <fieldset>
+    <legend>Group Fields</legend>
 
-        <!-- Tabs with Inputs -->
-        <div class="tab-content" data-tab="fuel">
-          <label>Fuel Amount:</label>
-          <input type="number" name="fuelAmount" />
-          <label>Date:</label>
-          <input type="date" name="fuelDate" />
-        </div>
+    <label>Place Visited:</label>
+    <input type="text" name="placeVisited" />
 
-        <div class="tab-content" data-tab="travel">
-          <label>Travel Place:</label>
-          <input type="text" name="travelPlace" />
-          <label>Travel Amount:</label>
-          <input type="number" name="travelAmount" />
-          <label>Date:</label>
-          <input type="date" name="travelDate" />
-        </div>
+    <label>Fuel:</label>
+    <input type="number" name="fuel" />
 
-        <div class="tab-content" data-tab="boarding">
-          <label>Boarding Amount:</label>
-          <input type="number" name="boardingAmount" />
-          <label>Date:</label>
-          <input type="date" name="boardingDate" />
-        </div>
+    <label>Fare:</label>
+    <input type="number" name="fare" />
 
-        <div class="tab-content" data-tab="food">
-          <label>Food Amount:</label>
-          <input type="number" name="foodAmount" />
-          <label>Date:</label>
-          <input type="date" name="foodDate" />
-        </div>
+    <label>Boarding:</label>
+    <input type="number" name="boarding" />
 
-        <div class="tab-content" data-tab="localconveyance">
-          <label>Local Conveyance Amount:</label>
-          <input type="number" name="localConveyanceAmount" />
-          <label>Date:</label>
-          <input type="date" name="localConveyanceDate" />
-        </div>
+    <label>Food:</label>
+    <input type="number" name="food" />
 
-        <div class="tab-content" data-tab="misc">
-          <label>Misc Amount:</label>
-          <input type="number" name="miscAmount" />
-          <label>Date:</label>
-          <input type="date" name="miscDate" />
-        </div>
+    <label>Local Conveyance:</label>
+    <input type="number" name="localConveyance" />
 
-        <div class="tab-content" data-tab="cash">
-          <label>Cash Amount:</label>
-          <input type="number" name="cashAmount" />
-          <label>Date:</label>
-          <input type="date" name="cashDate" />
-        </div>
+    <label>Misc:</label>
+    <input type="number" name="misc" />
 
-        <div class="tab-content" data-tab="monthlyconveyance">
-          <label>Monthly Conveyance Amount:</label>
-          <input type="number" name="monthlyConveyanceAmount" />
-          <label>Date:</label>
-          <input type="date" name="monthlyConveyanceDate" />
-        </div>
+    <label>Advance Cash:</label>
+    <input type="number" name="advanceCash" />
 
-        <div class="tab-content" data-tab="phone">
-          <label>Phone Amount:</label>
-          <input type="number" name="phoneAmount" />
-          <label>Date:</label>
-          <input type="date" name="phoneDate" />
-        </div>
+    <label>Monthly Conveyance:</label>
+    <input type="number" name="monthlyConveyance" />
+
+    <label>Monthly Phone:</label>
+    <input type="number" name="monthlyPhone" />
+  </fieldset>
+
+  <label>Date:</label>
+  <input type="date" name="date" required />
+
+  <button type="submit">Submit Expense</button>
+  <div id="toast" class="toast"></div>
+</form>
 
         <!-- Toast -->
         <div id="toast" class="toast"></div>
@@ -143,60 +102,6 @@
     <script type="module" src="firebase.js"></script>
     <script type="module" src="employee.js"></script>
 
-    <!-- 📢 Welcome Message Script -->
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const message = localStorage.getItem("welcomeMessage");
-        if (message) {
-          document.getElementById("welcomeBanner").textContent = message;
-        }
-      });
-    </script>
-
-    <!-- 🔐 Firebase Logout Logic -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-      import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-
-      const firebaseConfig = {
-        apiKey: "AIzaSyC-heT_dKo-O6523VVNPKW_Q-D6qxW8_HY",
-        authDomain: "xpay-b0298.firebaseapp.com",
-        projectId: "xpay-b0298",
-        storageBucket: "xpay-b0298.firebasestorage.app",
-        messagingSenderId: "518708112275",
-        appId: "1:518708112275:web:0ea8d94b4c3734d1895666"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-
-      window.logoutUser = async function () {
-        try {
-          await signOut(auth);
-          localStorage.removeItem("welcomeMessage");
-          window.location.href = "login.html";
-        } catch (error) {
-          console.error("Logout failed:", error);
-        }
-      };
-    </script>
-
-    <!-- 📊 Expense Report -->
-    <section id="expenseReport" class="report-section">
-      <h2>View Your Expenses</h2>
-      <table id="reportTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
     <!-- 🧾 Footer -->
     <footer class="site-footer">
       <div class="footer-content">
@@ -212,15 +117,7 @@
         </div>
       </div>
     </footer>   
-
-    <!-- 🚪 Logout Button -->
-    <div class="logout-container">
-      <button onclick="logoutUser()" class="logout-btn inside-form">🚪 Logout</button>
-    </div>
-
-    <!-- 📦 Scripts -->
-    <script type="module" src="app.js"></script>
-    <script type="module" src="dashboard.js"></script>
+>
 
   </main>
 </body>
