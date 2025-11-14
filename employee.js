@@ -1,3 +1,4 @@
+// employee.js
 import { auth, db } from './firebase.js';
 import {
   doc, getDoc, collection, query, where, getDocs, addDoc
@@ -66,7 +67,7 @@ function getTypeIcon(type = "") {
   const icons = {
     food: '🍽️',
     fuel: '⛽',
-    boarding: '🏨',
+    boarding: '🏨',        // hotel → boarding
     travel: '✈️',
     cash: '💵',
     localconveyance: '🚌',
@@ -165,7 +166,7 @@ function collectExpenseTabs() {
   const fields = [
     "fuelAmount", "fuelDate",
     "travelPlace", "travelAmount", "travelDate",
-    "boardingAmount", "boardingDate",
+    "boardingAmount", "boardingDate",   // hotel → boarding
     "foodAmount", "foodDate",
     "localConveyanceAmount", "localConveyanceDate",
     "miscAmount", "miscDate",
