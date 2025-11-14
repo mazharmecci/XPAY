@@ -25,8 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // 🔐 Auth Guard, role check and initial expense fetch
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    // If the user was just logged out, redirect silently without alert
-    window.location.href = "login.html";
+    showToast("You must be logged in.", "error");
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 1500); // Wait 1.5 seconds before redirect so toast is visible
     return;
   }
 
