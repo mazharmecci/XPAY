@@ -80,3 +80,30 @@ function showToast(message, type = "info") {
   setTimeout(() => toast.classList.remove("visible"), 3000);
 }
 
+function renderExpenses(expenses = []) {
+  const tbody = document.querySelector('#reportTable tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  expenses.forEach(exp => {
+    const f = exp.fields || {};
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${formatDate(exp.date)}</td>
+      <td>${exp.workflowType || '-'}</td>
+      <td>${f.placeVisited || '-'}</td>
+      <td>₹${f.fuel || 0}</td>
+      <td>₹${f.fare || 0}</td>
+      <td>₹${f.boarding || 0}</td>
+      <td>₹${f.food || 0}</td>
+      <td>₹${f.localConveyance || 0}</td>
+      <td>₹${f.misc || 0}</td>
+      <td>₹${f.advanceCash || 0}</td>
+      <td>₹${f.monthlyConveyance || 0}</td>
+      <td>₹${f.monthlyPhone || 0}</td>
+      <td>${exp.status || 'pending'}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
