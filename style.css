@@ -71,3 +71,141 @@ input[data-tooltip]:hover::after {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Page background */
+.employee-page {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f3f4f6;
+  margin: 0;
+  padding: 0;
+  color: #111827;
+}
+
+/* Wrapper */
+.form-wrapper {
+  max-width: 900px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+/* Header */
+.form-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.centered-logo .form-logo {
+  height: 60px;
+}
+.tagline {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* Banner */
+.welcome-banner {
+  background: #3b82f6;
+  color: #fff;
+  padding: 0.8rem;
+  border-radius: 6px;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Form grid */
+.employee-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.form-row {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Inputs */
+input, select, button {
+  padding: 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+input:focus, select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 6px rgba(59,130,246,0.4);
+  outline: none;
+}
+
+/* Submit + Logout buttons */
+button {
+  background: #3b82f6;
+  color: #fff;
+  cursor: pointer;
+}
+button:hover {
+  background: #2563eb;
+}
+.logout-container {
+  text-align: center;
+  margin-top: 2rem;
+}
+.logout-btn {
+  background: #ef4444;
+}
+.logout-btn:hover {
+  background: #dc2626;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: #111827;
+  color: #fff;
+  padding: 0.8rem 1.2rem;
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Report section */
+.report-section {
+  margin-top: 2rem;
+}
+.report-section table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.report-section th, .report-section td {
+  border: 1px solid #d1d5db;
+  padding: 0.6rem;
+  text-align: center;
+}
+.report-section th {
+  background: #f9fafb;
+}
+
+/* Footer */
+.site-footer {
+  background: #111827;
+  color: #fff;
+  padding: 1.5rem;
+  margin-top: 3rem;
+}
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.footer-logo {
+  height: 40px;
+  margin-bottom: 0.5rem;
+}
+.footer-legal {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
