@@ -3,209 +3,236 @@
   --biscuit-mid: #ddad75;
   --biscuit-dark: #a67845;
   --text-dark: #4b3b2a;
+  --accent-blue: #3b82f6;
+  --accent-red: #ef4444;
 }
 
-/* 🌰 Biscuit background for full page */
+/* Biscuit background for full page */
 body.employee-page {
-  background-color: #d2b48c; /* dark biscuit tone */
+  background-color: var(--biscuit-light);
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
+  color: var(--text-dark);
 }
 
-/* 🧾 Form container stays white */
-
-/* General form styling */
-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  padding: 1.5rem;
-  background: #f9fafb;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  animation: fadeIn 0.6s ease-in-out;
-}
-
-/* Input fields */
-input, select {
-  padding: 0.6rem 0.8rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  width: 100%;
-}
-
-/* Hover + focus for snappy feel */
-input:focus, select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 6px rgba(59,130,246,0.4);
-  outline: none;
-  transform: scale(1.02);
-}
-
-/* Tooltip inside fields */
-input[data-tooltip]:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  background: #111827;
-  color: #fff;
-  font-size: 0.75rem;
-  padding: 4px 8px;
-  border-radius: 4px;
-  top: -30px;
-  left: 0;
-  white-space: nowrap;
-  opacity: 0.9;
-}
-
-/* Compact layout for top alignment */
-.form-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Smooth fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Page background */
-.employee-page {
-  font-family: 'Segoe UI', sans-serif;
-  background: #f3f4f6;
-  margin: 0;
-  padding: 0;
-  color: #111827;
-}
-
-/* Wrapper */
+/* White panel card with biscuit shadow */
 .form-wrapper {
-  max-width: 900px;
-  margin: 2rem auto;
+  max-width: 950px;
+  margin: 2.5rem auto;
   background: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  padding: 2.5rem;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(166,120,69,0.18);
+  border: 1px solid var(--biscuit-mid);
 }
 
-/* Header */
+/* Header logo and tagline */
+.centered-logo .form-logo {
+  height: 58px;
+}
 .form-header {
   text-align: center;
   margin-bottom: 1rem;
 }
-.centered-logo .form-logo {
-  height: 60px;
-}
 .tagline {
-  font-size: 0.9rem;
-  color: #6b7280;
+  font-size: 1rem;
+  color: var(--biscuit-dark);
+  font-weight: 500;
+  margin-bottom: 1rem;
 }
 
-/* Banner */
+/* Welcome banner */
 .welcome-banner {
-  background: #3b82f6;
+  background: var(--accent-blue);
   color: #fff;
-  padding: 0.8rem;
-  border-radius: 6px;
+  padding: 1rem;
+  border-radius: 9px;
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  font-size: 1.07rem;
+  letter-spacing: 0.5px;
 }
 
-/* Form grid */
+/* Main grid for form sections */
 .employee-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-}
-.form-row {
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: 2fr 2fr 1.5fr;
+  gap: 1.5rem;
+  align-items: start;
 }
 
-/* Inputs */
+@media (max-width: 860px) {
+  .employee-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-section-box {
+  background: var(--biscuit-light);
+  border-radius: 10px;
+  padding: 1rem 1.3rem;
+  box-shadow: 0 2px 8px rgba(221,173,117,0.08);
+  border: 1px solid var(--biscuit-mid);
+  margin-bottom: 0.8rem;
+}
+
+.form-section-title {
+  color: var(--biscuit-dark);
+  font-size: 1.04rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.03em;
+}
+
+/* Inputs and dropdowns */
 input, select, button {
-  padding: 0.6rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--biscuit-mid);
+  border-radius: 7px;
+  font-size: 1.01rem;
+  margin-bottom: 0.7rem;
+  transition: border 0.2s, box-shadow 0.2s;
+  color: var(--text-dark);
+  background: #fff;
 }
 input:focus, select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 6px rgba(59,130,246,0.4);
+  border-color: var(--biscuit-dark);
+  box-shadow: 0 0 7px var(--biscuit-mid);
   outline: none;
 }
 
-/* Submit + Logout buttons */
+/* Submit and action buttons */
 button {
-  background: #3b82f6;
+  background: var(--accent-blue);
   color: #fff;
+  font-weight: 500;
+  border-radius: 7px;
+  border: none;
   cursor: pointer;
+  padding: 0.7rem 1.2rem;
+  transition: background 0.18s;
+  font-size: 1rem;
+  margin-top: 0.4rem;
 }
 button:hover {
   background: #2563eb;
 }
-.logout-container {
-  text-align: center;
-  margin-top: 2rem;
-}
+
 .logout-btn {
-  background: #ef4444;
+  background: var(--accent-red);
+  color: #fff;
 }
 .logout-btn:hover {
   background: #dc2626;
 }
 
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  background: #111827;
-  color: #fff;
-  padding: 0.8rem 1.2rem;
-  border-radius: 6px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-/* Report section */
+/* Table styling for expenses report */
 .report-section {
-  margin-top: 2rem;
+  margin-top: 2.5rem;
 }
 .report-section table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.97rem;
+  box-shadow: 0 3px 11px rgba(221,173,117,0.13);
 }
 .report-section th, .report-section td {
-  border: 1px solid #d1d5db;
-  padding: 0.6rem;
+  border: 1px solid var(--biscuit-mid);
+  padding: 0.7rem 0.1rem;
   text-align: center;
 }
 .report-section th {
-  background: #f9fafb;
+  background: var(--biscuit-mid);
+  color: var(--text-dark);
+  font-weight: 600;
+}
+.report-section tr:nth-child(even) td {
+  background: #f5e3c0;
+}
+.report-section tr:nth-child(odd) td {
+  background: #fff;
 }
 
-/* Footer */
-.site-footer {
-  background: #111827;
+/* Claims and travel costs boxes */
+.monthly-claims, .travel-costs, .trip-info {
+  background: var(--biscuit-light);
+  border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(221,173,117,0.125);
+  border: 1px solid var(--biscuit-mid);
+  padding: 1.1rem 1.2rem;
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+  .form-wrapper {
+    padding: 1rem;
+  }
+  .report-section table, .report-section th, .report-section td {
+    font-size: 0.85rem;
+    padding: 0.4rem;
+  }
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 1.3rem;
+  right: 1.3rem;
+  background: var(--text-dark);
   color: #fff;
-  padding: 1.5rem;
+  padding: 1rem 2rem;
+  border-radius: 7px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 4px 12px rgba(166,120,69,0.12);
+  font-size: 1.05rem;
+  z-index: 999;
+}
+
+/* Footer styling */
+.site-footer {
+  background: var(--text-dark);
+  color: #fff;
+  padding: 1.7rem;
   margin-top: 3rem;
+  border-top: 6px solid var(--biscuit-mid);
 }
 .footer-content {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
+  align-items: center;
 }
 .footer-logo {
   height: 40px;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.7rem;
 }
 .footer-legal {
-  font-size: 0.8rem;
-  color: #9ca3af;
+  font-size: 0.87rem;
+  color: #ddb783;
+  margin-top: 0.5rem;
+}
+
+/* Animation for smooth fade in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+form, .form-wrapper, .employee-form, .toast, .report-section {
+  animation: fadeIn 0.7s cubic-bezier(0.5,0.8,0.3,1) 1;
+}
+
+/* Optional: For placeholder icons/emojis in fields */
+input::placeholder, select::placeholder {
+  color: var(--biscuit-dark);
+  opacity: 0.88;
+}
+
+/* Checkbox styling for the submit/approval tick */
+input[type="checkbox"] {
+  accent-color: var(--biscuit-dark);
+  width: 1.25em;
+  height: 1.25em;
+  margin-right: 0.5em;
+  vertical-align: middle;
 }
