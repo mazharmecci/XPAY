@@ -1,6 +1,6 @@
 import { auth, db } from './firebase.js';
 import {
-  doc, getDoc, collection, query, where, getDocs
+  doc, getDoc, collection, query, where, getDocs, addDoc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 
@@ -55,24 +55,31 @@ function renderExpenses(expenses) {
   const tbody = document.querySelector('#reportTable tbody');
   tbody.innerHTML = '';
 
-  console.log("🔍 Employee expenses:", expenses.length);
-
   expenses.forEach((exp, index) => {
-    console.log(`📄 Expense #${index + 1}`, exp);
-
     const badge = getStatusBadge(exp);
-    const icon = getTypeIcon(exp.type);
+    const workflow = exp.workflowType || 'Unknown';
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${formatDate(exp.date)}</td>
-      <td>${icon} ${exp.type}</td>
-      <td>₹${exp.amount}</td>
-      <td>${badge}</td>
+      <td colspan="4"><strong>${workflow.toUpperCase()} Workflow</strong></td>
     `;
     tbody.appendChild(row);
-  });
 
-  console.log("✅ Employee expense table rendered.");
+    const tabs = exp.tabs || {};
+    Object.entries(tabs).forEach(([type, data]) => {
+      if (!data?.amount) return;
+      const icon = getTypeIcon(type);
+      const date = formatDate(data.date);
+      const amount = data.amount;
+      const subRow = document.createElement('tr');
+      subRow.innerHTML = `
+        <td>${date}</td>
+        <td>${icon} ${type}</td>
+        <td>₹${amount}</td>
+        <td>${badge}</td>
+      `;
+      tbody.appendChild(subRow);
+    });
+  });
 }
 
 // 🚀 On Load: Fetch Employee Expenses
@@ -89,3 +96,74 @@ onAuthStateChanged(auth, async (user) => {
   const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   renderExpenses(expenses);
 });
+
+// 📝 Unified Expense Submission
+document.getElementById("expenseForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const workflowType = document.getElementById("workflowType").value;
+  if (!workflowType) return showToast("Please select a workflow type", "error");
+
+  const tabs = {
+    fuel: {
+      amount: getVal("fuelAmount"),
+      date: getVal("fuelDate")
+    },
+    travel: {
+      place: getVal("travelPlace"),
+      amount: getVal("travelAmount"),
+      date: getVal("travelDate")
+    },
+    hotel: {
+      amount: getVal("hotelAmount"),
+      date: getVal("hotelDate")
+    },
+    food: {
+      amount: getVal("foodAmount"),
+      date: getVal("foodDate")
+    },
+    localconveyance: {
+      amount: getVal("localConveyanceAmount"),
+      date: getVal("localConveyanceDate")
+    },
+    misc: {
+      amount: getVal("miscAmount"),
+      date: getVal("miscDate")
+    },
+    cash: {
+      amount: getVal("cashAmount"),
+      date: getVal("cashDate")
+    },
+    monthlyconveyance: {
+      amount: getVal("monthlyConveyanceAmount"),
+      date: getVal("monthlyConveyanceDate")
+    },
+    phone: {
+      amount: getVal("phoneAmount"),
+      date: getVal("phoneDate")
+    }
+  };
+
+  const expenseRecord = {
+    workflowType,
+    tabs,
+    userId: auth.currentUser.uid,
+    date: new Date().toISOString(),
+    status: "pending"
+  };
+
+  try {
+    await addDoc(collection(db, "expenses"), expenseRecord);
+    showToast("Expense submitted successfully!");
+    document.getElementById("expenseForm").reset();
+  } catch (error) {
+    console.error("Submission error:", error);
+    showToast("Failed to submit expense", "error");
+  }
+});
+
+// 🔧 Helper to get input values
+function getVal(name) {
+  const el = document.querySelector(`[name="${name}"]`);
+  return el?.value?.trim() || null;
+}
