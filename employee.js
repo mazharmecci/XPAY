@@ -4,7 +4,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 
-// ✅ Role-aware logout label
+/* ---------------------------
+   🔑 Role-aware Logout Label
+---------------------------- */
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
   try {
@@ -19,28 +21,30 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// 🔧 Utility: Capitalize string
+/* ---------------------------
+   🛠️ Utilities
+---------------------------- */
 function capitalize(str = "") {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// ✅ Toast Alert
 function showToast(message, type = "info") {
   const toast = document.getElementById("toast");
   if (!toast) return console.warn("Toast element not found.");
-
   toast.textContent = message;
   toast.className = `toast toast-${type} visible`;
-
   setTimeout(() => toast.classList.remove("visible"), 3000);
 }
 
-// 🧾 Expense Type Icon Generator (aligned with employee.html tabs)
+/* ---------------------------
+   🧾 Expense Type Icons
+   (aligned with employee.html tabs)
+---------------------------- */
 function getTypeIcon(type = "") {
   const icons = {
     food: '🍽️',
     fuel: '⛽',
-    boarding: '🏨',        // renamed from hotel
+    boarding: '🏨',        // hotel → boarding
     travel: '✈️',
     cash: '💵',
     localconveyance: '🚌',
@@ -51,15 +55,18 @@ function getTypeIcon(type = "") {
   return icons[type.toLowerCase()] || '🧾';
 }
 
-
-// 🏷️ Badge Generator
+/* ---------------------------
+   🏷️ Status Badge Generator
+---------------------------- */
 function getStatusBadge(exp = {}) {
   if (exp.approvedByManager) return `<span class="badge badge-final">✅ Final Approval</span>`;
   if (exp.approvedByAccountant) return `<span class="badge badge-accountant">🧾 Approved by Accountant</span>`;
   return `<span class="badge badge-pending">⏳ Pending</span>`;
 }
 
-// 📅 Date Formatter
+/* ---------------------------
+   📅 Date Formatter
+---------------------------- */
 function formatDate(dateStr) {
   if (!dateStr) return "-";
   const date = new Date(dateStr);
@@ -67,7 +74,9 @@ function formatDate(dateStr) {
   return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
 }
 
-// 📊 Render Employee Expenses
+/* ---------------------------
+   📊 Render Employee Expenses
+---------------------------- */
 function renderExpenses(expenses = []) {
   const tbody = document.querySelector('#reportTable tbody');
   if (!tbody) return;
@@ -95,7 +104,9 @@ function renderExpenses(expenses = []) {
   });
 }
 
-// 🚀 On Load: Fetch Employee Expenses
+/* ---------------------------
+   🚀 On Load: Fetch Expenses
+---------------------------- */
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
   try {
@@ -114,7 +125,9 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// 📝 Unified Expense Submission
+/* ---------------------------
+   📝 Unified Expense Submission
+---------------------------- */
 document.getElementById("expenseForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -141,17 +154,18 @@ document.getElementById("expenseForm")?.addEventListener("submit", async (e) => 
   }
 });
 
-// 🔧 Helper to get input values
+/* ---------------------------
+   🔧 Helpers
+---------------------------- */
 function getVal(name) {
   return document.querySelector(`[name="${name}"]`)?.value?.trim() || null;
 }
 
-// 🔧 Collect expense tabs dynamically
 function collectExpenseTabs() {
   const fields = [
     "fuelAmount", "fuelDate",
     "travelPlace", "travelAmount", "travelDate",
-    "hotelAmount", "hotelDate",
+    "boardingAmount", "boardingDate",   // hotel → boarding
     "foodAmount", "foodDate",
     "localConveyanceAmount", "localConveyanceDate",
     "miscAmount", "miscDate",
