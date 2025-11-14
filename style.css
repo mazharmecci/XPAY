@@ -769,3 +769,31 @@ body.employee-page {
   background-color: #c0392b; /* 🔴 Darker red on hover */
 }
 
+/* Workflow Selector */
+.workflow-selector {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.workflow-selector label {
+  font-weight: 600;
+  margin-right: 10px;
+  color: #444;
+}
+
+.workflow-selector select {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fdfdfd;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.workflow-selector select:focus {
+  border-color: #ff914d; /* branded accent */
+  box-shadow: 0 0 6px rgba(255, 145, 77, 0.4);
+  outline: none;
+}
