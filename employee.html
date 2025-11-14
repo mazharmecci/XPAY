@@ -35,10 +35,11 @@
       <button class="tab-btn" data-tab="travel">Travel</button>
       <button class="tab-btn" data-tab="hotel">Boarding</button>
       <button class="tab-btn" data-tab="food">Food</button>
+      <button class="tab-btn" data-tab="conveyance">Local Conveyance</button>
       <button class="tab-btn" data-tab="misc">Misc</button>
       <button class="tab-btn" data-tab="cash">Advance Cash</button>
-      <button class="tab-btn" data-tab="conveyance">Local Conveyance</button>
-      <button class="tab-btn" data-tab="phone">Hand Phone</button>
+      <button class="tab-btn" data-tab="conveyance">Monthly Conveyance</button>
+      <button class="tab-btn" data-tab="phone">Hand Phone</button>      
     </div>
 
     <!-- Expense Form -->
@@ -101,6 +102,20 @@
         </div>
       </div>
 
+      <!-- Local Conveyance -->
+      <div class="tab-content" id="localconveyance">
+        <div class="expense-card">
+          <img src="images/move.png" alt="Conveyance" class="icon" />
+          <div class="form-fields">
+            <h3>Food Expense</h3>
+            <input type="number" name="conveyanceAmount" placeholder="Amount" required />
+            <input type="date" name="conveyanceDate" required />
+            <input type="file" name="conveyanceReceipt" accept="image/*,.pdf" />
+            <small class="optional-caption">* Upload receipt (optional)</small>
+          </div>
+        </div>
+      </div>
+      
       <!-- Misc -->
       <div class="tab-content" id="misc">
         <div class="expense-card">
@@ -129,13 +144,13 @@
         </div>
       </div>
 
-      <!-- Local Conveyance -->
-      <div class="tab-content" id="conveyance">
+      <!-- Monthly Conveyance -->
+      <div class="tab-content" id="monthlyconveyance">
         <div class="expense-card">
           <img src="images/move.png" alt="Conveyance" class="icon" />
           <div class="form-fields">
-            <h3>Local Conveyance Expense</h3>
-            <input type="number" name="conveyanceAmount" placeholder="Conveyance Amount" required />
+            <h3>Monthly Conveyance Expense</h3>
+            <input type="number" name="conveyanceAmount" placeholder="Monbthly Conveyance Amt" required />
             <input type="date" name="conveyanceDate" required />
             <input type="file" name="conveyanceReceipt" accept="image/*,.pdf" />
             <small class="optional-caption">* Upload receipt (optional)</small>
