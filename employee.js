@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 🔐 Auth Guard, role check and initial expense fetch
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    alert("You must be logged in.");
+    // If the user was just logged out, redirect silently without alert
     window.location.href = "login.html";
     return;
   }
