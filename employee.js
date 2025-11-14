@@ -13,12 +13,20 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // ✅ Toast Alert
-function showToast(message, type = 'success') {
-  const toast = document.getElementById('toast');
+function showToast(message, type = "info") {
+  const toast = document.getElementById("toast");
+  if (!toast) {
+    console.warn("Toast element not found.");
+    return;
+  }
+
   toast.textContent = message;
-  toast.className = `toast ${type}`;
-  toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 3000);
+  toast.className = `toast toast-${type}`; // e.g., toast-info, toast-error
+  toast.classList.add("visible");
+
+  setTimeout(() => {
+    toast.classList.remove("visible");
+  }, 3000);
 }
 
 // 🧾 Expense Type Icon Generator
