@@ -31,43 +31,76 @@
   <fieldset>
     <legend>Group Fields</legend>
 
-    <label>Place Visited:</label>
-    <input type="text" name="placeVisited" />
+    <form class="employee-form">
 
-    <label>Fuel:</label>
-    <input type="number" name="fuel" />
+  <!-- Place Visited -->
+  <div class="form-row">
+    <label for="place">Place Visited 🏙️</label>
+    <input type="text" id="place" name="place" placeholder="Place 🏙️" data-tooltip="Enter text value">
+  </div>
+      
+  <!-- Fuel -->
+  <div class="form-row">
+    <label for="fuel">Fuel ⛽</label>
+    <input type="number" id="fuel" name="fuel" placeholder="Fuel ⛽" data-tooltip="Enter numeric value">
+  </div>
 
-    <label>Fare:</label>
-    <input type="number" name="fare" />
+  <!-- Fare -->
+  <div class="form-row">
+    <label for="fare">Fare 💰</label>
+    <input type="number" id="fare" name="fare" placeholder="Fare 💰" data-tooltip="Enter numeric value">
+  </div>
 
-    <label>Boarding:</label>
-    <input type="number" name="boarding" />
+  <!-- Boarding -->
+  <div class="form-row">
+    <label for="boarding">Boarding 🛏️</label>
+    <input type="number" id="boarding" name="boarding" placeholder="Boarding 🛏️" data-tooltip="Enter numeric value">
+  </div>
 
-    <label>Food:</label>
-    <input type="number" name="food" />
+  <!-- Food -->
+  <div class="form-row">
+    <label for="food">Food 🍽️</label>
+    <input type="number" id="food" name="food" placeholder="Food 🍽️" data-tooltip="Enter numeric value">
+  </div>
 
-    <label>Local Conveyance:</label>
-    <input type="number" name="localConveyance" />
+  <!-- Local Conveyance -->
+  <div class="form-row">
+    <label for="local">Local Conveyance 🚖</label>
+    <input type="number" id="local" name="local" placeholder="Local Conveyance 🚖" data-tooltip="Enter numeric value">
+  </div>
 
-    <label>Misc:</label>
-    <input type="number" name="misc" />
+  <!-- Misc -->
+  <div class="form-row">
+    <label for="misc">Misc 📦</label>
+    <input type="number" id="misc" name="misc" placeholder="Misc 📦" data-tooltip="Enter numeric value">
+  </div>
 
-    <label>Advance Cash:</label>
-    <input type="number" name="advanceCash" />
+  <!-- Advance Cash -->
+  <div class="form-row">
+    <label for="advance">Advance Cash 💵</label>
+    <input type="number" id="advance" name="advance" placeholder="Advance Cash 💵" data-tooltip="Enter numeric value">
+  </div>
 
-    <label>Monthly Conveyance:</label>
-    <input type="number" name="monthlyConveyance" />
+  <!-- Monthly Conveyance -->
+  <div class="form-row">
+    <label for="monthly-conveyance">Monthly Conveyance 🚌</label>
+    <input type="number" id="monthly-conveyance" name="monthly-conveyance" placeholder="Monthly Conveyance 🚌" data-tooltip="Enter numeric value">
+  </div>
 
-    <label>Monthly Phone:</label>
-    <input type="number" name="monthlyPhone" />
-  </fieldset>
+  <!-- Monthly Phone -->
+  <div class="form-row">
+    <label for="monthly-phone">Monthly Phone 📱</label>
+    <input type="number" id="monthly-phone" name="monthly-phone" placeholder="Monthly Phone 📱" data-tooltip="Enter numeric value">
+  </div>
 
-  <label>Date:</label>
-  <input type="date" name="date" required />
 
-  <button type="submit">Submit Expense</button>
-  <div id="toast" class="toast"></div>
+  <!-- Submit -->
+  <div class="form-row">
+    <button type="submit">Submit ✅</button>
+  </div>
 </form>
+
+  <div id="toast" class="toast"></div>
 
         <!-- Toast -->
         <div id="toast" class="toast"></div>
