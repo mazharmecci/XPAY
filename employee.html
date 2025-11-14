@@ -9,14 +9,14 @@
 
 <body class="employee-page">
   <main>
-    <!-- 🌰 Form Wrapper for Biscuit Background -->
+    <!-- 🌰 Form Wrapper -->
     <div class="form-wrapper">
       <div class="form-header centered-logo">
         <img src="images/x.png" alt="XPAY Logo" class="form-logo" />
         <p class="tagline">ISTOS XPAY APP</p>
       </div>
 
-      <!-- 🎉 Welcome Banner inside frame -->
+      <!-- 🎉 Welcome Banner -->
       <div id="welcomeBanner" class="welcome-banner">Welcome back!</div>
 
       <!-- 🧾 Expense Form -->
@@ -31,27 +31,104 @@
           </select>
         </div>
 
-        <!-- Tabs -->
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="fuel">Fuel</button>
-          <button class="tab-btn" data-tab="travel">Travel</button>
-          <button class="tab-btn" data-tab="hotel">Boarding</button>
-          <button class="tab-btn" data-tab="food">Food</button>
-          <button class="tab-btn" data-tab="localconveyance">Local Conveyance</button>
-          <button class="tab-btn" data-tab="misc">Misc</button>
-          <button class="tab-btn" data-tab="cash">Advance Cash</button>
-          <button class="tab-btn" data-tab="monthlyconveyance">Monthly Conveyance</button>
-          <button class="tab-btn" data-tab="phone">Hand Phone</button>
+        <!-- Tabs with Inputs -->
+        <div class="tab-content" data-tab="fuel">
+          <label>Fuel Amount:</label>
+          <input type="number" name="fuelAmount" />
+          <label>Date:</label>
+          <input type="date" name="fuelDate" />
         </div>
 
-         <div id="toast" class="toast"></div>
+        <div class="tab-content" data-tab="travel">
+          <label>Travel Place:</label>
+          <input type="text" name="travelPlace" />
+          <label>Travel Amount:</label>
+          <input type="number" name="travelAmount" />
+          <label>Date:</label>
+          <input type="date" name="travelDate" />
+        </div>
 
-        <!-- Tab Contents (Fuel, Travel, etc.) -->
-        <!-- ✅ All tab-content blocks are already validated and clean in your version -->
-        <!-- ✅ Submit Button -->
+        <div class="tab-content" data-tab="boarding">
+          <label>Boarding Amount:</label>
+          <input type="number" name="boardingAmount" />
+          <label>Date:</label>
+          <input type="date" name="boardingDate" />
+        </div>
+
+        <div class="tab-content" data-tab="food">
+          <label>Food Amount:</label>
+          <input type="number" name="foodAmount" />
+          <label>Date:</label>
+          <input type="date" name="foodDate" />
+        </div>
+
+        <div class="tab-content" data-tab="localconveyance">
+          <label>Local Conveyance Amount:</label>
+          <input type="number" name="localConveyanceAmount" />
+          <label>Date:</label>
+          <input type="date" name="localConveyanceDate" />
+        </div>
+
+        <div class="tab-content" data-tab="misc">
+          <label>Misc Amount:</label>
+          <input type="number" name="miscAmount" />
+          <label>Date:</label>
+          <input type="date" name="miscDate" />
+        </div>
+
+        <div class="tab-content" data-tab="cash">
+          <label>Cash Amount:</label>
+          <input type="number" name="cashAmount" />
+          <label>Date:</label>
+          <input type="date" name="cashDate" />
+        </div>
+
+        <div class="tab-content" data-tab="monthlyconveyance">
+          <label>Monthly Conveyance Amount:</label>
+          <input type="number" name="monthlyConveyanceAmount" />
+          <label>Date:</label>
+          <input type="date" name="monthlyConveyanceDate" />
+        </div>
+
+        <div class="tab-content" data-tab="phone">
+          <label>Phone Amount:</label>
+          <input type="number" name="phoneAmount" />
+          <label>Date:</label>
+          <input type="date" name="phoneDate" />
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" class="toast"></div>
+
+        <!-- Submit Button -->
         <button type="submit" class="submit-btn">Submit Expense</button>
       </form>
     </div>
+
+    <!-- 📊 Expense Report -->
+    <section id="expenseReport" class="report-section">
+      <h2>View Your Expenses</h2>
+      <table id="reportTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- 🚪 Logout Button -->
+    <div class="logout-container">
+      <button onclick="logoutUser()" class="logout-btn inside-form">🚪 Logout</button>
+    </div>
+
+    <!-- 📦 Scripts -->
+    <script type="module" src="firebase.js"></script>
+    <script type="module" src="employee.js"></script>
 
     <!-- 📢 Welcome Message Script -->
     <script>
@@ -131,7 +208,7 @@
     <!-- 📦 Scripts -->
     <script type="module" src="app.js"></script>
     <script type="module" src="dashboard.js"></script>
-    <script type="module" src="employee.js"></script>
+
   </main>
 </body>
 </html>
