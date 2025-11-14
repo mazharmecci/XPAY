@@ -35,14 +35,22 @@ function showToast(message, type = "info") {
   setTimeout(() => toast.classList.remove("visible"), 3000);
 }
 
-// 🧾 Expense Type Icon Generator
+// 🧾 Expense Type Icon Generator (aligned with employee.html tabs)
 function getTypeIcon(type = "") {
   const icons = {
-    food: '🍽️', fuel: '⛽', hotel: '🏨', travel: '✈️',
-    cash: '💵', vehicle: '🚗', service: '🛠️', advance: '📦'
+    food: '🍽️',
+    fuel: '⛽',
+    boarding: '🏨',        // renamed from hotel
+    travel: '✈️',
+    cash: '💵',
+    localconveyance: '🚌',
+    misc: '📦',
+    monthlyconveyance: '🚎',
+    phone: '📱'
   };
   return icons[type.toLowerCase()] || '🧾';
 }
+
 
 // 🏷️ Badge Generator
 function getStatusBadge(exp = {}) {
