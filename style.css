@@ -356,16 +356,24 @@ button {
 .toast {
   position: fixed;
   bottom: 20px;
-  right: 20px;
-  background: #5cb85c;
-  color: white;
+  left: 50%;
+  transform: translateX(-50%);
   padding: 12px 20px;
-  border-radius: 8px;
-  font-weight: bold;
-  display: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  z-index: 999;
+  background-color: #333;
+  color: #fff;
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 9999;
 }
+.toast.visible {
+  opacity: 1;
+  
+}
+.toast-success { background-color: #4CAF50; }
+.toast-error { background-color: #F44336; }
+.toast-info { background-color: #2196F3; }
+
 .toast.error {
   background: #f44336;
 }
