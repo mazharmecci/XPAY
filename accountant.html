@@ -24,24 +24,48 @@
       <hr class="section-divider" />
 
       <!-- 📊 Expense Review Table -->
-      <section id="expenseReview" class="report-section">
-        <h2>All Submitted Expenses</h2>
-        <div class="table-wrapper">
-          <table id="reviewTable">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Employee</th>
-                <th>Amount</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
+      
+<h2>Accountant Dashboard - Pending Expense Approvals</h2>
+
+<select id="monthPicker">
+  <option value="2025-10">October 2025</option>
+  <option value="2025-11">November 2025</option>
+</select>
+
+<table id="expenseTable">
+  <thead>
+    <tr>
+      <th>Employee</th>
+      <th>Claim Date</th>
+      <th>Type</th>
+      <th>Place/Details</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Action</th>
+      <th>Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Dynamically filled by backend or JS -->
+  </tbody>
+</table>
+
+<button onclick="approveSelected()">Approve Selected</button>
+<button onclick="rejectSelected()">Reject Selected</button>
+
+<script>
+  // Sample data fetch
+  const pendingExpenses = [
+    {
+      employee: 'Ajay Kumar',
+      date: '2025-11-14',
+      type: 'Trip',
+      place: 'Hyderabad',
+      amount: 3070,
+      status: 'Pending'
+    },
+    // More data ...
+  ];
 
 <footer class="site-footer">
   <div class="footer-content">
