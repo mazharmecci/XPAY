@@ -239,4 +239,4 @@ onAuthStateChanged(auth, async (user) => {
   if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
 
   await renderTable();
-});
+});   // <-- this closing brace and parenthesis were missing
