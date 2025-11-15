@@ -1,42 +1,29 @@
+// 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
-import {
-  doc, getDoc, collection, addDoc, query, where, getDocs
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import { addDoc, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-function handleExpenseSubmission() {
-  const form = document.getElementById('expenseForm');
-  if (!form) return;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const expenseData = {
-      userId: auth.currentUser?.uid,
-      date: document.getElementById('date').value,
-      placeVisited: document.getElementById('place').value,
-      food: Number(document.getElementById('food').value) || 0,
-      fuel: Number(document.getElementById('fuel').value) || 0,
-      status: "Pending"
-    };
-
-    try {
-      await addDoc(collection(db, "expenses"), expenseData);
-      alert("Expense submitted successfully!");
-      form.reset();
-    } catch (err) {
-      console.error("Error submitting expense:", err);
-      alert("Failed to submit expense.");
-    }
-  });
+// 🛡️ Safe value getter
+function getVal(id, numeric = false) {
+  const el = document.getElementById(id);
+  if (!el) return numeric ? 0 : "";
+  const val = el.value;
+  return numeric ? (Number(val) || 0) : val;
 }
 
-document.addEventListener("DOMContentLoaded", handleExpenseSubmission);
+// 🍞 Toast Notification
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.className = `toast ${type}`;
+  toast.style.display = 'block';
+  setTimeout(() => (toast.style.display = 'none'), 3000);
+}
 
-
-// 🚪 Logout function (MUST be on window for HTML onclick)
+// 🚪 Logout
 function logoutUser() {
-  auth.signOut().then(() => {
+  signOut(auth).then(() => {
     window.location.href = "login.html";
   }).catch((err) => {
     showToast("Logout failed", "error");
@@ -44,192 +31,115 @@ function logoutUser() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const logoutBtn = document.querySelector('.logout-btn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', logoutUser);
-  }
-});
-
-
-// 🔐 Auth Guard, role check and initial expense fetch
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    showToast("You must be logged in.", "error");
-    setTimeout(() => {
-      window.location.href = "login.html";
-    }, 1500); // Wait 1.5 seconds before redirect so toast is visible
-    return;
-  }
-
-  // Check for employee role
-  const userDoc = await getDoc(doc(db, 'users', user.uid));
-  const role = userDoc.exists() ? userDoc.data().role : null;
-
-  if (role !== 'employee') {
-    alert("Access denied.");
-    window.location.href = "login.html";
-    return;
-  }
-
-  // Display role in Logout button
-  const logoutBtn = document.querySelector('.logout-btn');
-  if (logoutBtn) {
-    logoutBtn.textContent = `🚪 Logout ${role}`;
-  }
-
-  // Load expenses for logged in user
-  await loadAndRenderExpenses();
-});
-
-// 📝 Form Submission Handler
-document.getElementById("expenseForm")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const form = e.target;
-  const data = Object.fromEntries(new FormData(form).entries());
-
-  // Validate key fields
-  if (!data.workflowType || !data.date) {
-    return showToast("Workflow and date are required", "error");
-  }
-
-  const user = auth.currentUser;
-  if (!user) {
-    alert("You must be logged in to submit.");
-    return;
-  }
-
-  // Build the expense record object
-  const expenseRecord = {
-    userId: user.uid,
-    workflowType: data.workflowType,
-    date: data.date,
-    fields: {
-      placeVisited: data.place || null,
-      fuel: parseFloat(data.fuel) || null,
-      fare: parseFloat(data.fare) || null,
-      boarding: parseFloat(data.boarding) || null,
-      food: parseFloat(data.food) || null,
-      localConveyance: parseFloat(data.local) || null,
-      misc: parseFloat(data.misc) || null,
-      advanceCash: parseFloat(data.advance) || null,
-      monthlyConveyance: parseFloat(data["monthly-conveyance"]) || null,
-      monthlyPhone: parseFloat(data["monthly-phone"]) || null
-    },
-    status: "pending",
-    submittedAt: new Date().toISOString()
+// 🧾 Build Expense Data
+function buildExpenseData() {
+  return {
+    userId: auth.currentUser?.uid || "",
+    workflowType: getVal("workflowType"),
+    date: getVal("date"),
+    placeVisited: getVal("placeVisited"),
+    advanceCash: getVal("advanceCash", true),
+    monthlyConveyance: getVal("monthlyConveyance", true),
+    monthlyPhone: getVal("monthlyPhone", true),
+    fuel: getVal("fuel", true),
+    fare: getVal("fare", true),
+    boarding: getVal("boarding", true),
+    food: getVal("food", true),
+    localConveyance: getVal("localConveyance", true),
+    misc: getVal("misc", true),
+    status: "Pending"
   };
+}
 
+// 📤 Submit Expense
+async function submitExpense(e) {
+  e.preventDefault();
   try {
-    await addDoc(collection(db, "expenses"), expenseRecord);
-    showToast("Expense submitted!");
-    form.reset();
-    await loadAndRenderExpenses(); // ⬅ Refresh after submit
+    const expenseData = buildExpenseData();
+    await addDoc(collection(db, "expenses"), expenseData);
+    showToast("Expense submitted successfully ✅", "success");
+    document.getElementById("expenseForm").reset();
   } catch (err) {
-    console.error("Error submitting:", err);
-    showToast("Submission failed", "error");
+    console.error("Error submitting expense:", err);
+    showToast("Error submitting expense ❌", "error");
   }
-});
-
-// 🧾 Toast function for feedback
-function showToast(message, type = "info") {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  toast.textContent = message;
-  toast.className = `toast toast-${type} visible`;
-  setTimeout(() => toast.classList.remove("visible"), 3000);
 }
 
-// 📊 Load all expenses for current user & render, grouped
-async function loadAndRenderExpenses() {
-  const user = auth.currentUser;
-  if (!user) return;
+// 📊 Render Employee Expenses (optional reporting)
+async function renderExpenses() {
+  const tripInfoTable = document.querySelector("#tripInfoTable tbody");
+  const travelCostTable = document.querySelector("#travelCostTable tbody");
+  const monthlyClaimsTable = document.querySelector("#monthlyClaimsTable tbody");
 
-  // Query expenses where userId matches
-  const expenseQuery = query(
-    collection(db, "expenses"),
-    where("userId", "==", user.uid)
-  );
-  const snapshot = await getDocs(expenseQuery);
-  const expenses = [];
-  snapshot.forEach(doc => {
-    expenses.push(doc.data());
-  });
-  renderExpenses(expenses);
-}
+  tripInfoTable.innerHTML = "";
+  travelCostTable.innerHTML = "";
+  monthlyClaimsTable.innerHTML = "";
 
-// 📊 Render expenses into three grouped tables
-function renderExpenses(expenses = []) {
-  // Arrays for grouping
-  const tripRows = [];
-  const travelRows = [];
-  const monthlyRows = [];
+  const snapshot = await getDocs(collection(db, "expenses"));
+  snapshot.forEach(docSnap => {
+    const exp = docSnap.data();
 
-  expenses.forEach(exp => {
-    const f = exp.fields || {};
-
-    // Trip Info table (always fill)
-    tripRows.push(`
+    // Trip Info
+    tripInfoTable.innerHTML += `
       <tr>
-        <td>${formatDate(exp.date)}</td>
-        <td>${exp.workflowType || '-'}</td>
-        <td>${f.placeVisited || '-'}</td>
-        <td>${exp.status || 'pending'}</td>
+        <td>${exp.date || "-"}</td>
+        <td>${exp.workflowType || "-"}</td>
+        <td>${exp.placeVisited || "-"}</td>
+        <td>${exp.status || "-"}</td>
       </tr>
-    `);
+    `;
 
-    // Travel Costs (🚖 at least one travel field present)
-    if ([f.fuel, f.fare, f.boarding, f.food, f.localConveyance, f.misc].some(x => x != null && x !== "")) {
-      travelRows.push(`
-        <tr>
-          <td>${formatDate(exp.date)}</td>
-          <td>₹${f.fuel || 0}</td>
-          <td>₹${f.fare || 0}</td>
-          <td>₹${f.boarding || 0}</td>
-          <td>₹${f.food || 0}</td>
-          <td>₹${f.localConveyance || 0}</td>
-          <td>₹${f.misc || 0}</td>
-          <td>${exp.status || 'pending'}</td>
-        </tr>
-      `);
-    }
+    // Travel Costs
+    travelCostTable.innerHTML += `
+      <tr>
+        <td>${exp.date || "-"}</td>
+        <td>${exp.fuel || 0}</td>
+        <td>${exp.fare || 0}</td>
+        <td>${exp.boarding || 0}</td>
+        <td>${exp.food || 0}</td>
+        <td>${exp.localConveyance || 0}</td>
+        <td>${exp.misc || 0}</td>
+        <td>${exp.status || "-"}</td>
+      </tr>
+    `;
 
-    // Monthly Claims (📱 at least one monthly field present)
-    if ([f.advanceCash, f.monthlyConveyance, f.monthlyPhone].some(x => x != null && x !== "")) {
-      monthlyRows.push(`
-        <tr>
-          <td>${formatDate(exp.date)}</td>
-          <td>₹${f.advanceCash || 0}</td>
-          <td>₹${f.monthlyConveyance || 0}</td>
-          <td>₹${f.monthlyPhone || 0}</td>
-          <td>${exp.status || 'pending'}</td>
-        </tr>
-      `);
-    }
-  });
-
-  // Fill the tables (needs the grouped tables in your HTML)
-  document.querySelector('#tripInfoTable tbody').innerHTML = tripRows.join('');
-  document.querySelector('#travelCostTable tbody').innerHTML = travelRows.join('');
-  document.querySelector('#monthlyClaimsTable tbody').innerHTML = monthlyRows.join('');
-}
-
-// 🗓️ Date formatting helper
-function formatDate(dateStr) {
-  if (!dateStr) return '-';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+    // Monthly Claims
+    monthlyClaimsTable.innerHTML += `
+      <tr>
+        <td>${exp.date || "-"}</td>
+        <td>${exp.advanceCash || 0}</td>
+        <td>${exp.monthlyConveyance || 0}</td>
+        <td>${exp.monthlyPhone || 0}</td>
+        <td>${exp.status || "-"}</td>
+      </tr>
+    `;
   });
 }
 
-// (Optional) Run expense fetch/render after DOMContentLoaded for safety
-document.addEventListener('DOMContentLoaded', async () => {
-  if (auth.currentUser) {
-    await loadAndRenderExpenses();
-  }
+// 🚦 Init
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("expenseForm");
+  if (form) form.addEventListener("submit", submitExpense);
+
+  const logoutBtn = document.querySelector(".logout-btn");
+  if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      showToast("You must be logged in.", "error");
+      setTimeout(() => window.location.href = "login.html", 1500);
+      return;
+    }
+
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const role = (userDoc.exists() ? userDoc.data().role : "").toLowerCase();
+
+    if (role !== "employee") {
+      alert("Access denied. Employee role required.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    await renderExpenses();
+  });
 });
-
