@@ -4,6 +4,36 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 
+function handleExpenseSubmission() {
+  const form = document.getElementById('expenseForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const expenseData = {
+      userId: auth.currentUser?.uid,
+      date: document.getElementById('date').value,
+      placeVisited: document.getElementById('place').value,
+      food: Number(document.getElementById('food').value) || 0,
+      fuel: Number(document.getElementById('fuel').value) || 0,
+      status: "Pending"
+    };
+
+    try {
+      await addDoc(collection(db, "expenses"), expenseData);
+      alert("Expense submitted successfully!");
+      form.reset();
+    } catch (err) {
+      console.error("Error submitting expense:", err);
+      alert("Failed to submit expense.");
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", handleExpenseSubmission);
+
+
 // 🚪 Logout function (MUST be on window for HTML onclick)
 function logoutUser() {
   auth.signOut().then(() => {
@@ -202,3 +232,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadAndRenderExpenses();
   }
 });
+
