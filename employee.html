@@ -21,10 +21,10 @@
       <!-- 🎉 Welcome Banner -->
       <div id="welcomeBanner" class="welcome-banner">Welcome back!</div>
 
-      <form id="expenseForm" class="employee-form">
-  <!-- Workflow Type at top -->
+<form id="expenseForm" class="employee-form">
+  <!-- Workflow Type -->
   <div class="form-row">
-    <select id="workflowType" name="workflowType" required data-field-type="select">
+    <select id="workflowType" name="workflowType" required>
       <option value="" disabled selected>-- Choose Workflow Type --</option>
       <option value="sales">Sales</option>
       <option value="service">Service</option>
@@ -35,34 +35,40 @@
     <legend>Trip Info</legend>
     <div class="form-row">
       <label for="date">Date</label>
-      <input type="date" id="date" name="date" required data-field-type="date">
+      <input type="date" id="date" name="date" required>
     </div>
     <div class="form-row">
-      <label for="place">Place Visited 🏙️</label>
-      <input type="text" id="place" name="place" placeholder="Place" data-field-type="text">
+      <label for="placeVisited">Place Visited 🏙️</label>
+      <input type="text" id="placeVisited" name="placeVisited" placeholder="Place">
     </div>
   </fieldset>  
         
   <fieldset>
     <legend>Monthly Claims</legend>
-    <div class="form-row"><input type="number" name="advance" placeholder="Advance Cash 💵" data-field-type="numeric"></div>
-    <div class="form-row"><input type="number" name="monthly-conveyance" placeholder="Monthly Conveyance 🚌" data-field-type="numeric"></div>
-    <div class="form-row"><input type="number" name="monthly-phone" placeholder="Monthly Phone 📱" data-field-type="numeric"></div>
+    <div class="form-row">
+      <input type="number" id="advanceCash" name="advanceCash" placeholder="Advance Cash 💵">
+    </div>
+    <div class="form-row">
+      <input type="number" id="monthlyConveyance" name="monthlyConveyance" placeholder="Monthly Conveyance 🚌">
+    </div>
+    <div class="form-row">
+      <input type="number" id="monthlyPhone" name="monthlyPhone" placeholder="Monthly Phone 📱">
+    </div>
   </fieldset>        
      
   <fieldset>
     <legend>Travel Costs</legend>
-    <div class="form-row"><input type="number" name="fuel" placeholder="Fuel ⛽" data-field-type="numeric"></div>
-    <div class="form-row"><input type="number" name="fare" placeholder="Fare 💰" data-field-type="numeric"></div>
-    <div class="form-row"><input type="number" name="boarding" placeholder="Boarding 🛏️" data-field-type="numeric"></div>
-    <div class="form-row"><input type="number" name="food" placeholder="Food 🍽️" data-field-type="numeric"></div>
-    <div class="form-row"><input type="number" name="local" placeholder="Local Conveyance 🚖" data-field-type="numeric"></div>
-    <div class="form-row"><input type="number" name="misc" placeholder="Misc 📦" data-field-type="numeric"></div>
+    <div class="form-row"><input type="number" id="fuel" name="fuel" placeholder="Fuel ⛽"></div>
+    <div class="form-row"><input type="number" id="fare" name="fare" placeholder="Fare 💰"></div>
+    <div class="form-row"><input type="number" id="boarding" name="boarding" placeholder="Boarding 🛏️"></div>
+    <div class="form-row"><input type="number" id="food" name="food" placeholder="Food 🍽️"></div>
+    <div class="form-row"><input type="number" id="localConveyance" name="localConveyance" placeholder="Local Conveyance 🚖"></div>
+    <div class="form-row"><input type="number" id="misc" name="misc" placeholder="Misc 📦"></div>
 
-      <!-- Submit at bottom -->
-  <div class="form-row">
-    <button type="submit">Submit ✅</button>
-  </div>    
+    <!-- Submit -->
+    <div class="form-row">
+      <button type="submit">Submit ✅</button>
+    </div>    
   </fieldset>
 </form>
 
