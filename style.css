@@ -259,3 +259,168 @@ input[type="checkbox"] {
 }
 
 /* The tables inside .expense-group will auto-inherit your report-section table styles */
+
+
+/* Accountant main background and card styling: apply same as employee */
+
+body.accountant-page,
+body.employee-page {
+  background-color: var(--biscuit-light);
+  color: var(--text-dark);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Wrapper and panel as for .form-wrapper */
+.form-wrapper {
+  max-width: 950px;
+  margin: 2.5rem auto;
+  background: #fff;
+  padding: 2.5rem;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(166,120,69,0.18);
+  border: 1px solid var(--biscuit-mid);
+}
+
+/* Accountant banner matches employee */
+.welcome-banner {
+  background: var(--accent-blue);
+  color: #fff;
+  padding: 1rem;
+  border-radius: 9px;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.07rem;
+}
+
+/* Table styling -- match employee dashboard report-section */
+#expenseTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.97rem;
+  margin-top: 1.6rem;
+  box-shadow: 0 3px 11px rgba(221,173,117,0.13);
+}
+#expenseTable th, #expenseTable td {
+  border: 1px solid var(--biscuit-mid);
+  padding: 0.7rem 0.1rem;
+  text-align: center;
+}
+#expenseTable th {
+  background: var(--biscuit-mid);
+  color: var(--text-dark);
+  font-weight: 600;
+}
+#expenseTable tr:nth-child(even) td {
+  background: #f5e3c0;
+}
+#expenseTable tr:nth-child(odd) td {
+  background: #fff;
+}
+
+/* Buttons (approve/reject/logout) match employee style with color accents */
+button, .logout-btn {
+  padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: 7px;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 0.4rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+#approveBtn, #rejectBtn {
+  background: var(--accent-blue);
+  color: #fff;
+  margin-right: 1rem;
+}
+#approveBtn:hover, #rejectBtn:hover {
+  background: #2563eb;
+}
+.logout-btn {
+  background: var(--accent-red);
+  color: #fff;
+}
+.logout-btn:hover {
+  background: #dc2626;
+}
+.action-btns {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin: 1rem 0;
+}
+
+/* Inputs, selects, checkboxes, comments */
+input, select {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--biscuit-mid);
+  border-radius: 7px;
+  font-size: 1.01rem;
+  margin-bottom: 0.7rem;
+  color: var(--text-dark);
+  background: #fff;
+}
+input:focus, select:focus {
+  border-color: var(--biscuit-dark);
+  box-shadow: 0 0 7px var(--biscuit-mid);
+  outline: none;
+}
+input[type="checkbox"] {
+  accent-color: var(--biscuit-dark);
+  width: 1.25em;
+  height: 1.25em;
+  margin-right: 0.5em;
+  vertical-align: middle;
+}
+
+/* Toast notifications styling matches theme */
+.toast {
+  position: fixed;
+  bottom: 1.3rem;
+  right: 1.3rem;
+  background: var(--text-dark);
+  color: #fff;
+  padding: 1rem 2rem;
+  border-radius: 7px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 4px 12px rgba(166,120,69,0.12);
+  font-size: 1.05rem;
+  z-index: 999;
+}
+
+/* Footer remains matching theme */
+.site-footer {
+  background: var(--text-dark);
+  color: #fff;
+  padding: 1.7rem;
+  margin-top: 3rem;
+  border-top: 6px solid var(--biscuit-mid);
+}
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.footer-logo {
+  height: 40px;
+  margin-bottom: 0.7rem;
+}
+.footer-legal {
+  font-size: 0.87rem;
+  color: #ddb783;
+  margin-top: 0.5rem;
+}
+
+/* Responsive tweaks for mobile */
+@media (max-width: 600px) {
+  .form-wrapper {
+    padding: 1rem;
+  }
+  #expenseTable, #expenseTable th, #expenseTable td {
+    font-size: 0.85rem;
+    padding: 0.4rem;
+  }
+}
+
