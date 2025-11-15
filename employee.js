@@ -81,6 +81,7 @@ function safeAmount(val) {
 
 // 📊 Render Employee Expenses
 
+// 📊 Render Employee Expenses
 async function renderExpenses() {
   const tripInfoTable = document.querySelector("#tripInfoTable tbody");
   const travelCostTable = document.querySelector("#travelCostTable tbody");
@@ -105,93 +106,96 @@ async function renderExpenses() {
 
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
+  let monthlyTotal = 0;
+  let travelTotal = 0;
   let totalApproved = 0;
-let totalRejected = 0;
-let totalPending = 0;
+  let totalRejected = 0;
+  let totalPending = 0;
 
-records.forEach((exp, index) => {
-  const badge = getStatusBadge(exp.status);
-  const sn = index + 1;
-  const date = exp.date || "-";
+  records.forEach((exp, index) => {
+    const badge = getStatusBadge(exp.status);
+    const sn = index + 1;
+    const date = exp.date || "-";
 
-  // Trip Info
-  tripInfoTable.innerHTML += `
-    <tr>
-      <td>${sn}</td>
-      <td>${date}</td>
-      <td>${exp.workflowType || "-"}</td>
-      <td>${exp.placeVisited || "-"}</td>
-      <td>${badge}</td>
-    </tr>
-  `;
+    // Trip Info
+    tripInfoTable.innerHTML += `
+      <tr>
+        <td>${sn}</td>
+        <td>${date}</td>
+        <td>${exp.workflowType || "-"}</td>
+        <td>${exp.placeVisited || "-"}</td>
+        <td>${badge}</td>
+      </tr>
+    `;
 
-  // Travel Costs
-  const fuel = safeAmount(exp.fuel);
-  const fare = safeAmount(exp.fare);
-  const boarding = safeAmount(exp.boarding);
-  const food = safeAmount(exp.food);
-  const local = safeAmount(exp.localConveyance);
-  const misc = safeAmount(exp.misc);
-  const travelSum = fuel + fare + boarding + food + local + misc;
+    // Travel Costs
+    const fuel = safeAmount(exp.fuel);
+    const fare = safeAmount(exp.fare);
+    const boarding = safeAmount(exp.boarding);
+    const food = safeAmount(exp.food);
+    const local = safeAmount(exp.localConveyance);
+    const misc = safeAmount(exp.misc);
+    const travelSum = fuel + fare + boarding + food + local + misc;
+    travelTotal += travelSum;
 
-  travelCostTable.innerHTML += `
-    <tr>
-      <td>${sn}</td>
-      <td>${date}</td>
-      <td>${fuel}</td>
-      <td>${fare}</td>
-      <td>${boarding}</td>
-      <td>${food}</td>
-      <td>${local}</td>
-      <td>${misc}</td>
-      <td>${badge}</td>
-    </tr>
-  `;
+    travelCostTable.innerHTML += `
+      <tr>
+        <td>${sn}</td>
+        <td>${date}</td>
+        <td>${fuel}</td>
+        <td>${fare}</td>
+        <td>${boarding}</td>
+        <td>${food}</td>
+        <td>${local}</td>
+        <td>${misc}</td>
+        <td>${badge}</td>
+      </tr>
+    `;
 
-  // Monthly Claims
-  const advance = safeAmount(exp.advanceCash);
-  const convey = safeAmount(exp.monthlyConveyance);
-  const phone = safeAmount(exp.monthlyPhone);
-  const monthlySum = advance + convey + phone;
+    // Monthly Claims
+    const advance = safeAmount(exp.advanceCash);
+    const convey = safeAmount(exp.monthlyConveyance);
+    const phone = safeAmount(exp.monthlyPhone);
+    const monthlySum = advance + convey + phone;
+    monthlyTotal += monthlySum;
 
+    monthlyClaimsTable.innerHTML += `
+      <tr>
+        <td>${sn}</td>
+        <td>${date}</td>
+        <td>${advance}</td>
+        <td>${convey}</td>
+        <td>${phone}</td>
+        <td>${badge}</td>
+      </tr>
+    `;
+
+    const totalForRecord = travelSum + monthlySum;
+    if (exp.status === "Approved") {
+      totalApproved += totalForRecord;
+    } else if (exp.status === "Rejected") {
+      totalRejected += totalForRecord;
+    } else {
+      totalPending += totalForRecord;
+    }
+  });
+
+  // 🧾 Summary block
   monthlyClaimsTable.innerHTML += `
-    <tr>
-      <td>${sn}</td>
-      <td>${date}</td>
-      <td>${advance}</td>
-      <td>${convey}</td>
-      <td>${phone}</td>
-      <td>${badge}</td>
+    <tr style="font-weight:bold; background:#f9f9f9;">
+      <td colspan="5" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
+      <td>₹${totalApproved}</td>
+    </tr>
+    <tr style="font-weight:bold; background:#f9f9f9;">
+      <td colspan="5" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
+      <td>₹${totalRejected}</td>
+    </tr>
+    <tr style="font-weight:bold; background:#f9f9f9;">
+      <td colspan="5" style="text-align:right;">⏳ Still Pending for ${selectedMonth}:</td>
+      <td>₹${totalPending}</td>
     </tr>
   `;
-
-  const totalForRecord = travelSum + monthlySum;
-
-  if (exp.status === "Approved") {
-    totalApproved += totalForRecord;
-  } else if (exp.status === "Rejected") {
-    totalRejected += totalForRecord;
-  } else {
-    totalPending += totalForRecord;
-  }
-});
-
-// 🧾 Summary block
-monthlyClaimsTable.innerHTML += `
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
-    <td>₹${totalApproved}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
-    <td>₹${totalRejected}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">⏳ Still Pending for ${selectedMonth}:</td>
-    <td>₹${totalPending}</td>
-  </tr>
-`;
-  
+} // ✅ closes renderExpenses
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
@@ -201,7 +205,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
 
-  // 🗓️ Month filter listener
   document.getElementById("monthPicker")?.addEventListener("change", renderExpenses);
 
   onAuthStateChanged(auth, async (user) => {
