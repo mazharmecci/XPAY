@@ -54,7 +54,6 @@ async function fetchPendingExpenses(selectedMonth) {
   return records;
 }
 
-// 🖥️ Render accountant dashboard table
 async function renderTable() {
   const monthPicker = document.getElementById('monthPicker');
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
@@ -73,31 +72,60 @@ async function renderTable() {
     return;
   }
 
-  expenses.forEach(exp => {
+  const userCache = {};
+
+  for (const exp of expenses) {
+    // 🔍 Fetch employee name
+    let employeeName = exp.userId || "-";
+    if (exp.userId) {
+      if (userCache[exp.userId]) {
+        employeeName = userCache[exp.userId];
+      } else {
+        try {
+          const userDoc = await getDoc(doc(db, "users", exp.userId));
+          if (userDoc.exists()) {
+            employeeName = userDoc.data().name || employeeName;
+            userCache[exp.userId] = employeeName;
+          }
+        } catch (err) {
+          console.warn("Failed to fetch employee name:", err);
+        }
+      }
+    }
+
+    // 💰 Calculate total amount
     let amount = 0;
     Object.keys(FIELD_LABELS).forEach(key => {
       if (exp[key] && !isNaN(exp[key])) amount += Number(exp[key]);
     });
 
+    // 🧾 Build breakdown section
+    const breakdown = Object.keys(FIELD_LABELS)
+      .map(key => exp[key] ? `${FIELD_LABELS[key]}: ₹${exp[key]}` : '')
+      .filter(Boolean)
+      .join(', ');
+
+    const detailsSection = [
+      exp.placeVisited ? `Place: ${exp.placeVisited}` : '',
+      breakdown || 'No expense breakdown'
+    ].filter(Boolean).join('<br>');
+
+    // 🖥️ Render table row
     tbody.innerHTML += `
       <tr>
-        <td>${exp.userId || "-"}</td>
+        <td>${employeeName}</td>
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
-        <td>
-          Place: ${exp.placeVisited || "-"}<br>
-          ${Object.keys(FIELD_LABELS).map(key =>
-            exp[key] ? `${FIELD_LABELS[key]}: ₹${exp[key]}` : ''
-          ).filter(e => e).join(', ')}
-        </td>
+        <td>${detailsSection}</td>
         <td>₹${amount}</td>
         <td>${exp.status}</td>
         <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
         <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>
       </tr>
     `;
-  });
+  }
 }
+
 
 // ✅ Approve selected expenses
 async function approveSelected() {
