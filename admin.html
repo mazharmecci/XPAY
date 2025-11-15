@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>XPAY Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="admin-page">
+  <main class="admin-wrapper">
+    <h2>XPAY Admin Panel</h2>
+
+    <label for="userSelect">Select User:</label>
+    <select id="userSelect" class="admin-dropdown">
+      <option value="">-- Choose a user --</option>
+    </select>
+
+    <form id="userEditForm" class="admin-form">
+      <input type="text" id="uid" placeholder="User UID" readonly />
+      <input type="text" id="name" placeholder="Name" required />
+      <select id="role" required>
+        <option value="">Select Role</option>
+        <option value="employee">🧑‍💼 Employee</option>
+        <option value="accountant">📊 Accountant</option>
+        <option value="manager">🧭 Manager</option>
+      </select>
+      <button type="submit">Update User</button>
+    </form>
+
+    <p id="adminMessage" class="admin-msg"></p>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC-heT_dKo-O6523VVNPKW_Q-D6qxW8_HY",
+      authDomain: "xpay-b0298.firebaseapp.com",
+      projectId: "xpay-b0298",
+      storageBucket: "xpay-b0298.firebasestorage.app",
+      messagingSenderId: "518708112275",
+      appId: "1:518708112275:web:0ea8d94b4c3734d1895666"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const getEl = (id) => document.getElementById(id);
+    const showMsg = (msg, color = "green") => {
+      const el = getEl("adminMessage");
+      el.textContent = msg;
+      el.style.color = color;
+    };
+
+    const userSelect = getEl("userSelect");
+    const uidInput = getEl("uid");
+    const nameInput = getEl("name");
+    const roleSelect = getEl("role");
+
+    // 🔍 Load users into dropdown
+    async function loadUsers() {
+      const snapshot = await getDocs(collection(db, "users"));
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const option = document.createElement("option");
+        option.value = docSnap.id;
+        option.textContent = `${data.name} (${data.role})`;
+        userSelect.appendChild(option);
+      });
+    }
+
+    // 🧩 Populate form on selection
+    userSelect.addEventListener("change", async () => {
+      const uid = userSelect.value;
+      if (!uid) return;
+
+      const userDoc = await getDoc(doc(db, "users", uid));
+      const data = userDoc.data();
+      uidInput.value = uid;
+      nameInput.value = data?.name || "";
+      roleSelect.value = data?.role || "";
+    });
+
+    // ✏️ Update user
+    const form = getEl("userEditForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const uid = uidInput.value.trim();
+      const name = nameInput.value.trim();
+      const role = roleSelect.value;
+
+      if (!uid || !name || !role) {
+        showMsg("All fields are required.", "red");
+        return;
+      }
+
+      try {
+        await setDoc(doc(db, "users", uid), { name, role }, { merge: true });
+        showMsg(`✅ Updated ${name} as ${role}.`);
+      } catch (error) {
+        showMsg("Update failed: " + error.message, "red");
+      }
+    });
+
+    loadUsers();
+  </script>
+</body>
+</html>
