@@ -87,8 +87,9 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  const logoutBtn = document.querySelector(".logout-btn");
-  if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
+  setupLogout();
+  setupMonthFilter();
+  setupApprovalButtons();
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -109,6 +110,34 @@ document.addEventListener("DOMContentLoaded", () => {
     await renderManagerClaims();
   });
 });
+
+function setupLogout() {
+  const logoutBtn = document.querySelector(".logout-btn");
+  if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
+}
+
+function setupMonthFilter() {
+  document.getElementById("monthPicker")?.addEventListener("change", renderManagerClaims);
+}
+
+function setupApprovalButtons() {
+  document.getElementById("finalApproveBtn")?.addEventListener("click", () => handleFinalAction("FinalApproved", "Final approvals submitted.", "success"));
+  document.getElementById("finalRejectBtn")?.addEventListener("click", () => handleFinalAction("RejectedByManager", "Selected claims rejected.", "error"));
+}
+
+async function handleFinalAction(newStatus, toastMessage, toastType) {
+  const selected = document.querySelectorAll(".select-claim:checked");
+  for (const checkbox of selected) {
+    const id = checkbox.dataset.id;
+    const comment = checkbox.closest("tr").querySelector(".manager-comment")?.value || "";
+    await updateDoc(doc(db, "expenses", id), {
+      status: newStatus,
+      finalComment: comment
+    });
+  }
+  showToast(toastMessage, toastType);
+  await renderManagerClaims();
+}
 
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
@@ -148,34 +177,3 @@ async function renderManagerClaims() {
     `;
   });
 }
-
-document.getElementById("finalApproveBtn")?.addEventListener("click", async () => {
-  const selected = document.querySelectorAll(".select-claim:checked");
-  for (const checkbox of selected) {
-    const id = checkbox.dataset.id;
-    const comment = checkbox.closest("tr").querySelector(".manager-comment")?.value || "";
-    await updateDoc(doc(db, "expenses", id), {
-      status: "FinalApproved",
-      finalComment: comment
-    });
-  }
-  showToast("Final approvals submitted.", "success");
-  await renderManagerClaims();
-});
-
-document.getElementById("finalRejectBtn")?.addEventListener("click", async () => {
-  const selected = document.querySelectorAll(".select-claim:checked");
-  for (const checkbox of selected) {
-    const id = checkbox.dataset.id;
-    const comment = checkbox.closest("tr").querySelector(".manager-comment")?.value || "";
-    await updateDoc(doc(db, "expenses", id), {
-      status: "RejectedByManager",
-      finalComment: comment
-    });
-  }
-  showToast("Selected claims rejected.", "error");
-  await renderManagerClaims();
-});
-
-
-
