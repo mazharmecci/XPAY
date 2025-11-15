@@ -545,3 +545,31 @@ span[style*="orange"] {
   background-color: #005fa3;
 }
 
+.badge.approved {
+  background-color: #4caf50; /* green */
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.badge.rejected {
+  background-color: #f44336; /* red */
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.badge.pending {
+  background-color: #ff9800; /* amber */
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.badge.final-approved {
+  background-color: #2e7d32; /* dark green */
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
