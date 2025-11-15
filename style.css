@@ -580,3 +580,10 @@ span[style*="orange"] {
   border-radius: 4px;
 }
 
+.admin-msg {
+  font-weight: bold;
+  margin-top: 1rem;
+  text-align: center;
+  transition: opacity 0.5s ease;
+}
+
