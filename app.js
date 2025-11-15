@@ -1,28 +1,11 @@
 // 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
-import {
-  signInWithEmailAndPassword,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import {
-  doc, getDoc, collection, addDoc
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// 🧩 Utility Functions
-function getEl(id) {
-  return document.getElementById(id);
-}
-
-function showError(id, message) {
-  const el = getEl(id);
-  if (el) el.textContent = message;
-}
-
-function toggleRequired(container, isRequired) {
-  container?.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
-    input.required = isRequired;
-  });
-}
+// 🧩 Utility
+function getEl(id) { return document.getElementById(id); }
+function showError(id, message) { const el = getEl(id); if (el) el.textContent = message; }
 
 // 🧑‍💼 Login Handler
 function handleLogin() {
@@ -44,7 +27,7 @@ function handleLogin() {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.data();
 
-      const role = userData?.role;
+      const role = (userData?.role || "").toLowerCase();
       const name = userData?.name || "User";
       const emojiMap = { employee: "🧑‍💼", accountant: "📊", manager: "🧭" };
       const redirectMap = {
@@ -53,7 +36,7 @@ function handleLogin() {
         manager: "manager.html"
       };
 
-      if (!role || !redirectMap[role]) {
+      if (!redirectMap[role]) {
         showError('loginError', "Role not assigned. Contact admin.");
         return;
       }
@@ -67,7 +50,7 @@ function handleLogin() {
   });
 }
 
-// 🔐 Logout Handler
+// 🔐 Logout
 window.logoutUser = async function () {
   try {
     await signOut(auth);
@@ -81,6 +64,5 @@ window.logoutUser = async function () {
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
   handleLogin();
-  handleExpenseSubmission();
-  setupTabs();
+  setupTabs(); // keep if you have tab logic
 });
