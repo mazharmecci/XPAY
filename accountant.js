@@ -1,9 +1,25 @@
-import { db } from './firebase.js';
-import { getDocs, collection, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { auth, db } from './firebase.js';
+import {
+  onAuthStateChanged,
+  signOut,
+  getAuth
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import {
+  getDoc, getDocs, collection, updateDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// 🚪 Logout function (MUST be on window for HTML onclick)
+// Toast notification
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `toast ${type}`;
+  toast.style.display = 'block';
+  setTimeout(() => (toast.style.display = 'none'), 3000);
+}
+
+// 🚪 Logout function (correct usage with signOut)
 function logoutUser() {
-  auth.signOut().then(() => {
+  signOut(auth).then(() => {
     window.location.href = "login.html";
   }).catch((err) => {
     showToast("Logout failed", "error");
@@ -11,6 +27,7 @@ function logoutUser() {
   });
 }
 
+// Wire logout to button
 document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) {
@@ -18,40 +35,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-
-// 🔐 Auth Guard, role check and initial expense fetch
+// --- Accountant Auth Guard and Data Load ---
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     showToast("You must be logged in.", "error");
     setTimeout(() => {
       window.location.href = "login.html";
-    }, 1500); // Wait 1.5 seconds before redirect so toast is visible
+    }, 1500);
     return;
   }
 
-  // Check for employee role
+  // Check for accountant role, not employee
   const userDoc = await getDoc(doc(db, 'users', user.uid));
   const role = userDoc.exists() ? userDoc.data().role : null;
 
-  if (role !== 'employee') {
-    alert("Access denied.");
+  if (role !== 'accountant') {
+    alert("Access denied. Accountant role required.");
     window.location.href = "login.html";
     return;
   }
 
-  // Display role in Logout button
+  // Show role in Logout button
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) {
-    logoutBtn.textContent = `🚪 Logout ${role}`;
+    logoutBtn.textContent = `🚪 Logout (${role})`;
   }
 
-  // Load expenses for logged in user
-  await loadAndRenderExpenses();
+  // Load pending expenses table
+  await renderTable();
 });
 
-
-// Key fields from your doc: boarding, food, fare, fuel, localConveyance, misc, monthlyConveyance, monthlyPhone
-
+// -- Expense fields and fetch logic
 const FIELD_LABELS = {
   boarding: "Boarding",
   fare: "Fare",
@@ -63,15 +77,12 @@ const FIELD_LABELS = {
   monthlyPhone: "Monthly Phone"
 };
 
-// Get all pending expenses for a given month
 async function fetchPendingExpenses(selectedMonth) {
   const expensesRef = collection(db, "expenses");
   const snapshot = await getDocs(expensesRef);
   const records = [];
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
-
-    // Only Pending and matching year-month
     if (
       data.status === "Pending" &&
       data.date &&
@@ -83,15 +94,15 @@ async function fetchPendingExpenses(selectedMonth) {
   return records;
 }
 
-// Render table: handle document layout per your fields, sum up amount
+// Render accountant dashboard table
 async function renderTable() {
-  const selectedMonth = document.getElementById('monthPicker').value;
+  const monthPicker = document.getElementById('monthPicker');
+  const selectedMonth = monthPicker ? monthPicker.value : '';
   const expenses = await fetchPendingExpenses(selectedMonth);
   const tbody = document.querySelector('#expenseTable tbody');
   tbody.innerHTML = '';
 
   expenses.forEach(exp => {
-    // Calculate total amount
     let amount = 0;
     Object.keys(FIELD_LABELS).forEach(key => {
       if (exp[key] && !isNaN(exp[key])) amount += Number(exp[key]);
@@ -103,11 +114,10 @@ async function renderTable() {
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
         <td>
-          Place: ${exp.placeVisited || "-"}
-          <br>
+          Place: ${exp.placeVisited || "-"}<br>
           ${Object.keys(FIELD_LABELS).map(key =>
-             exp[key] ? `${FIELD_LABELS[key]}: ₹${exp[key]}` : ''
-           ).filter(e => e).join(', ')}
+            exp[key] ? `${FIELD_LABELS[key]}: ₹${exp[key]}` : ''
+          ).filter(e => e).join(', ')}
         </td>
         <td>₹${amount}</td>
         <td>${exp.status}</td>
@@ -122,7 +132,7 @@ async function renderTable() {
   });
 }
 
-// Approval/rejection logic (unchanged, works by doc id)
+// Approve selected expenses
 async function approveSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
   let success = 0;
@@ -143,6 +153,7 @@ async function approveSelected() {
   renderTable();
 }
 
+// Reject selected expenses
 async function rejectSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
   let success = 0;
@@ -163,22 +174,8 @@ async function rejectSelected() {
   renderTable();
 }
 
-// Attach events and init on page load
+// Event listeners for table actions
 document.getElementById('monthPicker').addEventListener('change', renderTable);
 document.getElementById('approveBtn').addEventListener('click', approveSelected);
 document.getElementById('rejectBtn').addEventListener('click', rejectSelected);
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  try {
-    await signOut(auth);
-    showToast("Logged out successfully!");
-    setTimeout(() => (window.location.href = 'login.html'), 1500);
-  } catch (error) {
-    console.error("Logout error:", error);
-    showToast("Logout failed. Try again.", 'error');
-  }
-});
 
-renderTable(); // Initial table load
-
-// Toast (already provided)
-function showToast(message, type = 'success') { /* ... */ }
