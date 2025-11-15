@@ -56,6 +56,7 @@
         return;
       }
 
+      // Convert username to email format
       const email = `${username.toLowerCase()}@xpay.local`;
 
       try {
@@ -86,10 +87,15 @@
       }
     });
 
+    // 🔐 Logout logic (used in dashboards)
     window.logoutUser = async function () {
-      await signOut(auth);
-      localStorage.removeItem("welcomeMessage");
-      window.location.href = "login.html";
+      try {
+        await signOut(auth);
+        localStorage.removeItem("welcomeMessage");
+        window.location.href = "login.html";
+      } catch (error) {
+        console.error("Logout failed:", error);
+      }
     };
   </script>
 
