@@ -186,11 +186,12 @@ async function renderExpenses() {
   year: "numeric"
 });
 
-const totalSubmitted = records.length;
+const totalSubmittedAmount = totalApproved + totalRejected + totalPending;
 
 monthlyClaimsTable.innerHTML += `
-  <tr style="font-weight:bold; background:#f0f0f0;">
-    <td colspan="6" style="text-align:left;">Total ${totalSubmitted} expenses submitted for current month – ${monthLabel}: Trip Info + Travel Cost + Monthly Claims</td>
+  <tr style="font-weight:bold; background:#f9f9f9;">
+    <td colspan="5" style="text-align:right;">📊 Total of all the expenses ${selectedMonth}:</td>
+    <td>₹${totalSubmittedAmount}</td>
   </tr>
   <tr style="font-weight:bold; background:#f9f9f9;">
     <td colspan="5" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
@@ -205,6 +206,7 @@ monthlyClaimsTable.innerHTML += `
     <td>₹${totalPending}</td>
   </tr>
 `;
+
 } // ✅ this was missing — closes renderExpenses
 
 // 🚦 Init
