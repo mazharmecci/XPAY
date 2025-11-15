@@ -104,18 +104,7 @@ async function renderManagerClaims() {
     }
   });
 
-  records.forEach((exp, index) => {
-    // ✅ total calculation belongs here, where exp is defined
-    const total = safeAmount(exp.advanceCash) 
-                + safeAmount(exp.monthlyConveyance) 
-                + safeAmount(exp.monthlyPhone)
-                + safeAmount(exp.fuel) 
-                + safeAmount(exp.fare) 
-                + safeAmount(exp.boarding)
-                + safeAmount(exp.food) 
-                + safeAmount(exp.localConveyance) 
-                + safeAmount(exp.misc);
-
+  // MOVE THIS SORT OUTSIDE OF THE forEach LOOP!
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   let totalApproved = 0;
@@ -215,3 +204,5 @@ document.addEventListener("DOMContentLoaded", () => {
     await renderManagerClaims();
   });
 });
+
+
