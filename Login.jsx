@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase"; // adjust path to your Firebase config
+import { auth } from "../firebase"; // adjust path if needed
 import toast from "react-hot-toast";
 
 export default function Login() {
@@ -13,8 +13,22 @@ export default function Login() {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      toast.success(`Welcome, ${userCredential.user.displayName}!`);
-      // redirect to dashboard
+      const user = userCredential.user;
+
+      // Get custom role claim
+      const tokenResult = await user.getIdTokenResult();
+      const role = tokenResult.claims.role || "";
+
+      toast.success(`Welcome, ${user.displayName}!`);
+
+      // Redirect based on role
+      if (role === "manager") {
+        window.location.href = "manager.html";
+      } else if (role === "employee") {
+        window.location.href = "employee.html";
+      } else {
+        toast.error("Role not assigned. Contact admin.");
+      }
     } catch (error) {
       toast.error("Login failed. Please check your credentials.");
       console.error("Login error:", error.message);
