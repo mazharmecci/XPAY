@@ -31,6 +31,14 @@ function logoutUser() {
   });
 }
 
+// 🏷️ Status badge
+function getStatusBadge(status) {
+  const s = (status || '').toLowerCase();
+  if (s === 'approved') return `<span style="color:green;">✅ Approved</span>`;
+  if (s === 'rejected') return `<span style="color:red;">❌ Rejected</span>`;
+  return `<span style="color:orange;">⏳ Pending</span>`;
+}
+
 // 🧾 Build Expense Data
 function buildExpenseData() {
   return {
@@ -65,7 +73,7 @@ async function submitExpense(e) {
   }
 }
 
-// 📊 Render Employee Expenses (optional reporting)
+// 📊 Render Employee Expenses (with badges)
 async function renderExpenses() {
   const tripInfoTable = document.querySelector("#tripInfoTable tbody");
   const travelCostTable = document.querySelector("#travelCostTable tbody");
@@ -78,6 +86,7 @@ async function renderExpenses() {
   const snapshot = await getDocs(collection(db, "expenses"));
   snapshot.forEach(docSnap => {
     const exp = docSnap.data();
+    const badge = getStatusBadge(exp.status);
 
     // Trip Info
     tripInfoTable.innerHTML += `
@@ -85,7 +94,7 @@ async function renderExpenses() {
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
         <td>${exp.placeVisited || "-"}</td>
-        <td>${exp.status || "-"}</td>
+        <td>${badge}</td>
       </tr>
     `;
 
@@ -99,7 +108,7 @@ async function renderExpenses() {
         <td>${exp.food || 0}</td>
         <td>${exp.localConveyance || 0}</td>
         <td>${exp.misc || 0}</td>
-        <td>${exp.status || "-"}</td>
+        <td>${badge}</td>
       </tr>
     `;
 
@@ -110,7 +119,7 @@ async function renderExpenses() {
         <td>${exp.advanceCash || 0}</td>
         <td>${exp.monthlyConveyance || 0}</td>
         <td>${exp.monthlyPhone || 0}</td>
-        <td>${exp.status || "-"}</td>
+        <td>${badge}</td>
       </tr>
     `;
   });
