@@ -13,42 +13,44 @@
         <img src="images/x.png" alt="XPAY Logo" class="form-logo" />
         <p class="tagline">ISTOS PAYMENT APP</p>
       </div>
+
       <div class="welcome-row">
-        <div id="welcomeBanner" class="welcome-banner">👨‍💼 Welcome Accountant!</div>
+        <div id="welcomeBanner" class="welcome-banner">📊 Welcome Accountant!</div>
       </div>
+
       <hr class="section-divider" />
 
       <!-- Expense Review Table -->
       <h2>Accountant Dashboard – Pending Expense Approvals</h2>
+      <label for="monthPicker">Select Month:</label>
       <select id="monthPicker">
         <option value="2025-10">October 2025</option>
         <option value="2025-11">November 2025</option>
       </select>
-        <table id="expenseTable">
-          <thead>
-            <tr>
-              <th>Employee ID</th>
-              <th>Claim Date</th>
-              <th>Type</th>
-              <th>Place/Details & Breakdown</th>
-              <th>Total Amount</th>
-              <th>Status</th>
-              <th>Action</th>
-              <th>Comment</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Filled by JS -->
-          </tbody>
-        </table>
-          <!-- Populated by accountant.js -->
+
+      <table id="expenseTable">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Claim Date</th>
+            <th>Type</th>
+            <th>Place/Details & Breakdown</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+            <th>Action</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Filled dynamically by accountant.js -->
         </tbody>
       </table>
+
       <div id="toast" class="toast"></div>
 
       <div class="action-btns">
-        <button id="approveBtn">Approve Selected</button>
-        <button id="rejectBtn">Reject Selected</button>
+        <button id="approveBtn">✅ Approve Selected</button>
+        <button id="rejectBtn">❌ Reject Selected</button>
       </div>
 
       <div class="logout-container">
@@ -71,6 +73,7 @@
       </div>
     </footer>
   </main>
+
   <script type="module" src="accountant.js"></script>
 </body>
 </html>
