@@ -105,10 +105,13 @@ async function renderExpenses() {
 
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
+  let monthlyTotal = 0;
+
   records.forEach((exp, index) => {
     const badge = getStatusBadge(exp.status);
     const sn = index + 1;
 
+    // Trip Info
     tripInfoTable.innerHTML += `
       <tr>
         <td>${sn}</td>
@@ -119,6 +122,7 @@ async function renderExpenses() {
       </tr>
     `;
 
+    // Travel Costs
     travelCostTable.innerHTML += `
       <tr>
         <td>${sn}</td>
@@ -132,16 +136,30 @@ async function renderExpenses() {
       </tr>
     `;
 
+    // Monthly Claims
+    const advance = safeAmount(exp.advanceCash);
+    const convey = safeAmount(exp.monthlyConveyance);
+    const phone = safeAmount(exp.monthlyPhone);
+    monthlyTotal += advance + convey + phone;
+
     monthlyClaimsTable.innerHTML += `
       <tr>
         <td>${sn}</td>
-        <td>${safeAmount(exp.advanceCash)}</td>
-        <td>${safeAmount(exp.monthlyConveyance)}</td>
-        <td>${safeAmount(exp.monthlyPhone)}</td>
+        <td>${advance}</td>
+        <td>${convey}</td>
+        <td>${phone}</td>
         <td>${badge}</td>
       </tr>
     `;
   });
+
+  // ➕ Summary row for Monthly Claims
+  monthlyClaimsTable.innerHTML += `
+    <tr style="font-weight:bold; background:#f9f9f9;">
+      <td colspan="4" style="text-align:right;">Total Pending for ${selectedMonth}:</td>
+      <td>₹${monthlyTotal}</td>
+    </tr>
+  `;
 }
 
 
