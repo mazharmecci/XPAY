@@ -3,7 +3,27 @@ import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import { getDoc, getDocs, collection, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// 🧩 Utility: Toast notifications
+// 🧩 Field Labels and Grouping
+const FIELD_GROUPS = {
+  "🧭 Trip Info": ["placeVisited"],
+  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "misc"],
+  "📅 Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone"]
+};
+
+const FIELD_LABELS = {
+  placeVisited: "Place Visited",
+  fuel: "Fuel",
+  fare: "Fare",
+  boarding: "Boarding",
+  food: "Food",
+  localConveyance: "Local Conveyance",
+  misc: "Misc",
+  advanceCash: "Advance Cash",
+  monthlyConveyance: "Monthly Conveyance",
+  monthlyPhone: "Monthly Phone"
+};
+
+// 🍞 Toast Notification
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
   if (!toast) return;
@@ -23,19 +43,7 @@ function logoutUser() {
   });
 }
 
-// 📊 Field labels for expense breakdown
-const FIELD_LABELS = {
-  boarding: "Boarding",
-  fare: "Fare",
-  food: "Food",
-  fuel: "Fuel",
-  localConveyance: "Local Conveyance",
-  misc: "Misc",
-  monthlyConveyance: "Monthly Conveyance",
-  monthlyPhone: "Monthly Phone"
-};
-
-// 🔎 Fetch pending expenses for selected month
+// 🔎 Fetch pending expenses
 async function fetchPendingExpenses(selectedMonth) {
   const expensesRef = collection(db, "expenses");
   const snapshot = await getDocs(expensesRef);
@@ -46,14 +54,38 @@ async function fetchPendingExpenses(selectedMonth) {
     const dateStr = typeof data.date === 'string' ? data.date : '';
     const status = (data.status || '').toLowerCase();
 
-    if (status === "pending" && dateStr.slice(0, 7) === selectedMonth) {
+    if (dateStr.slice(0, 7) === selectedMonth) {
       records.push({ ...data, id: docSnap.id });
     }
   });
 
+  // Sort by date descending
+  records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   return records;
 }
 
+// 🧾 Build grouped breakdown
+function buildBreakdown(exp) {
+  return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
+    const items = keys
+      .map(key => exp[key] ? `${FIELD_LABELS[key]}: ₹${exp[key]}` : '')
+      .filter(Boolean);
+
+    return items.length
+      ? `<strong>${groupName}</strong><br>${items.join(', ')}`
+      : '';
+  }).filter(Boolean).join('<br><br>');
+}
+
+// 🏷️ Status badge
+function getStatusBadge(status) {
+  const s = (status || '').toLowerCase();
+  if (s === 'approved') return `<span style="color:green;">✅ Approved</span>`;
+  if (s === 'rejected') return `<span style="color:red;">❌ Rejected</span>`;
+  return `<span style="color:orange;">⏳ Pending</span>`;
+}
+
+// 🖥️ Render accountant dashboard table
 async function renderTable() {
   const monthPicker = document.getElementById('monthPicker');
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
@@ -65,7 +97,7 @@ async function renderTable() {
     tbody.innerHTML = `
       <tr>
         <td colspan="8" style="text-align:center; padding: 1em; color: #888;">
-          📭 No pending expenses found for ${selectedMonth}.
+          📭 No expenses found for ${selectedMonth}.
         </td>
       </tr>
     `;
@@ -95,37 +127,29 @@ async function renderTable() {
 
     // 💰 Calculate total amount
     let amount = 0;
-    Object.keys(FIELD_LABELS).forEach(key => {
+    Object.values(FIELD_GROUPS).flat().forEach(key => {
       if (exp[key] && !isNaN(exp[key])) amount += Number(exp[key]);
     });
 
-    // 🧾 Build breakdown section
-    const breakdown = Object.keys(FIELD_LABELS)
-      .map(key => exp[key] ? `${FIELD_LABELS[key]}: ₹${exp[key]}` : '')
-      .filter(Boolean)
-      .join(', ');
+    // 🧾 Build breakdown
+    const breakdownHTML = buildBreakdown(exp);
+    const statusBadge = getStatusBadge(exp.status);
 
-    const detailsSection = [
-      exp.placeVisited ? `Place: ${exp.placeVisited}` : '',
-      breakdown || 'No expense breakdown'
-    ].filter(Boolean).join('<br>');
-
-    // 🖥️ Render table row
+    // 🖥️ Render row
     tbody.innerHTML += `
       <tr>
         <td>${employeeName}</td>
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
-        <td>${detailsSection}</td>
+        <td>${breakdownHTML || 'No expense breakdown'}</td>
         <td>₹${amount}</td>
-        <td>${exp.status}</td>
+        <td>${statusBadge}</td>
         <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
         <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>
       </tr>
     `;
   }
 }
-
 
 // ✅ Approve selected expenses
 async function approveSelected() {
@@ -169,7 +193,7 @@ async function rejectSelected() {
   renderTable();
 }
 
-// 🚦 Init: Auth guard + event wiring
+// 🚦 Init
 document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
@@ -183,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('rejectBtn')?.addEventListener('click', rejectSelected);
   document.getElementById('monthPicker')?.addEventListener('change', renderTable);
 
-  // 🔐 Auth guard
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
