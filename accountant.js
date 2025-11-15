@@ -23,6 +23,32 @@ const FIELD_LABELS = {
   monthlyPhone: "Monthly Phone"
 };
 
+// 🛡️ Safe value getter
+function getVal(id, numeric = false) {
+  const el = document.getElementById(id);
+  if (!el) return numeric ? 0 : "";
+  const val = el.value;
+  return numeric ? (Number(val) || 0) : val;
+}
+
+// 🧾 Expense Data Object
+const expenseData = {
+  userId: auth.currentUser?.uid || "",
+  workflowType: getVal("workflowType"),
+  date: getVal("date"),
+  placeVisited: getVal("placeVisited"),
+  advanceCash: getVal("advanceCash", true),
+  monthlyConveyance: getVal("monthlyConveyance", true),
+  monthlyPhone: getVal("monthlyPhone", true),
+  fuel: getVal("fuel", true),
+  fare: getVal("fare", true),
+  boarding: getVal("boarding", true),
+  food: getVal("food", true),
+  localConveyance: getVal("localConveyance", true),
+  misc: getVal("misc", true),
+  status: "Pending"
+};
+
 // 🍞 Toast Notification
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
