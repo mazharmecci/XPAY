@@ -63,6 +63,5 @@ window.logoutUser = async function () {
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
-  handleLogin();
-  setupTabs(); // keep if you have tab logic
+  handleLogin();  
 });
