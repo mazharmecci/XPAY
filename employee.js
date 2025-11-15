@@ -110,12 +110,13 @@ async function renderExpenses() {
   records.forEach((exp, index) => {
     const badge = getStatusBadge(exp.status);
     const sn = index + 1;
+    const date = exp.date || "-";
 
     // Trip Info
     tripInfoTable.innerHTML += `
       <tr>
         <td>${sn}</td>
-        <td>${exp.date || "-"}</td>
+        <td>${date}</td>
         <td>${exp.workflowType || "-"}</td>
         <td>${exp.placeVisited || "-"}</td>
         <td>${badge}</td>
@@ -126,6 +127,7 @@ async function renderExpenses() {
     travelCostTable.innerHTML += `
       <tr>
         <td>${sn}</td>
+        <td>${date}</td>
         <td>${safeAmount(exp.fuel)}</td>
         <td>${safeAmount(exp.fare)}</td>
         <td>${safeAmount(exp.boarding)}</td>
@@ -145,6 +147,7 @@ async function renderExpenses() {
     monthlyClaimsTable.innerHTML += `
       <tr>
         <td>${sn}</td>
+        <td>${date}</td>
         <td>${advance}</td>
         <td>${convey}</td>
         <td>${phone}</td>
@@ -156,7 +159,7 @@ async function renderExpenses() {
   // ➕ Summary row for Monthly Claims
   monthlyClaimsTable.innerHTML += `
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="4" style="text-align:right;">Total Pending for ${selectedMonth}:</td>
+      <td colspan="5" style="text-align:right;">Total Pending for ${selectedMonth}:</td>
       <td>₹${monthlyTotal}</td>
     </tr>
   `;
