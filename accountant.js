@@ -1,6 +1,55 @@
 import { db } from './firebase.js';
 import { getDocs, collection, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
+// 🚪 Logout function (MUST be on window for HTML onclick)
+function logoutUser() {
+  auth.signOut().then(() => {
+    window.location.href = "login.html";
+  }).catch((err) => {
+    showToast("Logout failed", "error");
+    console.error(err);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const logoutBtn = document.querySelector('.logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logoutUser);
+  }
+});
+
+
+// 🔐 Auth Guard, role check and initial expense fetch
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    showToast("You must be logged in.", "error");
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 1500); // Wait 1.5 seconds before redirect so toast is visible
+    return;
+  }
+
+  // Check for employee role
+  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  const role = userDoc.exists() ? userDoc.data().role : null;
+
+  if (role !== 'employee') {
+    alert("Access denied.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  // Display role in Logout button
+  const logoutBtn = document.querySelector('.logout-btn');
+  if (logoutBtn) {
+    logoutBtn.textContent = `🚪 Logout ${role}`;
+  }
+
+  // Load expenses for logged in user
+  await loadAndRenderExpenses();
+});
+
+
 // Key fields from your doc: boarding, food, fare, fuel, localConveyance, misc, monthlyConveyance, monthlyPhone
 
 const FIELD_LABELS = {
