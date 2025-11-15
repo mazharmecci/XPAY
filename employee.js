@@ -67,13 +67,19 @@ async function submitExpense(e) {
     await addDoc(collection(db, "expenses"), expenseData);
     showToast("Expense submitted successfully ✅", "success");
     document.getElementById("expenseForm").reset();
+    await renderExpenses();
   } catch (err) {
     console.error("Error submitting expense:", err);
     showToast("Error submitting expense ❌", "error");
   }
 }
 
-// 📊 Render Employee Expenses (with badges)
+// 🧮 Safe amount parser
+function safeAmount(val) {
+  return (val === null || val === undefined || isNaN(val)) ? 0 : Number(val);
+}
+
+// 📊 Render Employee Expenses
 async function renderExpenses() {
   const tripInfoTable = document.querySelector("#tripInfoTable tbody");
   const travelCostTable = document.querySelector("#travelCostTable tbody");
@@ -84,11 +90,19 @@ async function renderExpenses() {
   monthlyClaimsTable.innerHTML = "";
 
   const snapshot = await getDocs(collection(db, "expenses"));
+  const records = [];
+
   snapshot.forEach(docSnap => {
     const exp = docSnap.data();
+    records.push(exp);
+  });
+
+  // Sort by date descending
+  records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  records.forEach(exp => {
     const badge = getStatusBadge(exp.status);
 
-    // Trip Info
     tripInfoTable.innerHTML += `
       <tr>
         <td>${exp.date || "-"}</td>
@@ -98,27 +112,25 @@ async function renderExpenses() {
       </tr>
     `;
 
-    // Travel Costs
     travelCostTable.innerHTML += `
       <tr>
         <td>${exp.date || "-"}</td>
-        <td>${exp.fuel || 0}</td>
-        <td>${exp.fare || 0}</td>
-        <td>${exp.boarding || 0}</td>
-        <td>${exp.food || 0}</td>
-        <td>${exp.localConveyance || 0}</td>
-        <td>${exp.misc || 0}</td>
+        <td>${safeAmount(exp.fuel)}</td>
+        <td>${safeAmount(exp.fare)}</td>
+        <td>${safeAmount(exp.boarding)}</td>
+        <td>${safeAmount(exp.food)}</td>
+        <td>${safeAmount(exp.localConveyance)}</td>
+        <td>${safeAmount(exp.misc)}</td>
         <td>${badge}</td>
       </tr>
     `;
 
-    // Monthly Claims
     monthlyClaimsTable.innerHTML += `
       <tr>
         <td>${exp.date || "-"}</td>
-        <td>${exp.advanceCash || 0}</td>
-        <td>${exp.monthlyConveyance || 0}</td>
-        <td>${exp.monthlyPhone || 0}</td>
+        <td>${safeAmount(exp.advanceCash)}</td>
+        <td>${safeAmount(exp.monthlyConveyance)}</td>
+        <td>${safeAmount(exp.monthlyPhone)}</td>
         <td>${badge}</td>
       </tr>
     `;
