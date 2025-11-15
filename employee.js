@@ -86,6 +86,7 @@ async function renderExpenses() {
   const travelCostTable = document.querySelector("#travelCostTable tbody");
   const monthlyClaimsTable = document.querySelector("#monthlyClaimsTable tbody");
   const selectedMonth = document.getElementById("monthPicker")?.value || new Date().toISOString().slice(0, 7);
+  const currentUserId = auth.currentUser?.uid;
 
   tripInfoTable.innerHTML = "";
   travelCostTable.innerHTML = "";
@@ -97,7 +98,7 @@ async function renderExpenses() {
   snapshot.forEach(docSnap => {
     const exp = docSnap.data();
     const dateStr = typeof exp.date === 'string' ? exp.date : '';
-    if (dateStr.slice(0, 7) === selectedMonth) {
+    if (exp.userId === currentUserId && dateStr.slice(0, 7) === selectedMonth) {
       records.push(exp);
     }
   });
