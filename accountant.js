@@ -1,23 +1,19 @@
+// 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
-import {
-  onAuthStateChanged,
-  signOut,
-  getAuth
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import {
-  getDoc, getDocs, collection, updateDoc, doc
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import { getDoc, getDocs, collection, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// Toast notification
+// 🧩 Utility: Toast notifications
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
+  if (!toast) return;
   toast.textContent = message;
   toast.className = `toast ${type}`;
   toast.style.display = 'block';
   setTimeout(() => (toast.style.display = 'none'), 3000);
 }
 
-// 🚪 Logout function (correct usage with signOut)
+// 🚪 Logout
 function logoutUser() {
   signOut(auth).then(() => {
     window.location.href = "login.html";
@@ -27,52 +23,7 @@ function logoutUser() {
   });
 }
 
-// Wire logout to button
-document.addEventListener('DOMContentLoaded', () => {
-  const logoutBtn = document.querySelector('.logout-btn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', logoutUser);
-  }
-
-  // 🗓️ Set default month to current if not already set
-  const monthPicker = document.getElementById('monthPicker');
-  if (monthPicker && !monthPicker.value) {
-    monthPicker.value = new Date().toISOString().slice(0, 7);
-  }
-});
-
-// --- Accountant Auth Guard and Data Load ---
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    showToast("You must be logged in.", "error");
-    setTimeout(() => {
-      window.location.href = "login.html";
-    }, 1500);
-    return;
-  }
-
-  // Check for accountant role, not employee
-  const userDoc = await getDoc(doc(db, 'users', user.uid));
-  const role = userDoc.exists() ? userDoc.data().role : null;
-
-  if (role !== 'accountant') {
-    alert("Access denied. Accountant role required.");
-    window.location.href = "login.html";
-    return;
-  }
-
-  // Show role in Logout button
-  const logoutBtn = document.querySelector('.logout-btn');
-  if (logoutBtn) {
-    logoutBtn.textContent = `🚪 Logout (${role})`;
-  }
-
-  // Load pending expenses table
-  
-  await renderTable();
-});
-
-// -- Expense fields and fetch logic
+// 📊 Field labels for expense breakdown
 const FIELD_LABELS = {
   boarding: "Boarding",
   fare: "Fare",
@@ -84,6 +35,7 @@ const FIELD_LABELS = {
   monthlyPhone: "Monthly Phone"
 };
 
+// 🔎 Fetch pending expenses for selected month
 async function fetchPendingExpenses(selectedMonth) {
   const expensesRef = collection(db, "expenses");
   const snapshot = await getDocs(expensesRef);
@@ -94,10 +46,7 @@ async function fetchPendingExpenses(selectedMonth) {
     const dateStr = typeof data.date === 'string' ? data.date : '';
     const status = (data.status || '').toLowerCase();
 
-    if (
-      status === "pending" &&
-      dateStr.slice(0, 7) === selectedMonth
-    ) {
+    if (status === "pending" && dateStr.slice(0, 7) === selectedMonth) {
       records.push({ ...data, id: docSnap.id });
     }
   });
@@ -105,8 +54,7 @@ async function fetchPendingExpenses(selectedMonth) {
   return records;
 }
 
-// Render accountant dashboard table
-
+// 🖥️ Render accountant dashboard table
 async function renderTable() {
   const monthPicker = document.getElementById('monthPicker');
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
@@ -144,19 +92,14 @@ async function renderTable() {
         </td>
         <td>₹${amount}</td>
         <td>${exp.status}</td>
-        <td>
-          <input type="checkbox" class="action-checkbox" data-id="${exp.id}">
-        </td>
-        <td>
-          <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)">
-        </td>
+        <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
+        <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>
       </tr>
     `;
   });
 }
 
-// Approve selected expenses
-
+// ✅ Approve selected expenses
 async function approveSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
   let success = 0;
@@ -177,8 +120,7 @@ async function approveSelected() {
   renderTable();
 }
 
-// Reject selected expenses
-
+// ❌ Reject selected expenses
 async function rejectSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
   let success = 0;
@@ -199,8 +141,39 @@ async function rejectSelected() {
   renderTable();
 }
 
-// Event listeners for table actions
-document.getElementById('monthPicker').addEventListener('change', renderTable);
-document.getElementById('approveBtn').addEventListener('click', approveSelected);
-document.getElementById('rejectBtn').addEventListener('click', rejectSelected);
+// 🚦 Init: Auth guard + event wiring
+document.addEventListener('DOMContentLoaded', () => {
+  const logoutBtn = document.querySelector('.logout-btn');
+  if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
 
+  const monthPicker = document.getElementById('monthPicker');
+  if (monthPicker && !monthPicker.value) {
+    monthPicker.value = new Date().toISOString().slice(0, 7);
+  }
+
+  document.getElementById('approveBtn')?.addEventListener('click', approveSelected);
+  document.getElementById('rejectBtn')?.addEventListener('click', rejectSelected);
+  document.getElementById('monthPicker')?.addEventListener('change', renderTable);
+
+  // 🔐 Auth guard
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      showToast("You must be logged in.", "error");
+      setTimeout(() => window.location.href = "login.html", 1500);
+      return;
+    }
+
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const role = (userDoc.exists() ? userDoc.data().role : '').toLowerCase();
+
+    if (role !== 'accountant') {
+      alert("Access denied. Accountant role required.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
+
+    await renderTable();
+  });
+});
