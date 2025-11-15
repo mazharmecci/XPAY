@@ -345,19 +345,6 @@ async function renderTable() {
   }
 }
 
-  // Wire up toggle buttons
-  document.querySelectorAll('.toggle-breakdown').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      const breakdown = document.getElementById(`breakdown-${id}`);
-      const isVisible = breakdown.style.display === 'block';
-      breakdown.style.display = isVisible ? 'none' : 'block';
-      btn.textContent = isVisible ? '▶' : '▼';
-    });
-  });
-}
-
-
 // ✅ Approve selected expenses
 async function approveSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
@@ -405,35 +392,4 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
 
-  const monthPicker = document.getElementById('monthPicker');
-  if (monthPicker && !monthPicker.value) {
-    monthPicker.value = new Date().toISOString().slice(0, 7);
-  }
-
-  document.getElementById('approveBtn')?.addEventListener('click', approveSelected);
-  document.getElementById('rejectBtn')?.addEventListener('click', rejectSelected);
-  document.getElementById('monthPicker')?.addEventListener('change', renderTable);
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      showToast("You must be logged in.", "error");
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 1500);
-      return;
-    }
-
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    const role = (userDoc.exists() ? userDoc.data().role : '').toLowerCase();
-
-    if (role !== 'accountant') {
-      alert("Access denied. Accountant role required.");
-      window.location.href = "login.html";
-      return;
-    }
-
-    if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
-
-    await renderTable();
-  });
-});
+  const monthPicker = document.getElementById('monthP
