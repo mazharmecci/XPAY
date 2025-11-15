@@ -57,6 +57,7 @@ async function fetchExpenses(selectedMonth) {
     }
   });
 
+  // Sort by date descending
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   return records;
 }
@@ -219,24 +220,25 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('rejectBtn')?.addEventListener('click', rejectSelected);
   document.getElementById('monthPicker')?.addEventListener('change', renderTable);
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    showToast("You must be logged in.", "error");
-    setTimeout(() => window.location.href = "login.html", 1500);
-    return;
-  }
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      showToast("You must be logged in.", "error");
+      setTimeout(() => window.location.href = "login.html", 1500);
+      return;
+    }
 
-  const userDoc = await getDoc(doc(db, 'users', user.uid));
-  const role = (userDoc.exists() ? userDoc.data().role : '').toLowerCase();
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const role = (userDoc.exists() ? userDoc.data().role : '').toLowerCase();
 
-  if (role !== 'accountant') {
-    alert("Access denied. Accountant role required.");
-    window.location.href = "login.html";
-    return;
-  }
+        if (role !== 'accountant') {
+      alert("Access denied. Accountant role required.");
+      window.location.href = "login.html";
+      return;
+    }
 
-  const logoutBtn = document.querySelector('.logout-btn');
-  if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
+    const logoutBtn = document.querySelector('.logout-btn');
+    if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
 
-  await renderTable();
-});   // <-- this closing brace and parenthesis were missing
+    await renderTable();
+  });
+});
