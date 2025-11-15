@@ -76,11 +76,25 @@ async function handleFinalAction(newStatus, toastMessage, toastType) {
   await renderManagerClaims();
 }
 
-// 🛡️ Safe Amount Helper
+// 📊 Render Manager Claims
 
+// 🛡️ Safe Amount Helper
 function safeAmount(value) {
   const num = Number(value);
   return isNaN(num) ? 0 : num;
+}
+
+// 🧮 Unified Expense Total Calculator
+function calculateExpenseTotal(exp) {
+  return safeAmount(exp.advanceCash) 
+       + safeAmount(exp.monthlyConveyance) 
+       + safeAmount(exp.monthlyPhone)
+       + safeAmount(exp.fuel) 
+       + safeAmount(exp.fare) 
+       + safeAmount(exp.boarding)
+       + safeAmount(exp.food) 
+       + safeAmount(exp.localConveyance) 
+       + safeAmount(exp.misc);
 }
 
 // 📊 Render Manager Claims
@@ -89,6 +103,8 @@ async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   const summaryRow = document.querySelector("#managerSummaryRow");
   const selectedMonth = document.getElementById("monthPicker")?.value || new Date().toISOString().slice(0, 7);
+
+  if (!tableBody || !summaryRow) return; // defensive check
 
   tableBody.innerHTML = "";
   summaryRow.innerHTML = "";
@@ -104,7 +120,6 @@ async function renderManagerClaims() {
     }
   });
 
-  // MOVE THIS SORT OUTSIDE OF THE forEach LOOP!
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   let totalApproved = 0;
@@ -114,27 +129,25 @@ async function renderManagerClaims() {
 
   records.forEach((exp, index) => {
     const sn = index + 1;
-    const total = safeAmount(exp.advanceCash) + safeAmount(exp.monthlyConveyance) + safeAmount(exp.monthlyPhone)
-                + safeAmount(exp.fuel) + safeAmount(exp.fare) + safeAmount(exp.boarding)
-                + safeAmount(exp.food) + safeAmount(exp.localConveyance) + safeAmount(exp.misc);
+    const total = calculateExpenseTotal(exp);
 
     // 🎨 Badge color coding
     let badgeClass = "";
     let badgeText = "";
     if (exp.status === "Approved") {
-      badgeClass = "badge approved"; // green
+      badgeClass = "badge approved";
       badgeText = "Approved";
       totalApproved += total;
     } else if (exp.status === "Rejected") {
-      badgeClass = "badge rejected"; // red
+      badgeClass = "badge rejected";
       badgeText = "Rejected";
       totalRejected += total;
     } else if (exp.status === "FinalApproved") {
-      badgeClass = "badge final-approved"; // dark green
+      badgeClass = "badge final-approved";
       badgeText = "Final Approved";
       totalFinalApproved += total;
     } else {
-      badgeClass = "badge pending"; // amber
+      badgeClass = "badge pending";
       badgeText = "Pending";
       totalPending += total;
     }
@@ -153,7 +166,8 @@ async function renderManagerClaims() {
     `;
   });
 
-  const totalSubmittedAmount = totalApproved + totalRejected + totalPending + totalFinalApproved;
+  // 📊 Summary Totals
+  const totalSubmittedAmount = records.reduce((sum, exp) => sum + calculateExpenseTotal(exp), 0);
 
   summaryRow.innerHTML = `
     <tr style="font-weight:bold; background:#f9f9f9;">
@@ -202,7 +216,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     await renderManagerClaims();
-  });
-});
+  }); // ✅ closes onAuthStateChanged
+});   // ✅ closes DOMContentLoaded
+
 
 
