@@ -43,8 +43,8 @@ function logoutUser() {
   });
 }
 
-// 🔎 Fetch pending expenses
-async function fetchPendingExpenses(selectedMonth) {
+// 🔎 Fetch expenses for selected month
+async function fetchExpenses(selectedMonth) {
   const expensesRef = collection(db, "expenses");
   const snapshot = await getDocs(expensesRef);
   const records = [];
@@ -52,14 +52,11 @@ async function fetchPendingExpenses(selectedMonth) {
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
     const dateStr = typeof data.date === 'string' ? data.date : '';
-    const status = (data.status || '').toLowerCase();
-
     if (dateStr.slice(0, 7) === selectedMonth) {
       records.push({ ...data, id: docSnap.id });
     }
   });
 
-  // Sort by date descending
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   return records;
 }
@@ -89,7 +86,7 @@ function getStatusBadge(status) {
 async function renderTable() {
   const monthPicker = document.getElementById('monthPicker');
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
-  const expenses = await fetchPendingExpenses(selectedMonth);
+  const expenses = await fetchExpenses(selectedMonth);
   const tbody = document.querySelector('#expenseTable tbody');
   tbody.innerHTML = '';
 
@@ -135,13 +132,17 @@ async function renderTable() {
     const breakdownHTML = buildBreakdown(exp);
     const statusBadge = getStatusBadge(exp.status);
 
-    // 🖥️ Render row
+    // 🖥️ Render row with toggle breakdown
     tbody.innerHTML += `
       <tr>
         <td>${employeeName}</td>
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
-        <td>${breakdownHTML || 'No expense breakdown'}</td>
+        <td>
+          <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer;">▶</button>
+          <span style="margin-left:0.5em;">Click to view breakdown</span>
+          <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em;">${breakdownHTML || 'No expense breakdown'}</div>
+        </td>
         <td>₹${amount}</td>
         <td>${statusBadge}</td>
         <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
@@ -149,6 +150,17 @@ async function renderTable() {
       </tr>
     `;
   }
+
+  // 🔄 Wire up toggle buttons
+  document.querySelectorAll('.toggle-breakdown').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const breakdown = document.getElementById(`breakdown-${id}`);
+      const isVisible = breakdown.style.display === 'block';
+      breakdown.style.display = isVisible ? 'none' : 'block';
+      btn.textContent = isVisible ? '▶' : '▼';
+    });
+  });
 }
 
 // ✅ Approve selected expenses
@@ -207,24 +219,24 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('rejectBtn')?.addEventListener('click', rejectSelected);
   document.getElementById('monthPicker')?.addEventListener('change', renderTable);
 
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      showToast("You must be logged in.", "error");
-      setTimeout(() => window.location.href = "login.html", 1500);
-      return;
-    }
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    showToast("You must be logged in.", "error");
+    setTimeout(() => window.location.href = "login.html", 1500);
+    return;
+  }
 
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    const role = (userDoc.exists() ? userDoc.data().role : '').toLowerCase();
+  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  const role = (userDoc.exists() ? userDoc.data().role : '').toLowerCase();
 
-    if (role !== 'accountant') {
-      alert("Access denied. Accountant role required.");
-      window.location.href = "login.html";
-      return;
-    }
+  if (role !== 'accountant') {
+    alert("Access denied. Accountant role required.");
+    window.location.href = "login.html";
+    return;
+  }
 
-    if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
+  const logoutBtn = document.querySelector('.logout-btn');
+  if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
 
-    await renderTable();
-  });
+  await renderTable();
 });
