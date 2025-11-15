@@ -11,7 +11,7 @@ admin.initializeApp({
 // Define users with roles
 const users = [
   { firstName: "Mazhar", mobile: "9945266755", role: "manager" },
-  { firstName: "Naushad", mobile: "9900198668", role: "employee" },
+  { firstName: "Naushad", mobile: "9900198668", role: "manager" },
   { firstName: "skhan", mobile: "9538262779", role: "employee" },
   { firstName: "Sridhar", mobile: "8708502540", role: "employee" },
   { firstName: "Prajwal", mobile: "9347271346", role: "employee" },
