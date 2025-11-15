@@ -5,7 +5,11 @@
   <title>XPAY Admin Panel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Toastify CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
 </head>
+
 <body class="admin-page">
   <main class="admin-wrapper">
     <h2>XPAY Admin Panel</h2>
@@ -30,106 +34,111 @@
     <p id="adminMessage" class="admin-msg"></p>
   </main>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+  <!-- Toastify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC-heT_dKo-O6523VVNPKW_Q-D6qxW8_HY",
-    authDomain: "xpay-b0298.firebaseapp.com",
-    projectId: "xpay-b0298",
-    storageBucket: "xpay-b0298.firebasestorage.app",
-    messagingSenderId: "518708112275",
-    appId: "1:518708112275:web:0ea8d94b4c3734d1895666"
-  };
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyC-heT_dKo-O6523VVNPKW_Q-D6qxW8_HY",
+      authDomain: "xpay-b0298.firebaseapp.com",
+      projectId: "xpay-b0298",
+      storageBucket: "xpay-b0298.firebasestorage.app",
+      messagingSenderId: "518708112275",
+      appId: "1:518708112275:web:0ea8d94b4c3734d1895666"
+    };
 
-  const getEl = (id) => document.getElementById(id);
-  const showMsg = (msg, color = "green", timeout = 3000) => {
-    const el = getEl("adminMessage");
-    el.textContent = msg;
-    el.style.color = color;
-    if (timeout) setTimeout(() => (el.textContent = ""), timeout);
-  };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-  const userSelect = getEl("userSelect");
-  const uidInput = getEl("uid");
-  const nameInput = getEl("name");
-  const roleSelect = getEl("role");
+    const getEl = (id) => document.getElementById(id);
+    const userSelect = getEl("userSelect");
+    const uidInput = getEl("uid");
+    const nameInput = getEl("name");
+    const roleSelect = getEl("role");
 
-  let currentUserRole = "";
+    let currentUserRole = "";
 
-  // 🔐 Check current user's role
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      showMsg("Please log in to access admin panel.", "red", 0);
-      return;
-    }
+    const toast = (text, color = "#4CAF50") => {
+      Toastify({
+        text,
+        duration: 3000,
+        gravity: "top",
+        position: "center",
+        backgroundColor: color
+      }).showToast();
+    };
 
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    currentUserRole = userDoc.data()?.role || "";
+    // 🔐 Check current user's role
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        toast("Please log in to access admin panel.", "#f44336");
+        return;
+      }
 
-    if (currentUserRole !== "manager") {
-      showMsg("Access denied. Only managers can update users.", "red", 0);
-    } else {
-      loadUsers();
-    }
-  });
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      currentUserRole = userDoc.data()?.role || "";
 
-  // 🔽 Load users into dropdown
-  async function loadUsers() {
-    const snapshot = await getDocs(collection(db, "users"));
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const option = document.createElement("option");
-      option.value = docSnap.id;
-      option.textContent = `${data.name} (${data.role})`;
-      userSelect.appendChild(option);
+      if (currentUserRole !== "manager") {
+        toast("Access denied. Only managers can update users.", "#f44336");
+      } else {
+        loadUsers();
+      }
     });
-  }
 
-  // 🧠 Populate form on selection
-  userSelect.addEventListener("change", async () => {
-    const uid = userSelect.value;
-    if (!uid) return;
-
-    const userDoc = await getDoc(doc(db, "users", uid));
-    const data = userDoc.data();
-    uidInput.value = uid;
-    nameInput.value = data?.name || "";
-    roleSelect.value = data?.role || "";
-  });
-
-  // ✏️ Update user
-  const form = getEl("userEditForm");
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (currentUserRole !== "manager") {
-      showMsg("Access denied. Only managers can update users.", "red", 0);
-      return;
+    // 🔽 Load users into dropdown
+    async function loadUsers() {
+      const snapshot = await getDocs(collection(db, "users"));
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const option = document.createElement("option");
+        option.value = docSnap.id;
+        option.textContent = `${data.name} (${data.role})`;
+        userSelect.appendChild(option);
+      });
     }
 
-    const uid = uidInput.value.trim();
-    const name = nameInput.value.trim();
-    const role = roleSelect.value;
+    // 🧠 Populate form on selection
+    userSelect.addEventListener("change", async () => {
+      const uid = userSelect.value;
+      if (!uid) return;
 
-    if (!uid || !name || !role) {
-      showMsg("All fields are required.", "red");
-      return;
-    }
+      const userDoc = await getDoc(doc(db, "users", uid));
+      const data = userDoc.data();
+      uidInput.value = uid;
+      nameInput.value = data?.name || "";
+      roleSelect.value = data?.role || "";
+    });
 
-    try {
-      await setDoc(doc(db, "users", uid), { name, role }, { merge: true });
-      showMsg(`✅ Updated ${name} as ${role}.`);
-    } catch (error) {
-      showMsg("Update failed: " + error.message, "red");
-    }
-  });
-</script>
+    // ✏️ Update user
+    const form = getEl("userEditForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (currentUserRole !== "manager") {
+        toast("Access denied. Only managers can update users.", "#f44336");
+        return;
+      }
 
+      const uid = uidInput.value.trim();
+      const name = nameInput.value.trim();
+      const role = roleSelect.value;
+
+      if (!uid || !name || !role) {
+        toast("All fields are required.", "#f44336");
+        return;
+      }
+
+      try {
+        await setDoc(doc(db, "users", uid), { name, role }, { merge: true });
+        toast(`✅ Updated ${name} as ${role}.`);
+      } catch (error) {
+        toast("Update failed: " + error.message, "#f44336");
+      }
+    });
+  </script>
 </body>
 </html>
