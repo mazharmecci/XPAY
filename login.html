@@ -5,25 +5,29 @@
   <title>XPAY Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="login.css" />
+
+  <!-- Toastify CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
 </head>
 <body class="login-page">
   <main class="login-wrapper">
     <div class="login-box">
       <img src="images/x.png" alt="XPAY Logo" class="login-logo" />
-
       <form id="loginForm" class="login-form">
         <input type="text" id="username" class="login-input" placeholder="Username" required />
         <input type="password" id="password" class="login-input" placeholder="Password" required />
         <button type="submit" class="login-button">Login</button>
       </form>
-
       <p id="loginError" class="login-error-msg"></p>
     </div>
   </main>
 
+  <!-- Toastify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -40,65 +44,53 @@
     const db = getFirestore(app);
 
     const getEl = (id) => document.getElementById(id);
-    const showError = (id, message) => {
-      const el = getEl(id);
-      if (el) el.textContent = message;
+
+    const toast = (text, color = "#4CAF50") => {
+      Toastify({
+        text,
+        duration: 3000,
+        gravity: "top",
+        position: "center",
+        backgroundColor: color
+      }).showToast();
     };
 
-    const loginForm = getEl('loginForm');
-    loginForm.addEventListener('submit', async (e) => {
+    const loginForm = getEl("loginForm");
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const username = getEl('username')?.value.trim();
-      const password = getEl('password')?.value;
+      const username = getEl("username").value.trim().toLowerCase();
+      const password = getEl("password").value;
 
       if (!username || !password) {
-        showError('loginError', "Username and password are required.");
+        toast("Username and password are required.", "#f44336");
         return;
       }
 
-      // Convert username to email format
-      const email = `${username.toLowerCase()}@xpay.local`;
+      const email = `${username}@xpay.local`;
 
       try {
         const { user } = await signInWithEmailAndPassword(auth, email, password);
+
+        // 🔍 Fetch role from Firestore
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.data();
-
-        const role = (userData?.role || "").toLowerCase();
-        const name = userData?.name || "User";
-
-        const emojiMap = { employee: "🧑‍💼", accountant: "📊", manager: "🧭" };
-        const redirectMap = {
-          manager: "manager.html",
-          employee: "employee.html",
-          accountant: "accountant.html"
-        };
-
-        if (!redirectMap[role]) {
-          showError("loginError", "Role not assigned. Contact admin.");
+        if (!userDoc.exists()) {
+          toast("Role not assigned. Contact admin.", "#f44336");
           return;
         }
 
-        localStorage.setItem("welcomeMessage", `${emojiMap[role]} Welcome ${name}, ISTOS ${role}.`);
-        window.location.href = redirectMap[role];
+        const role = userDoc.data().role;
+        toast(`✅ Welcome ${userDoc.data().name} (${role})`);
+
+        // 🔀 Redirect based on role
+        if (role === "employee") window.location.href = "employee.html";
+        else if (role === "accountant") window.location.href = "accountant.html";
+        else if (role === "manager") window.location.href = "manager.html";
+        else toast("Unknown role. Contact admin.", "#f44336");
 
       } catch (error) {
-        showError("loginError", error.message);
+        toast("Login failed: " + error.message, "#f44336");
       }
     });
-
-    // 🔐 Logout logic (used in dashboards)
-    window.logoutUser = async function () {
-      try {
-        await signOut(auth);
-        localStorage.removeItem("welcomeMessage");
-        window.location.href = "login.html";
-      } catch (error) {
-        console.error("Logout failed:", error);
-      }
-    };
   </script>
-
-  <script type="module" src="app.js"></script>
 </body>
 </html>
