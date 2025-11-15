@@ -78,6 +78,22 @@ async function handleFinalAction(newStatus, toastMessage, toastType) {
 
 // 📊 Render Manager Claims
 
+// 🛡️ Safe Amount Helper
+function safeAmount(value) {
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+}
+
+const total = safeAmount(exp.advanceCash) 
+            + safeAmount(exp.monthlyConveyance) 
+            + safeAmount(exp.monthlyPhone)
+            + safeAmount(exp.fuel) 
+            + safeAmount(exp.fare) 
+            + safeAmount(exp.boarding)
+            + safeAmount(exp.food) 
+            + safeAmount(exp.localConveyance) 
+            + safeAmount(exp.misc);
+
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   const summaryRow = document.querySelector("#managerSummaryRow");
