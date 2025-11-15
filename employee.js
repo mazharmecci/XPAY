@@ -105,65 +105,75 @@ async function renderExpenses() {
 
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-  let monthlyTotal = 0;
+let monthlyTotal = 0;
+let travelTotal = 0;
 
-  records.forEach((exp, index) => {
-    const badge = getStatusBadge(exp.status);
-    const sn = index + 1;
-    const date = exp.date || "-";
+records.forEach((exp, index) => {
+  const badge = getStatusBadge(exp.status);
+  const sn = index + 1;
+  const date = exp.date || "-";
 
-    // Trip Info
-    tripInfoTable.innerHTML += `
-      <tr>
-        <td>${sn}</td>
-        <td>${date}</td>
-        <td>${exp.workflowType || "-"}</td>
-        <td>${exp.placeVisited || "-"}</td>
-        <td>${badge}</td>
-      </tr>
-    `;
-
-    // Travel Costs
-    travelCostTable.innerHTML += `
-      <tr>
-        <td>${sn}</td>
-        <td>${date}</td>
-        <td>${safeAmount(exp.fuel)}</td>
-        <td>${safeAmount(exp.fare)}</td>
-        <td>${safeAmount(exp.boarding)}</td>
-        <td>${safeAmount(exp.food)}</td>
-        <td>${safeAmount(exp.localConveyance)}</td>
-        <td>${safeAmount(exp.misc)}</td>
-        <td>${badge}</td>
-      </tr>
-    `;
-
-    // Monthly Claims
-    const advance = safeAmount(exp.advanceCash);
-    const convey = safeAmount(exp.monthlyConveyance);
-    const phone = safeAmount(exp.monthlyPhone);
-    monthlyTotal += advance + convey + phone;
-
-    monthlyClaimsTable.innerHTML += `
-      <tr>
-        <td>${sn}</td>
-        <td>${date}</td>
-        <td>${advance}</td>
-        <td>${convey}</td>
-        <td>${phone}</td>
-        <td>${badge}</td>
-      </tr>
-    `;
-  });
-
-  // ➕ Summary row for Monthly Claims
-  monthlyClaimsTable.innerHTML += `
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">Total Pending for ${selectedMonth}:</td>
-      <td>₹${monthlyTotal}</td>
+  // Trip Info
+  tripInfoTable.innerHTML += `
+    <tr>
+      <td>${sn}</td>
+      <td>${date}</td>
+      <td>${exp.workflowType || "-"}</td>
+      <td>${exp.placeVisited || "-"}</td>
+      <td>${badge}</td>
     </tr>
   `;
-}
+
+  // Travel Costs
+  const fuel = safeAmount(exp.fuel);
+  const fare = safeAmount(exp.fare);
+  const boarding = safeAmount(exp.boarding);
+  const food = safeAmount(exp.food);
+  const local = safeAmount(exp.localConveyance);
+  const misc = safeAmount(exp.misc);
+  travelTotal += fuel + fare + boarding + food + local + misc;
+
+  travelCostTable.innerHTML += `
+    <tr>
+      <td>${sn}</td>
+      <td>${date}</td>
+      <td>${fuel}</td>
+      <td>${fare}</td>
+      <td>${boarding}</td>
+      <td>${food}</td>
+      <td>${local}</td>
+      <td>${misc}</td>
+      <td>${badge}</td>
+    </tr>
+  `;
+
+  // Monthly Claims
+  const advance = safeAmount(exp.advanceCash);
+  const convey = safeAmount(exp.monthlyConveyance);
+  const phone = safeAmount(exp.monthlyPhone);
+  monthlyTotal += advance + convey + phone;
+
+  monthlyClaimsTable.innerHTML += `
+    <tr>
+      <td>${sn}</td>
+      <td>${date}</td>
+      <td>${advance}</td>
+      <td>${convey}</td>
+      <td>${phone}</td>
+      <td>${badge}</td>
+    </tr>
+  `;
+});
+
+// ➕ Summary row for Monthly Claims
+const grandTotal = travelTotal + monthlyTotal;
+
+monthlyClaimsTable.innerHTML += `
+  <tr style="font-weight:bold; background:#f9f9f9;">
+    <td colspan="5" style="text-align:right;">Total Pending for ${selectedMonth}:</td>
+    <td>₹${grandTotal}</td>
+  </tr>
+`;
 
 
 // 🚦 Init
