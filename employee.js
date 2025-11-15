@@ -80,10 +80,12 @@ function safeAmount(val) {
 }
 
 // 📊 Render Employee Expenses
+
 async function renderExpenses() {
   const tripInfoTable = document.querySelector("#tripInfoTable tbody");
   const travelCostTable = document.querySelector("#travelCostTable tbody");
   const monthlyClaimsTable = document.querySelector("#monthlyClaimsTable tbody");
+  const selectedMonth = document.getElementById("monthPicker")?.value || new Date().toISOString().slice(0, 7);
 
   tripInfoTable.innerHTML = "";
   travelCostTable.innerHTML = "";
@@ -94,17 +96,21 @@ async function renderExpenses() {
 
   snapshot.forEach(docSnap => {
     const exp = docSnap.data();
-    records.push(exp);
+    const dateStr = typeof exp.date === 'string' ? exp.date : '';
+    if (dateStr.slice(0, 7) === selectedMonth) {
+      records.push(exp);
+    }
   });
 
-  // Sort by date descending
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-  records.forEach(exp => {
+  records.forEach((exp, index) => {
     const badge = getStatusBadge(exp.status);
+    const sn = index + 1;
 
     tripInfoTable.innerHTML += `
       <tr>
+        <td>${sn}</td>
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
         <td>${exp.placeVisited || "-"}</td>
@@ -114,7 +120,7 @@ async function renderExpenses() {
 
     travelCostTable.innerHTML += `
       <tr>
-        <td>${exp.date || "-"}</td>
+        <td>${sn}</td>
         <td>${safeAmount(exp.fuel)}</td>
         <td>${safeAmount(exp.fare)}</td>
         <td>${safeAmount(exp.boarding)}</td>
@@ -127,7 +133,7 @@ async function renderExpenses() {
 
     monthlyClaimsTable.innerHTML += `
       <tr>
-        <td>${exp.date || "-"}</td>
+        <td>${sn}</td>
         <td>${safeAmount(exp.advanceCash)}</td>
         <td>${safeAmount(exp.monthlyConveyance)}</td>
         <td>${safeAmount(exp.monthlyPhone)}</td>
@@ -136,6 +142,7 @@ async function renderExpenses() {
     `;
   });
 }
+
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
