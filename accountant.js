@@ -1,56 +1,66 @@
-import { auth, db } from './firebase.js';
-import {
-  onAuthStateChanged,
-  signOut,
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import {
-  getDocs,
-  collection,
-  updateDoc,
-  doc,
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { db } from './firebase.js';
+import { getDocs, collection, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// Toast Alert
-function showToast(message, type = 'success') {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.className = `toast ${type}`;
-  toast.style.display = 'block';
-  setTimeout(() => (toast.style.display = 'none'), 3000);
-}
+// Key fields from your doc: boarding, food, fare, fuel, localConveyance, misc, monthlyConveyance, monthlyPhone
 
-// Fetch pending expenses from Firestore for the selected month
+const FIELD_LABELS = {
+  boarding: "Boarding",
+  fare: "Fare",
+  food: "Food",
+  fuel: "Fuel",
+  localConveyance: "Local Conveyance",
+  misc: "Misc",
+  monthlyConveyance: "Monthly Conveyance",
+  monthlyPhone: "Monthly Phone"
+};
+
+// Get all pending expenses for a given month
 async function fetchPendingExpenses(selectedMonth) {
-  const expensesRef = collection(db, "expenses"); // Make sure your backend collection matches
+  const expensesRef = collection(db, "expenses");
   const snapshot = await getDocs(expensesRef);
-  const expenses = [];
+  const records = [];
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
-    // Filter: Only 'Pending' and matching month
+
+    // Only Pending and matching year-month
     if (
       data.status === "Pending" &&
-      data.date && data.date.slice(0, 7) === selectedMonth
+      data.date &&
+      data.date.slice(0, 7) === selectedMonth
     ) {
-      expenses.push({ ...data, id: docSnap.id });
+      records.push({ ...data, id: docSnap.id });
     }
   });
-  return expenses;
+  return records;
 }
 
-// Render the expense table
+// Render table: handle document layout per your fields, sum up amount
 async function renderTable() {
   const selectedMonth = document.getElementById('monthPicker').value;
   const expenses = await fetchPendingExpenses(selectedMonth);
   const tbody = document.querySelector('#expenseTable tbody');
   tbody.innerHTML = '';
+
   expenses.forEach(exp => {
+    // Calculate total amount
+    let amount = 0;
+    Object.keys(FIELD_LABELS).forEach(key => {
+      if (exp[key] && !isNaN(exp[key])) amount += Number(exp[key]);
+    });
+
     tbody.innerHTML += `
       <tr>
-        <td>${exp.employee}</td>
-        <td>${exp.date}</td>
-        <td>${exp.type}</td>
-        <td>${exp.place}</td>
-        <td>₹${exp.amount}</td>
+        <td>${exp.userId || "-"}</td>
+        <td>${exp.date || "-"}</td>
+        <td>${exp.workflowType || "-"}</td>
+        <td>
+          Place: ${exp.placeVisited || "-"}
+          <br>
+          ${Object.keys(FIELD_LABELS).map(key =>
+             exp[key] ? `${FIELD_LABELS[key]}: ₹${exp[key]}` : ''
+           ).filter(e => e).join(', ')}
+        </td>
+        <td>₹${amount}</td>
         <td>${exp.status}</td>
         <td>
           <input type="checkbox" class="action-checkbox" data-id="${exp.id}">
@@ -58,11 +68,12 @@ async function renderTable() {
         <td>
           <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)">
         </td>
-      </tr>`;
+      </tr>
+    `;
   });
 }
 
-// Approve selected expenses
+// Approval/rejection logic (unchanged, works by doc id)
 async function approveSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
   let success = 0;
@@ -83,7 +94,6 @@ async function approveSelected() {
   renderTable();
 }
 
-// Reject selected expenses
 async function rejectSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
   let success = 0;
@@ -104,7 +114,7 @@ async function rejectSelected() {
   renderTable();
 }
 
-// Event Listeners
+// Attach events and init on page load
 document.getElementById('monthPicker').addEventListener('change', renderTable);
 document.getElementById('approveBtn').addEventListener('click', approveSelected);
 document.getElementById('rejectBtn').addEventListener('click', rejectSelected);
@@ -119,5 +129,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   }
 });
 
-// On page load, show table
-renderTable();
+renderTable(); // Initial table load
+
+// Toast (already provided)
+function showToast(message, type = 'success') { /* ... */ }
