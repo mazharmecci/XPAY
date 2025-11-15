@@ -24,6 +24,12 @@
 
       <hr class="section-divider" />
 
+      <select id="monthPicker">
+        <option value="2025-10">October 2025</option>
+        <option value="2025-11">November 2025</option>        
+  <!-- Add more months manually -->        
+      </select>
+
       <!-- 📊 Expense Review Table -->
       <section id="managerReview" class="report-section">
         <h2>All Submitted Expenses</h2>
@@ -31,19 +37,23 @@
           <table id="managerTable">
             <thead>
               <tr>
+                <th>S.No</th>
                 <th>Date</th>
-                <th>Employee</th>
                 <th>Type</th>
-                <th>Amount</th>
+                <th>Place</th>
+                <th>Total Amount</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th>Action</th>
+                <th>Comment</th>
               </tr>
             </thead>
             <tbody></tbody>
+            <tfoot id="managerSummaryRow"></tfoot>
           </table>
-        </div>
-      </section>
-
+          
+<button id="finalApproveBtn">✅ Final Approve</button>
+<button id="finalRejectBtn">❌ Final Reject</button>
+          
 <footer class="site-footer">
   <div class="footer-content">
     <div class="footer-brand">
