@@ -106,10 +106,12 @@ function buildBreakdown(exp) {
 
 // 🏷️ Status badge
 function getStatusBadge(status) {
-  const s = (status || '').toLowerCase();
-  if (s === 'approved') return `<span style="color:green;">✅ Accountant Approved</span>`;
-  if (s === 'rejected') return `<span style="color:red;">❌ Rejected</span>`;
-  return `<span style="color:orange;">⏳ Pending</span>`;
+  if (status === "Approved") return `<span class="badge approved">Accountant Approved</span>`;
+  if (status === "FinalApproved") return `<span class="badge final-approved">Final Approved</span>`;
+  if (status === "Rejected") return `<span class="badge rejected">Rejected</span>`;
+  if (status === "RejectedByManager") return `<span class="badge rejected">Rejected by Manager</span>`;
+  if (status === "Pending") return `<span class="badge pending">Pending</span>`;
+  return `<span class="badge unknown">Unknown</span>`;
 }
 
 // 🛠️ Debug Logger Utility
