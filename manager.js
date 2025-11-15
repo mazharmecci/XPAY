@@ -76,23 +76,14 @@ async function handleFinalAction(newStatus, toastMessage, toastType) {
   await renderManagerClaims();
 }
 
-// 📊 Render Manager Claims
-
 // 🛡️ Safe Amount Helper
+
 function safeAmount(value) {
   const num = Number(value);
   return isNaN(num) ? 0 : num;
 }
 
-const total = safeAmount(exp.advanceCash) 
-            + safeAmount(exp.monthlyConveyance) 
-            + safeAmount(exp.monthlyPhone)
-            + safeAmount(exp.fuel) 
-            + safeAmount(exp.fare) 
-            + safeAmount(exp.boarding)
-            + safeAmount(exp.food) 
-            + safeAmount(exp.localConveyance) 
-            + safeAmount(exp.misc);
+// 📊 Render Manager Claims
 
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
@@ -112,6 +103,18 @@ async function renderManagerClaims() {
       records.push({ id: docSnap.id, ...exp });
     }
   });
+
+  records.forEach((exp, index) => {
+    // ✅ total calculation belongs here, where exp is defined
+    const total = safeAmount(exp.advanceCash) 
+                + safeAmount(exp.monthlyConveyance) 
+                + safeAmount(exp.monthlyPhone)
+                + safeAmount(exp.fuel) 
+                + safeAmount(exp.fare) 
+                + safeAmount(exp.boarding)
+                + safeAmount(exp.food) 
+                + safeAmount(exp.localConveyance) 
+                + safeAmount(exp.misc);
 
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
@@ -186,7 +189,6 @@ async function renderManagerClaims() {
     </tr>
   `;
 }
-
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
