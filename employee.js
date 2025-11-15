@@ -146,12 +146,16 @@ async function renderExpenses() {
 
 
 // 🚦 Init
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("expenseForm");
   if (form) form.addEventListener("submit", submitExpense);
 
   const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
+
+  // 🗓️ Month filter listener
+  document.getElementById("monthPicker")?.addEventListener("change", renderExpenses);
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -172,3 +176,4 @@ document.addEventListener("DOMContentLoaded", () => {
     await renderExpenses();
   });
 });
+
