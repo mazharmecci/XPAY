@@ -33,6 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', logoutUser);
   }
+
+  // 🗓️ Set default month to current if not already set
+  const monthPicker = document.getElementById('monthPicker');
+  if (monthPicker && !monthPicker.value) {
+    monthPicker.value = new Date().toISOString().slice(0, 7);
+  }
 });
 
 // --- Accountant Auth Guard and Data Load ---
@@ -62,6 +68,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   // Load pending expenses table
+  
   await renderTable();
 });
 
@@ -81,26 +88,42 @@ async function fetchPendingExpenses(selectedMonth) {
   const expensesRef = collection(db, "expenses");
   const snapshot = await getDocs(expensesRef);
   const records = [];
+
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
+    const dateStr = typeof data.date === 'string' ? data.date : '';
+    const status = (data.status || '').toLowerCase();
+
     if (
-      data.status === "Pending" &&
-      data.date &&
-      data.date.slice(0, 7) === selectedMonth
+      status === "pending" &&
+      dateStr.slice(0, 7) === selectedMonth
     ) {
       records.push({ ...data, id: docSnap.id });
     }
   });
+
   return records;
 }
 
 // Render accountant dashboard table
+
 async function renderTable() {
   const monthPicker = document.getElementById('monthPicker');
-  const selectedMonth = monthPicker ? monthPicker.value : '';
+  const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
   const expenses = await fetchPendingExpenses(selectedMonth);
   const tbody = document.querySelector('#expenseTable tbody');
   tbody.innerHTML = '';
+
+  if (expenses.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align:center; padding: 1em; color: #888;">
+          📭 No pending expenses found for ${selectedMonth}.
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
   expenses.forEach(exp => {
     let amount = 0;
@@ -133,6 +156,7 @@ async function renderTable() {
 }
 
 // Approve selected expenses
+
 async function approveSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
   let success = 0;
@@ -154,6 +178,7 @@ async function approveSelected() {
 }
 
 // Reject selected expenses
+
 async function rejectSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
   let success = 0;
