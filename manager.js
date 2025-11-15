@@ -136,7 +136,7 @@ async function renderManagerClaims() {
     let badgeText = "";
     if (exp.status === "Approved") {
       badgeClass = "badge approved";
-      badgeText = "Approved";
+      badgeText = "Accountant Approved";
       totalApproved += total;
     } else if (exp.status === "Rejected") {
       badgeClass = "badge rejected";
