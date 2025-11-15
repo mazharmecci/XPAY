@@ -3,6 +3,17 @@ import { auth, db } from './firebase.js';
 import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
+import { Toaster } from "react-hot-toast";
+
+function App() {
+  return (
+    <>
+      <Toaster position="top-center" />
+      <Login />
+    </>
+  );
+}
+
 // 🧩 Utility
 function getEl(id) { return document.getElementById(id); }
 function showError(id, message) { const el = getEl(id); if (el) el.textContent = message; }
