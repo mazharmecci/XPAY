@@ -30,17 +30,21 @@ function showToast(message, type = 'success') {
   toast.textContent = message;
   toast.className = `toast ${type}`;
   toast.style.display = 'block';
-  setTimeout(() => (toast.style.display = 'none'), 3000);
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 3000);
 }
 
 // 🚪 Logout
 function logoutUser() {
-  signOut(auth).then(() => {
-    window.location.href = "login.html";
-  }).catch((err) => {
-    showToast("Logout failed", "error");
-    console.error(err);
-  });
+  signOut(auth)
+    .then(() => {
+      window.location.href = "login.html";
+    })
+    .catch((err) => {
+      showToast("Logout failed", "error");
+      console.error(err);
+    });
 }
 
 // 🔎 Fetch expenses for selected month
@@ -68,7 +72,6 @@ function buildBreakdown(exp) {
     const items = keys
       .map(key => exp[key] ? `${FIELD_LABELS[key]}: ₹${exp[key]}` : '')
       .filter(Boolean);
-
     return items.length
       ? `<strong>${groupName}</strong><br>${items.join(', ')}`
       : '';
@@ -223,20 +226,21 @@ document.addEventListener('DOMContentLoaded', () => {
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
-      setTimeout(() => window.location.href = "login.html", 1500);
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1500);
       return;
     }
 
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     const role = (userDoc.exists() ? userDoc.data().role : '').toLowerCase();
 
-        if (role !== 'accountant') {
+    if (role !== 'accountant') {
       alert("Access denied. Accountant role required.");
       window.location.href = "login.html";
       return;
     }
 
-    const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
 
     await renderTable();
