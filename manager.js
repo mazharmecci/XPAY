@@ -44,66 +44,6 @@ function showApprovalOverlay(role, expenseType) {
   setTimeout(() => overlay.remove(), 3000);
 }
 
-// 🔘 Render Action Cell
-function renderActionCell(exp) {
-  const isReady = exp.approvedByAccountant && !exp.approvedByManager;
-
-  if (isReady) {
-    return `<button class="approve-btn" data-id="${exp.id}" data-type="${exp.type}">✅ Final Approve</button>`;
-  }
-
-  return `<span class="badge">${exp.approvedByManager ? '✅ Approved' : '⏳ Awaiting Accountant'}</span>`;
-}
-
-// 📊 Render Expenses into Table
-function renderExpenses(expenses, userNames) {
-  const tbody = document.querySelector('#managerTable tbody');
-  tbody.innerHTML = '';
-
-  expenses.forEach(exp => {
-    const employeeName = userNames[exp.userId] || 'Unknown';
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${employeeName}</td>
-      <td>${exp.type}</td>
-      <td>₹${exp.amount}</td>
-      <td>${formatDate(exp.date)}</td>
-      <td>${exp.status}</td>
-      <td>${renderActionCell(exp)}</td>
-    `;
-    tbody.appendChild(row);
-  });
-
-  attachApprovalLogic();
-}
-
-// 🔘 Attach Approval Logic
-function attachApprovalLogic() {
-  document.querySelectorAll('.approve-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const expenseId = btn.dataset.id;
-      const expenseType = btn.dataset.type || 'Expense';
-
-      try {
-        await updateDoc(doc(db, 'expenses', expenseId), {
-          approvedByManager: true,
-          status: 'manager-approved'
-        });
-
-        showToast("Expense approved successfully!");
-        showApprovalOverlay("Manager", expenseType);
-
-        btn.disabled = true;
-        btn.textContent = "✅ Approved";
-        btn.classList.add("badge", "badge-final");
-      } catch (error) {
-        console.error("Approval error:", error);
-        showToast("Approval failed. Try again.", 'error');
-      }
-    });
-  });
-}
-
 // 👥 Fetch Employee Names
 async function fetchUserNames() {
   const snapshot = await getDocs(collection(db, 'users'));
@@ -145,3 +85,97 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
     showToast("Logout failed. Try again.", 'error');
   }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutBtn = document.querySelector(".logout-btn");
+  if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      showToast("You must be logged in.", "error");
+      setTimeout(() => window.location.href = "login.html", 1500);
+      return;
+    }
+
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const role = (userDoc.exists() ? userDoc.data().role : "").toLowerCase();
+
+    if (role !== "manager") {
+      alert("Access denied. Manager role required.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    await renderManagerClaims();
+  });
+});
+
+async function renderManagerClaims() {
+  const tableBody = document.querySelector("#managerClaimsTable tbody");
+  const selectedMonth = document.getElementById("monthPicker")?.value || new Date().toISOString().slice(0, 7);
+  tableBody.innerHTML = "";
+
+  const snapshot = await getDocs(collection(db, "expenses"));
+  const records = [];
+
+  snapshot.forEach(docSnap => {
+    const exp = docSnap.data();
+    const dateStr = typeof exp.date === 'string' ? exp.date : '';
+    if (exp.status === "Approved" && dateStr.slice(0, 7) === selectedMonth) {
+      records.push({ id: docSnap.id, ...exp });
+    }
+  });
+
+  records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  records.forEach((exp, index) => {
+    const sn = index + 1;
+    const total = safeAmount(exp.advanceCash) + safeAmount(exp.monthlyConveyance) + safeAmount(exp.monthlyPhone)
+                + safeAmount(exp.fuel) + safeAmount(exp.fare) + safeAmount(exp.boarding)
+                + safeAmount(exp.food) + safeAmount(exp.localConveyance) + safeAmount(exp.misc);
+
+    tableBody.innerHTML += `
+      <tr>
+        <td>${sn}</td>
+        <td>${exp.date || "-"}</td>
+        <td>${exp.workflowType || "-"}</td>
+        <td>${exp.placeVisited || "-"}</td>
+        <td>₹${total}</td>
+        <td><span class="badge approved">Approved</span></td>
+        <td><input type="checkbox" class="select-claim" data-id="${exp.id}"></td>
+        <td><input type="text" class="manager-comment" placeholder="Comment (optional)"></td>
+      </tr>
+    `;
+  });
+}
+
+document.getElementById("finalApproveBtn")?.addEventListener("click", async () => {
+  const selected = document.querySelectorAll(".select-claim:checked");
+  for (const checkbox of selected) {
+    const id = checkbox.dataset.id;
+    const comment = checkbox.closest("tr").querySelector(".manager-comment")?.value || "";
+    await updateDoc(doc(db, "expenses", id), {
+      status: "FinalApproved",
+      finalComment: comment
+    });
+  }
+  showToast("Final approvals submitted.", "success");
+  await renderManagerClaims();
+});
+
+document.getElementById("finalRejectBtn")?.addEventListener("click", async () => {
+  const selected = document.querySelectorAll(".select-claim:checked");
+  for (const checkbox of selected) {
+    const id = checkbox.dataset.id;
+    const comment = checkbox.closest("tr").querySelector(".manager-comment")?.value || "";
+    await updateDoc(doc(db, "expenses", id), {
+      status: "RejectedByManager",
+      finalComment: comment
+    });
+  }
+  showToast("Selected claims rejected.", "error");
+  await renderManagerClaims();
+});
+
+
+
