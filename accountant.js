@@ -105,6 +105,10 @@ async function renderTable() {
     return;
   }
 
+  // DEBUG
+  console.log("First expense structure:", expenses[0]);
+  console.log("Available fields:", Object.keys(expenses[0]));
+
   const userCache = {};
 
   for (const exp of expenses) {
@@ -126,17 +130,23 @@ async function renderTable() {
       }
     }
 
-    // 💰 Calculate total amount
+    // 💰 Calculate total amount - DEBUG VERSION
     let amount = 0;
-    Object.values(FIELD_GROUPS).flat().forEach(key => {
-      if (exp[key] && !isNaN(exp[key])) amount += Number(exp[key]);
+    const allKeys = Object.values(FIELD_GROUPS).flat();
+    console.log("Expected keys:", allKeys);
+    console.log("Checking values in expense:", allKeys.map(k => `${k}: ${exp[k]}`));
+    
+    allKeys.forEach(key => {
+      if (exp[key] && !isNaN(exp[key])) {
+        amount += Number(exp[key]);
+      }
     });
 
     // 🧾 Build breakdown
     const breakdownHTML = buildBreakdown(exp);
     const statusBadge = getStatusBadge(exp.status);
 
-    // 🖥️ Render row with toggle breakdown
+    // 🖥️ Render row
     tbody.innerHTML += `
       <tr>
         <td>${employeeName}</td>
@@ -155,7 +165,7 @@ async function renderTable() {
     `;
   }
 
-  // 🔄 Wire up toggle buttons
+  // Wire up toggle buttons
   document.querySelectorAll('.toggle-breakdown').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
@@ -166,6 +176,7 @@ async function renderTable() {
     });
   });
 }
+
 
 // ✅ Approve selected expenses
 async function approveSelected() {
