@@ -81,7 +81,6 @@ function safeAmount(val) {
 
 // 📊 Render Employee Expenses
 
-// 📊 Render Employee Expenses
 async function renderExpenses() {
   const tripInfoTable = document.querySelector("#tripInfoTable tbody");
   const travelCostTable = document.querySelector("#travelCostTable tbody");
@@ -206,7 +205,7 @@ monthlyClaimsTable.innerHTML += `
     <td>₹${totalPending}</td>
   </tr>
 `;
-
+} // ✅ this was missing — closes renderExpenses
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
