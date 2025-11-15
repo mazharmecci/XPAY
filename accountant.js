@@ -107,7 +107,7 @@ function buildBreakdown(exp) {
 // 🏷️ Status badge
 function getStatusBadge(status) {
   const s = (status || '').toLowerCase();
-  if (s === 'approved') return `<span style="color:green;">✅ Approved</span>`;
+  if (s === 'approved') return `<span style="color:green;">✅ Accountant Approved</span>`;
   if (s === 'rejected') return `<span style="color:red;">❌ Rejected</span>`;
   return `<span style="color:orange;">⏳ Pending</span>`;
 }
