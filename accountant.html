@@ -8,92 +8,66 @@
 </head>
 <body class="employee-page">
   <main>
-    <!-- 🌰 Form Wrapper for Biscuit Background -->
     <div class="form-wrapper">
-      <!-- 🔷 Header with Logo + Tagline -->
       <div class="form-header centered-logo">
         <img src="images/x.png" alt="XPAY Logo" class="form-logo" />
         <p class="tagline">ISTOS PAYMENT APP</p>
       </div>
-
-      <!-- 🎉 Welcome Banner -->
       <div class="welcome-row">
-        <div id="welcomeBanner" class="welcome-banner">👨‍💼 Welcome Accountant!</div>        
+        <div id="welcomeBanner" class="welcome-banner">👨‍💼 Welcome Accountant!</div>
       </div>
-
       <hr class="section-divider" />
 
-      <!-- 📊 Expense Review Table -->
-      
-<h2>Accountant Dashboard - Pending Expense Approvals</h2>
-
-<select id="monthPicker">
-  <option value="2025-10">October 2025</option>
-  <option value="2025-11">November 2025</option>
-</select>
-
-<table id="expenseTable">
-  <thead>
-    <tr>
-      <th>Employee</th>
-      <th>Claim Date</th>
-      <th>Type</th>
-      <th>Place/Details</th>
-      <th>Amount</th>
-      <th>Status</th>
-      <th>Action</th>
-      <th>Comment</th>
-    </tr>
-  </thead>
-  <tbody>
-    <!-- Dynamically filled by backend or JS -->
-  </tbody>
-</table>
-
-<button onclick="approveSelected()">Approve Selected</button>
-<button onclick="rejectSelected()">Reject Selected</button>
-
-<script>
-  // Sample data fetch
-  const pendingExpenses = [
-    {
-      employee: 'Ajay Kumar',
-      date: '2025-11-14',
-      type: 'Trip',
-      place: 'Hyderabad',
-      amount: 3070,
-      status: 'Pending'
-    },
-    // More data ...
-  ];
-  
-<!-- 🚪 Logout Button -->
-<div class="logout-container">
-  <button class="logout-btn inside-form">🚪 Logout</button>
-</div>
-  
-<footer class="site-footer">
-  <div class="footer-content">
-    <div class="footer-brand">
-      <img src="images/istos-logo.png" alt="ISTOS Logo" class="footer-logo" />
-      <p>XPAY by ISTOS Medical Private Limited</p>
-      <p>51/5, Ground Floor, BSTN Heights, 2nd Cr <br>
-        J.C Industrial Area, Bakasipura Mn Rd, <br>
-        Yelachenhalli, Bangalore - 560062</p>      
-    </div>
-
-    <div class="footer-legal">
-      <p>© 2015-2025 ISTOS Medical Private Limited.</p>      
-    </div>
-  </div>
-</footer>
-
-      
-      <!-- 🔔 Toast Alert -->
+      <!-- Expense Review Table -->
+      <h2>Accountant Dashboard – Pending Expense Approvals</h2>
+      <select id="monthPicker">
+        <option value="2025-10">October 2025</option>
+        <option value="2025-11">November 2025</option>
+      </select>
+      <table id="expenseTable">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Claim Date</th>
+            <th>Type</th>
+            <th>Place/Details</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Action</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Populated by accountant.js -->
+        </tbody>
+      </table>
       <div id="toast" class="toast"></div>
-    </div> <!-- ✅ Closing .form-wrapper -->
-  </main>
 
+      <div class="action-btns">
+        <button id="approveBtn">Approve Selected</button>
+        <button id="rejectBtn">Reject Selected</button>
+      </div>
+
+      <div class="logout-container">
+        <button id="logoutBtn" class="logout-btn inside-form">🚪 Logout</button>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <img src="images/istos-logo.png" alt="ISTOS Logo" class="footer-logo" />
+          <p>XPAY by ISTOS Medical Private Limited</p>
+          <p>51/5, Ground Floor, BSTN Heights, 2nd Cr<br>
+             J.C Industrial Area, Bakasipura Mn Rd,<br>
+             Yelachenhalli, Bangalore - 560062</p>
+        </div>
+        <div class="footer-legal">
+          <p>© 2015-2025 ISTOS Medical Private Limited.</p>
+        </div>
+      </div>
+    </footer>
+  </main>
   <script type="module" src="accountant.js"></script>
 </body>
 </html>
