@@ -181,29 +181,32 @@ async function renderExpenses() {
   });
 
   // 🧾 Final Summary Block
-  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
-    month: "long",
-    year: "numeric"
-  });
 
-  monthlyClaimsTable.innerHTML += `
-    <tr style="font-weight:bold; background:#f0f0f0;">
-      <td colspan="6" style="text-align:left;">Total expenses submitted for current month – ${monthLabel}: Trip Info + Travel Cost + Monthly Claims</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
-      <td>₹${totalApproved}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
-      <td>₹${totalRejected}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">⏳ Still Pending for ${selectedMonth}:</td>
-      <td>₹${totalPending}</td>
-    </tr>
-  `;
-} // ✅ closes renderExpenses
+  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
+  month: "long",
+  year: "numeric"
+});
+
+const totalSubmitted = records.length;
+
+monthlyClaimsTable.innerHTML += `
+  <tr style="font-weight:bold; background:#f0f0f0;">
+    <td colspan="6" style="text-align:left;">Total ${totalSubmitted} expenses submitted for current month – ${monthLabel}: Trip Info + Travel Cost + Monthly Claims</td>
+  </tr>
+  <tr style="font-weight:bold; background:#f9f9f9;">
+    <td colspan="5" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
+    <td>₹${totalApproved}</td>
+  </tr>
+  <tr style="font-weight:bold; background:#f9f9f9;">
+    <td colspan="5" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
+    <td>₹${totalRejected}</td>
+  </tr>
+  <tr style="font-weight:bold; background:#f9f9f9;">
+    <td colspan="5" style="text-align:right;">⏳ Still Pending for ${selectedMonth}:</td>
+    <td>₹${totalPending}</td>
+  </tr>
+`;
+
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
