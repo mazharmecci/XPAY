@@ -86,84 +86,264 @@ function getStatusBadge(status) {
   return `<span style="color:orange;">⏳ Pending</span>`;
 }
 
-// 🖥️ Render accountant dashboard table
-async function renderTable() {
-  const monthPicker = document.getElementById('monthPicker');
-  const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
-  const expenses = await fetchExpenses(selectedMonth);
-  const tbody = document.querySelector('#expenseTable tbody');
-  tbody.innerHTML = '';
-
-  if (expenses.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="8" style="text-align:center; padding: 1em; color: #888;">
-          📭 No expenses found for ${selectedMonth}.
-        </td>
-      </tr>
-    `;
-    return;
+// 🛠️ Debug Logger Utility
+const DebugLogger = {
+  isEnabled: true, // Toggle for production
+  
+  log: (title, data) => {
+    if (!DebugLogger.isEnabled) return;
+    console.group(`🔍 ${title}`);
+    console.log(data);
+    console.groupEnd();
+  },
+  
+  table: (title, data) => {
+    if (!DebugLogger.isEnabled) return;
+    console.group(`📊 ${title}`);
+    console.table(data);
+    console.groupEnd();
+  },
+  
+  error: (title, error) => {
+    console.group(`❌ ERROR: ${title}`);
+    console.error(error);
+    console.groupEnd();
+  },
+  
+  warn: (title, message) => {
+    console.group(`⚠️ WARNING: ${title}`);
+    console.warn(message);
+    console.groupEnd();
   }
+};
 
-  // DEBUG
-  console.log("First expense structure:", expenses[0]);
-  console.log("Available fields:", Object.keys(expenses[0]));
+// 🖥️ Render accountant dashboard table - REFACTORED
+async function renderTable() {
+  try {
+    const monthPicker = document.getElementById('monthPicker');
+    const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+    
+    DebugLogger.log('Selected Month', selectedMonth);
+    
+    const expenses = await fetchExpenses(selectedMonth);
+    DebugLogger.log('Total Expenses Fetched', expenses.length);
+    
+    const tbody = document.querySelector('#expenseTable tbody');
+    if (!tbody) {
+      DebugLogger.error('Table Body Not Found', 'Could not find #expenseTable tbody');
+      return;
+    }
+    
+    tbody.innerHTML = '';
 
-  const userCache = {};
+    // ============================================
+    // 🔍 FULL DIAGNOSTIC - First Expense Analysis
+    // ============================================
+    if (expenses.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; padding: 1em; color: #888;">
+            📭 No expenses found for ${selectedMonth}.
+          </td>
+        </tr>
+      `;
+      DebugLogger.warn('No Data', `No expenses found for ${selectedMonth}`);
+      return;
+    }
 
-  for (const exp of expenses) {
-    // 🔍 Fetch employee name
-    let employeeName = exp.userId || "-";
-    if (exp.userId) {
-      if (userCache[exp.userId]) {
-        employeeName = userCache[exp.userId];
-      } else {
-        try {
-          const userDoc = await getDoc(doc(db, "users", exp.userId));
-          if (userDoc.exists()) {
-            employeeName = userDoc.data().name || employeeName;
-            userCache[exp.userId] = employeeName;
+    // Log complete first expense object
+    DebugLogger.log(
+      'COMPLETE FIRST EXPENSE OBJECT',
+      JSON.parse(JSON.stringify(expenses[0]))
+    );
+    
+    DebugLogger.table('All Expense Keys', {
+      keys: Object.keys(expenses[0]),
+      values: Object.entries(expenses[0]).map(([k, v]) => ({
+        key: k,
+        value: v,
+        type: typeof v
+      }))
+    });
+
+    // ============================================
+    // 🔄 PROCESS EACH EXPENSE
+    // ============================================
+    const userCache = {};
+    const expenseDebugData = [];
+
+    for (const exp of expenses) {
+      try {
+        const expDebug = {
+          id: exp.id,
+          date: exp.date,
+          workflowType: exp.workflowType
+        };
+
+        // 🔍 Fetch employee name
+        let employeeName = exp.userId || "-";
+        if (exp.userId) {
+          if (userCache[exp.userId]) {
+            employeeName = userCache[exp.userId];
+          } else {
+            try {
+              const userDoc = await getDoc(doc(db, "users", exp.userId));
+              if (userDoc.exists()) {
+                employeeName = userDoc.data().name || employeeName;
+                userCache[exp.userId] = employeeName;
+              }
+            } catch (err) {
+              DebugLogger.warn(`Failed to fetch employee name for ${exp.userId}`, err);
+            }
           }
-        } catch (err) {
-          console.warn("Failed to fetch employee name:", err);
         }
+        expDebug.employeeName = employeeName;
+
+        // ============================================
+        // 💰 CALCULATE TOTAL AMOUNT - DETAILED DEBUG
+        // ============================================
+        let amount = 0;
+        const allKeys = Object.values(FIELD_GROUPS).flat();
+        
+        // Create detailed breakdown of what's being checked
+        const fieldCheckResults = {};
+        const fieldSourceMap = {};
+
+        // Check 1: Direct flat properties
+        DebugLogger.log(`Checking flat fields for expense ${exp.id}`, 
+          allKeys.map(k => ({
+            field: k,
+            value: exp[k],
+            exists: k in exp,
+            isNumeric: !isNaN(exp[k])
+          }))
+        );
+
+        // Check 2: Nested 'expenses' object
+        if (exp.expenses && typeof exp.expenses === 'object') {
+          DebugLogger.log(`Nested 'expenses' object found for ${exp.id}`, exp.expenses);
+          Object.entries(exp.expenses).forEach(([key, val]) => {
+            fieldSourceMap[key] = { value: val, source: 'exp.expenses' };
+            if (!isNaN(val) && val) {
+              amount += Number(val);
+            }
+          });
+        }
+
+        // Check 3: Nested 'items' array
+        if (Array.isArray(exp.items)) {
+          DebugLogger.log(`Items array found for ${exp.id}`, exp.items);
+          exp.items.forEach((item, idx) => {
+            if (item.amount && !isNaN(item.amount)) {
+              amount += Number(item.amount);
+              fieldSourceMap[`${item.type || 'unknown'}_${idx}`] = { 
+                value: item.amount, 
+                source: 'exp.items[]' 
+              };
+            }
+          });
+        }
+
+        // Check 4: Flat properties as fallback
+        allKeys.forEach(key => {
+          if (exp[key] && !isNaN(exp[key])) {
+            amount += Number(exp[key]);
+            fieldSourceMap[key] = { value: exp[key], source: 'flat' };
+          }
+        });
+
+        DebugLogger.table(`Amount Calculation for ${exp.id}`, {
+          sources: fieldSourceMap,
+          totalAmount: amount
+        });
+
+        expDebug.amount = amount;
+        expDebug.fieldSources = fieldSourceMap;
+
+        // 🧾 Build breakdown
+        const breakdownHTML = buildBreakdown(exp);
+        expDebug.breakdownGenerated = !!breakdownHTML && breakdownHTML !== '';
+
+        const statusBadge = getStatusBadge(exp.status);
+        expDebug.status = exp.status;
+
+        expenseDebugData.push(expDebug);
+
+        // 🖥️ Render row
+        tbody.innerHTML += `
+          <tr>
+            <td>${employeeName}</td>
+            <td>${exp.date || "-"}</td>
+            <td>${exp.workflowType || "-"}</td>
+            <td>
+              <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size: 1.2em;">▶</button>
+              <span style="margin-left:0.5em;">Click to view breakdown</span>
+              <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left: 3px solid #2196F3; border-radius: 4px;">
+                ${breakdownHTML || '<em>No expense breakdown</em>'}
+              </div>
+            </td>
+            <td style="font-weight: bold; color: ${amount > 0 ? '#4CAF50' : '#999'};">₹${amount}</td>
+            <td>${statusBadge}</td>
+            <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
+            <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>
+          </tr>
+        `;
+
+      } catch (expError) {
+        DebugLogger.error(`Error processing expense ${exp.id}`, expError);
       }
     }
 
-    // 💰 Calculate total amount - DEBUG VERSION
-    let amount = 0;
-    const allKeys = Object.values(FIELD_GROUPS).flat();
-    console.log("Expected keys:", allKeys);
-    console.log("Checking values in expense:", allKeys.map(k => `${k}: ${exp[k]}`));
-    
-    allKeys.forEach(key => {
-      if (exp[key] && !isNaN(exp[key])) {
-        amount += Number(exp[key]);
-      }
+    // ============================================
+    // 📊 SUMMARY LOG
+    // ============================================
+    DebugLogger.table('Processing Summary', expenseDebugData);
+
+    // ============================================
+    // 🔄 Wire up toggle buttons
+    // ============================================
+    const toggleButtons = document.querySelectorAll('.toggle-breakdown');
+    DebugLogger.log('Toggle Buttons Found', toggleButtons.length);
+
+    toggleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const breakdown = document.getElementById(`breakdown-${id}`);
+        
+        if (!breakdown) {
+          DebugLogger.error('Breakdown Element Not Found', `breakdown-${id}`);
+          return;
+        }
+
+        const isVisible = breakdown.style.display === 'block';
+        breakdown.style.display = isVisible ? 'none' : 'block';
+        btn.textContent = isVisible ? '▶' : '▼';
+        
+        DebugLogger.log(`Toggled breakdown for ${id}`, {
+          nowVisible: !isVisible
+        });
+      });
     });
 
-    // 🧾 Build breakdown
-    const breakdownHTML = buildBreakdown(exp);
-    const statusBadge = getStatusBadge(exp.status);
+    DebugLogger.log('Render Complete', {
+      rowsRendered: expenses.length,
+      timestamp: new Date().toISOString()
+    });
 
-    // 🖥️ Render row
-    tbody.innerHTML += `
-      <tr>
-        <td>${employeeName}</td>
-        <td>${exp.date || "-"}</td>
-        <td>${exp.workflowType || "-"}</td>
-        <td>
-          <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer;">▶</button>
-          <span style="margin-left:0.5em;">Click to view breakdown</span>
-          <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em;">${breakdownHTML || 'No expense breakdown'}</div>
-        </td>
-        <td>₹${amount}</td>
-        <td>${statusBadge}</td>
-        <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
-        <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>
-      </tr>
-    `;
+  } catch (err) {
+    DebugLogger.error('renderTable Fatal Error', err);
+    const tbody = document.querySelector('#expenseTable tbody');
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color: red; padding: 1em;">
+            ❌ Error loading expenses. Check console for details.
+          </td>
+        </tr>
+      `;
+    }
   }
+}
 
   // Wire up toggle buttons
   document.querySelectorAll('.toggle-breakdown').forEach(btn => {
