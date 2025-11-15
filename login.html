@@ -12,7 +12,7 @@
       <img src="images/x.png" alt="XPAY Logo" class="login-logo" />
 
       <form id="loginForm" class="login-form">
-        <input type="email" id="email" class="login-input" placeholder="Email" required />
+        <input type="text" id="username" class="login-input" placeholder="Username" required />
         <input type="password" id="password" class="login-input" placeholder="Password" required />
         <button type="submit" class="login-button">Login</button>
       </form>
@@ -39,53 +39,60 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const loginForm = document.getElementById('loginForm');
+    const getEl = (id) => document.getElementById(id);
+    const showError = (id, message) => {
+      const el = getEl(id);
+      if (el) el.textContent = message;
+    };
+
+    const loginForm = getEl('loginForm');
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+      const username = getEl('username')?.value.trim();
+      const password = getEl('password')?.value;
+
+      if (!username || !password) {
+        showError('loginError', "Username and password are required.");
+        return;
+      }
+
+      const email = `${username.toLowerCase()}@xpay.local`;
 
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const uid = userCredential.user.uid;
-        const userDoc = await getDoc(doc(db, "users", uid));
+        const { user } = await signInWithEmailAndPassword(auth, email, password);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
         const userData = userDoc.data();
-        const role = userData?.role;
+
+        const role = (userData?.role || "").toLowerCase();
         const name = userData?.name || "User";
 
-        let emoji = "👋";
-        let redirect = "login.html";
+        const emojiMap = { employee: "🧑‍💼", accountant: "📊", manager: "🧭" };
+        const redirectMap = {
+          manager: "manager.html",
+          employee: "employee.html",
+          accountant: "accountant.html"
+        };
 
-        if (role === "employee") {
-          emoji = "🧑‍💼";
-          redirect = "employee.html";
-        } else if (role === "accountant") {
-          emoji = "📊";
-          redirect = "accountant.html";
-        } else if (role === "manager") {
-          emoji = "🧭";
-          redirect = "manager.html";
-        } else {
-          document.getElementById('loginError').textContent = "Role not assigned. Contact admin.";
+        if (!redirectMap[role]) {
+          showError("loginError", "Role not assigned. Contact admin.");
           return;
         }
 
-        localStorage.setItem("welcomeMessage", `${emoji} Welcome ${name}, ISTOS ${role}.`);
-        window.location.href = redirect;
+        localStorage.setItem("welcomeMessage", `${emojiMap[role]} Welcome ${name}, ISTOS ${role}.`);
+        window.location.href = redirectMap[role];
 
       } catch (error) {
-        document.getElementById('loginError').textContent = error.message;
+        showError("loginError", error.message);
       }
     });
 
-    // Optional: Logout logic (can be reused in dashboard pages)
     window.logoutUser = async function () {
       await signOut(auth);
       localStorage.removeItem("welcomeMessage");
       window.location.href = "login.html";
     };
   </script>
-<script type="module" src="app.js"></script>
 
+  <script type="module" src="app.js"></script>
 </body>
 </html>
