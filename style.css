@@ -101,6 +101,14 @@ input:focus, select:focus {
   outline: none;
 }
 
+.date-input {
+  border: 1px solid var(--biscuit-border);
+  padding: 6px 12px;
+  border-radius: 6px;
+  background-color: var(--biscuit-bg);
+  color: var(--biscuit-text);
+}
+
 /* Submit and action buttons */
 button {
   background: var(--accent-blue);
