@@ -16,6 +16,7 @@ const users = [
   { firstName: "Sridhar", mobile: "8708502540", role: "employee" },
   { firstName: "Prajwal", mobile: "9347271346", role: "employee" },
   { firstName: "Praveen", mobile: "8754754465", role: "employee" },
+  { firstName: "Account", mobile: "8708502540", role: "accountant" },
 ];
 
 // Create user with retry logic
