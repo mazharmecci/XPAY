@@ -35,9 +35,26 @@
   <fieldset>
     <legend>Trip Info</legend>
     <div class="form-row">
-      <label for="date">Date</label>
+      <label for="expenseDate">📅 Expense Date (last 2 days only)</label>
       <input type="date" id="date" name="date" required>
     </div>
+
+        <script>
+      const dateInput = document.getElementById("date");
+      const today = new Date();
+    
+      const formatDate = d => d.toISOString().split('T')[0];
+    
+      const maxDate = formatDate(today); // today allowed
+    
+      const twoDaysBack = new Date();
+      twoDaysBack.setDate(today.getDate() - 2);
+      const minDate = formatDate(twoDaysBack); // 2 days back
+    
+      dateInput.min = minDate;
+      dateInput.max = maxDate;
+    </script>
+
     <div class="form-row">
       <label for="placeVisited">Place Visited 🏙️</label>
       <input type="text" id="placeVisited" name="placeVisited" placeholder="Place">
