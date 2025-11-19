@@ -190,54 +190,83 @@ async function renderManagerClaims() {
 }
 
 // 📥 Download expenses in csv format
+
 function downloadFinalApproved() {
-  // You must pass or have a reference to filtered records (final approved)!
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   if (!tableBody) {
     alert("No expenses table found.");
     return;
   }
+
   const rows = Array.from(tableBody.querySelectorAll("tr"));
-  const approvedExpenses = rows
-    .map((row, i) => {
-      const cells = row.querySelectorAll("td");
-      if (cells.length < 8) return null;
-      const status = cells[5].textContent.trim();
-      if (!status.includes('Final Approved')) return null;
-      return [
-        i + 1,
-        cells[1].textContent.trim(),
-        cells[2].textContent.trim(),
-        cells[3].textContent.trim(),
-        cells[4].textContent.trim(),
-        status,
-        cells[7].querySelector("input")?.value.trim() || ""
-      ];
-    })
-    .filter(Boolean);
+  const approvedExpenses = [];
+
+  rows.forEach((row, i) => {
+    const cells = row.querySelectorAll("td");
+    if (cells.length < 8) return;
+    const statusText = cells[5].textContent.trim().toLowerCase();
+    if (!statusText.includes('final approved')) return;
+    approvedExpenses.push([
+      i + 1,
+      cells[1].textContent.trim(),
+      cells[2].textContent.trim(),
+      cells[3].textContent.trim(),
+      cells[4].textContent.trim(),
+      cells[5].textContent.trim(),
+      cells[7].querySelector("input") ? cells[7].querySelector("input").value.trim() : ""
+    ]);
+  });
 
   if (approvedExpenses.length === 0) {
     alert("No final approved expenses found.");
     return;
   }
 
-  const csvContent = [
+  const csvRows = [
     ["S.No", "Date", "Type", "Place", "Total Amount", "Status", "Comment"],
     ...approvedExpenses
-  ].map(row => row.join(",")).join("\n");
+  ];
+
+  // Escape CSV fields if needed (quotes for fields with commas/newlines)
+  function escapeCSV(val) {
+    if (/[,"\n]/.test(val)) {
+      return `"${val.replace(/"/g, '""')}"`;
+    }
+    return val;
+  }
+  const csvContent = csvRows.map(row => row.map(escapeCSV).join(",")).join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "FinalApprovedExpenses.csv";
+  document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  // ... other setup ...
+  const dlBtn = document.getElementById("downloadFinalBtn");
+  if (dlBtn) {
+    dlBtn.addEventListener("click", downloadFinalApproved);
+  }
+});
+
+
 // 🚦 Init
+
 document.addEventListener("DOMContentLoaded", () => {
   setupLogout();
   setupMonthFilter();
   setupApprovalButtons();
+
+  // CSV export button event handler
+  const dlBtn = document.getElementById("downloadFinalBtn");
+  if (dlBtn) {
+    dlBtn.addEventListener("click", downloadFinalApproved);
+  }
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
