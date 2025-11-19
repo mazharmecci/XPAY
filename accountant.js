@@ -418,7 +418,8 @@ async function rejectSelected() {
 // ✅ Download approved expenses
 
 function downloadApprovedCSV() {
-  const tableBody = document.querySelector("#expenseTable tbody");  if (!tableBody) {
+  const tableBody = document.querySelector("#expenseTable tbody");
+  if (!tableBody) {
     alert("No expenses table found.");
     return;
   }
@@ -429,17 +430,23 @@ function downloadApprovedCSV() {
   rows.forEach((row, i) => {
     const cells = row.querySelectorAll("td");
     if (cells.length < 8) return;
-    const statusText = cells[5].textContent.trim().toLowerCase();
-    // Only include exact matches for "Approved" not "FinalApproved" etc.
-    if (statusText !== "accountant approved" && statusText !== "approved") return;
+    // The status spans (badge) may have formatted content
+    const statusSpan = cells[5].querySelector("span");
+    const statusText = statusSpan ? statusSpan.textContent.trim().toLowerCase() : "";
+    // Only include "accountant approved" or "approved" (robust to badge text)
+    if (
+      statusText !== "accountant approved" &&
+      statusText !== "approved"
+    ) return;
+
     approvedExpenses.push([
       i + 1,
-      cells[1].textContent.trim(),
-      cells[2].textContent.trim(),
-      cells[3].textContent.trim(),
-      cells[4].textContent.trim(),
-      cells[5].textContent.trim(),
-      cells[7].querySelector("input") ? cells[7].querySelector("input").value.trim() : ""
+      cells[1].textContent.trim(), // Claim Date
+      cells[2].textContent.trim(), // Type
+      cells[3].textContent.trim(), // Place/Details
+      cells[4].textContent.trim(), // Amount
+      statusSpan ? statusSpan.textContent.trim() : cells[5].textContent.trim(), // Status from badge
+      cells[7].querySelector("input") ? cells[7].querySelector("input").value.trim() : "" // Comment
     ]);
   });
 
@@ -449,11 +456,11 @@ function downloadApprovedCSV() {
   }
 
   const csvRows = [
-    ["S.No", "Date", "Type", "Place", "Total Amount", "Status", "Comment"],
+    ["S.No", "Date", "Type", "Place/Details", "Total Amount", "Status", "Comment"],
     ...approvedExpenses
   ];
 
-  // RFC-safe CSV field escaping
+  // Ensure values are properly escaped for CSV
   function escapeCSV(val) {
     if (/[,"\n]/.test(val)) {
       return `"${val.replace(/"/g, '""')}"`;
@@ -462,6 +469,7 @@ function downloadApprovedCSV() {
   }
   const csvContent = csvRows.map(row => row.map(escapeCSV).join(",")).join("\n");
 
+  // Proxy download via a temporary <a> element
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -473,9 +481,8 @@ function downloadApprovedCSV() {
 }
 
 
-// 🚦 Init
-
 document.addEventListener('DOMContentLoaded', () => {
+  // Button listeners
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
 
@@ -488,13 +495,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('rejectBtn')?.addEventListener('click', rejectSelected);
   document.getElementById('monthPicker')?.addEventListener('change', renderTable);
 
-  // 🚀 CSV Export for Accountants
-  
+  // CSV Export
   const dlBtn = document.getElementById("downloadApprovedBtn");
   if (dlBtn) {
     dlBtn.addEventListener("click", downloadApprovedCSV);
   }
 
+  // Auth/role logic and initial render
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
@@ -518,4 +525,3 @@ document.addEventListener('DOMContentLoaded', () => {
     await renderTable();
   });
 });
-
