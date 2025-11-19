@@ -192,7 +192,8 @@ async function renderManagerClaims() {
 // 📥 Download expenses in csv format
 
 function downloadFinalApproved() {
-  const tableBody = document.querySelector("#expenseTable tbody");  if (!tableBody) {
+  const tableBody = document.querySelector("#managerClaimsTable tbody");
+  if (!tableBody) {
     alert("No expenses table found.");
     return;
   }
@@ -203,7 +204,9 @@ function downloadFinalApproved() {
   rows.forEach((row, i) => {
     const cells = row.querySelectorAll("td");
     if (cells.length < 8) return;
-    const statusText = cells[5].textContent.trim().toLowerCase();
+    // Use `.textContent` of the span in Status column
+    const statusSpan = cells[5].querySelector("span");
+    const statusText = statusSpan ? statusSpan.textContent.trim().toLowerCase() : "";
     if (!statusText.includes('final approved')) return;
     approvedExpenses.push([
       i + 1,
@@ -211,7 +214,7 @@ function downloadFinalApproved() {
       cells[2].textContent.trim(),
       cells[3].textContent.trim(),
       cells[4].textContent.trim(),
-      cells[5].textContent.trim(),
+      statusSpan ? statusSpan.textContent.trim() : cells[5].textContent.trim(),
       cells[7].querySelector("input") ? cells[7].querySelector("input").value.trim() : ""
     ]);
   });
@@ -245,13 +248,6 @@ function downloadFinalApproved() {
   URL.revokeObjectURL(link.href);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  // ... other setup ...
-  const dlBtn = document.getElementById("downloadFinalBtn");
-  if (dlBtn) {
-    dlBtn.addEventListener("click", downloadFinalApproved);
-  }
-});
 
 
 // 🚦 Init
@@ -261,8 +257,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupMonthFilter();
   setupApprovalButtons();
 
-  // CSV export button event handler
-  const dlBtn = document.getElementById("downloadFinalBtn");
+  // Export CSV for Final Approved
+  const dlBtn = document.getElementById("downloadApprovedBtn");
   if (dlBtn) {
     dlBtn.addEventListener("click", downloadFinalApproved);
   }
