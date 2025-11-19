@@ -193,6 +193,96 @@ async function renderManagerClaims() {
   `;
 }
 
+<script>
+(function () {
+  // Utility: get current month YYYY-MM from header or fallback to today
+  function getCurrentMonthKey() {
+    // Try reading "November 2025" from your header and convert to "2025-11"
+    const header = document.body.innerText.match(/([A-Za-z]+)\s+(\d{4})/);
+    if (header) {
+      const months = {
+        January: "01", February: "02", March: "03", April: "04",
+        May: "05", June: "06", July: "07", August: "08",
+        September: "09", October: "10", November: "11", December: "12"
+      };
+      const mm = months[header[1]] || String(new Date().getMonth() + 1).padStart(2, "0");
+      return `${header[2]}-${mm}`;
+    }
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  // Replace this with your actual data source
+  // Example: if you already have a global "expenses" array used to render the table, use that.
+  // Expected shape per row: { date, type, place, totalAmount, status, comment }
+  const getAllExpenses = () => {
+    // Fallback: scrape table rows if no array is available
+    const rows = Array.from(document.querySelectorAll("table tbody tr"));
+    return rows
+      .map((tr) => {
+        const tds = tr.querySelectorAll("td");
+        if (tds.length < 7) return null;
+        return {
+          date: tds[1]?.textContent?.trim(),
+          type: tds[2]?.textContent?.trim(),
+          place: tds[3]?.textContent?.trim(),
+          totalAmount: tds[4]?.textContent?.trim(),
+          status: tds[5]?.textContent?.trim(),
+          comment: tds[7]?.textContent?.trim() || ""
+        };
+      })
+      .filter(Boolean);
+  };
+
+  function toCSV(rows) {
+    const header = ["S.No", "Date", "Type", "Place", "Total Amount", "Status", "Comment"];
+    const lines = [header.join(",")];
+    rows.forEach((exp, i) => {
+      const line = [
+        i + 1,
+        exp.date,
+        exp.type,
+        exp.place,
+        exp.totalAmount,
+        exp.status,
+        (exp.comment || "").replace(/\r?\n/g, " ").replace(/,/g, ";")
+      ].join(",");
+      lines.push(line);
+    });
+    return lines.join("\n");
+  }
+
+  function downloadBlob(filename, text, mime = "text/csv;charset=utf-8;") {
+    const blob = new Blob([text], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // Expose globally for inline onclick
+  window.downloadFinalApproved = function () {
+    const monthKey = getCurrentMonthKey();         // e.g., "2025-11"
+    const all = getAllExpenses();
+    const finalApproved = all.filter((x) =>
+      (x.status || "").toLowerCase().includes("final approved")
+    );
+
+    if (finalApproved.length === 0) {
+      alert("No final approved expenses found.");
+      return;
+    }
+
+    const csv = toCSV(finalApproved);
+    downloadBlob(`FinalApprovedExpenses_${monthKey}.csv`, csv);
+  };
+})();
+</script>
+
 // Download expenses in csv format
 function downloadFinalApproved() {
   const approvedExpenses = allExpenses.filter(exp => exp.status === "Final Approved by Manager");
