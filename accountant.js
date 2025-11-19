@@ -418,8 +418,7 @@ async function rejectSelected() {
 // ✅ Download approved expenses
 
 function downloadApprovedCSV() {
-  const tableBody = document.querySelector("#accountantClaimsTable tbody");
-  if (!tableBody) {
+  const tableBody = document.querySelector("#expenseTable tbody");  if (!tableBody) {
     alert("No expenses table found.");
     return;
   }
