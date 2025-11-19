@@ -415,6 +415,34 @@ async function rejectSelected() {
   renderTable();
 }
 
+// Download expenses in csv format
+function downloadFinalApproved() {
+  const approvedExpenses = allExpenses.filter(exp => exp.status === "Final Approved by Manager");
+  if (approvedExpenses.length === 0) {
+    alert("No final approved expenses found.");
+    return;
+  }
+
+  const csvContent = [
+    ["S.No", "Date", "Type", "Place", "Total Amount", "Status", "Comment"],
+    ...approvedExpenses.map((exp, index) => [
+      index + 1,
+      exp.date,
+      exp.type,
+      exp.place,
+      exp.totalAmount,
+      exp.status,
+      exp.comment || ""
+    ])
+  ].map(row => row.join(",")).join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "FinalApprovedExpenses.csv";
+  link.click();
+}
+
 // 🚦 Init
 document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.querySelector('.logout-btn');
