@@ -192,8 +192,7 @@ async function renderManagerClaims() {
 // 📥 Download expenses in csv format
 
 function downloadFinalApproved() {
-  const tableBody = document.querySelector("#managerClaimsTable tbody");
-  if (!tableBody) {
+  const tableBody = document.querySelector("#expenseTable tbody");  if (!tableBody) {
     alert("No expenses table found.");
     return;
   }
