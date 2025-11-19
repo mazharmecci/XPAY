@@ -247,22 +247,21 @@ function downloadFinalApproved() {
 
 // 🔧 Escape CSV values (quotes, commas, line breaks)
 function escapeCSV(val) {
-  if (!val) return "";
-  const clean = val.replace(/\n/g, " ").replace(/\r/g, " ").trim();
+  const str = String(val ?? ""); // ensure it's a string
+  const clean = str.replace(/\n/g, " ").replace(/\r/g, " ").trim();
   if (/[,"\n]/.test(clean)) {
     return `"${clean.replace(/"/g, '""')}"`;
   }
   return clean;
 }
 
-// 🔧 Sanitize symbols and emojis
 function sanitize(val) {
-  return val
+  const str = String(val ?? ""); // ensure it's a string
+  return str
     .replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '') // remove emojis and symbols
     .replace(/\s+/g, ' ') // collapse whitespace
     .trim();
 }
-
 
 
 // 🚦 Init
