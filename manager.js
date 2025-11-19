@@ -189,8 +189,7 @@ async function renderManagerClaims() {
   `;
 }
 
-// 📥 Download expenses in csv format
-
+// ✅ Cleaned CSV Export for Manager Final Approved Expenses
 function downloadFinalApproved() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   if (!tableBody) {
@@ -204,18 +203,20 @@ function downloadFinalApproved() {
   rows.forEach((row, i) => {
     const cells = row.querySelectorAll("td");
     if (cells.length < 8) return;
-    // Use `.textContent` of the span in Status column
+
     const statusSpan = cells[5].querySelector("span");
     const statusText = statusSpan ? statusSpan.textContent.trim().toLowerCase() : "";
-    if (!statusText.includes('final approved')) return;
+
+    if (!statusText.includes("final approved")) return;
+
     approvedExpenses.push([
       i + 1,
-      cells[1].textContent.trim(),
-      cells[2].textContent.trim(),
-      cells[3].textContent.trim(),
-      cells[4].textContent.trim(),
-      statusSpan ? statusSpan.textContent.trim() : cells[5].textContent.trim(),
-      cells[7].querySelector("input") ? cells[7].querySelector("input").value.trim() : ""
+      sanitize(cells[1].textContent), // Date
+      sanitize(cells[2].textContent), // Type
+      sanitize(cells[3].textContent), // Place/Details
+      sanitize(cells[4].textContent), // Amount
+      sanitize(statusSpan ? statusSpan.textContent : cells[5].textContent), // Status
+      sanitize(cells[7].querySelector("input") ? cells[7].querySelector("input").value : "") // Comment
     ]);
   });
 
@@ -225,20 +226,16 @@ function downloadFinalApproved() {
   }
 
   const csvRows = [
-    ["S.No", "Date", "Type", "Place", "Total Amount", "Status", "Comment"],
+    ["S.No", "Date", "Type", "Place/Details", "Total Amount", "Status", "Comment"],
     ...approvedExpenses
   ];
 
-  // Escape CSV fields if needed (quotes for fields with commas/newlines)
-  function escapeCSV(val) {
-    if (/[,"\n]/.test(val)) {
-      return `"${val.replace(/"/g, '""')}"`;
-    }
-    return val;
-  }
-  const csvContent = csvRows.map(row => row.map(escapeCSV).join(",")).join("\n");
+  const BOM = "\uFEFF"; // UTF-8 BOM for Excel
+  const csvContent = csvRows
+    .map(row => row.map(escapeCSV).join(","))
+    .join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "FinalApprovedExpenses.csv";
@@ -246,6 +243,24 @@ function downloadFinalApproved() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(link.href);
+}
+
+// 🔧 Escape CSV values (quotes, commas, line breaks)
+function escapeCSV(val) {
+  if (!val) return "";
+  const clean = val.replace(/\n/g, " ").replace(/\r/g, " ").trim();
+  if (/[,"\n]/.test(clean)) {
+    return `"${clean.replace(/"/g, '""')}"`;
+  }
+  return clean;
+}
+
+// 🔧 Sanitize symbols and emojis
+function sanitize(val) {
+  return val
+    .replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '') // remove emojis and symbols
+    .replace(/\s+/g, ' ') // collapse whitespace
+    .trim();
 }
 
 
