@@ -35,9 +35,18 @@ function logoutUser() {
 function getStatusBadge(status) {
   const s = (status || '').toLowerCase();
   if (s === 'approved') return `<span style="color:green;">✅ Approved</span>`;
+  if (s === 'finalapproved') return `<span style="color:blue;">🔷 Final Approved</span>`;
   if (s === 'rejected') return `<span style="color:red;">❌ Rejected</span>`;
   return `<span style="color:orange;">⏳ Pending</span>`;
 }
+function getStatusBadge(status) {
+  const s = (status || '').toLowerCase();
+  if (s === 'approved') return `<span style="color:green;">✅ Approved</span>`;
+  if (s === 'finalapproved') return `<span style="color:blue;">🔷 Final Approved</span>`;
+  if (s === 'rejected') return `<span style="color:red;">❌ Rejected</span>`;
+  return `<span style="color:orange;">⏳ Pending</span>`;
+}
+
 
 // 🧾 Build Expense Data
 function buildExpenseData() {
