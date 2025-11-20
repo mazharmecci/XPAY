@@ -201,7 +201,7 @@ async function renderExpenses() {
       <td>₹${totalPending}</td>
     </tr>
     <tr style="font-weight:bold; background:#e8ffe8;">
-      <td colspan="5" style="text-align:right;">💰 Net Reimbursement Due (${selectedMonth}):</td>
+      <td colspan="5" style="text-align:right;">💰 Net reimbursement due to the emp (${selectedMonth}):</td>
       <td>₹${netReimbursementDue}</td>
     </tr>
   `;
