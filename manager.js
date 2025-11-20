@@ -96,6 +96,7 @@ function calculateExpenseTotal(exp) {
 }
 
 // 📊 Render Manager Claims (with Employee name & Breakdown column)
+
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   const summaryRow = document.querySelector("#managerSummaryRow");
@@ -137,15 +138,15 @@ async function renderManagerClaims() {
     }
   }
 
-  // Breakdown HTML builder
+  // Breakdown HTML builder (Advance Cash included)
   function buildBreakdown(exp) {
     const items = [];
     if (exp.placeVisited) items.push(`Place Visited: ${exp.placeVisited}`);
     [
       ["Advance Cash", exp.advanceCash], ["Monthly Conveyance", exp.monthlyConveyance],
       ["Monthly Phone", exp.monthlyPhone], ["Fuel", exp.fuel], ["Fare", exp.fare],
-      ["Boarding", exp.boarding], ["Food", exp.food],
-      ["Local Conveyance", exp.localConveyance], ["Misc", exp.misc]
+      ["Boarding", exp.boarding], ["Food", exp.food], ["Local Conveyance", exp.localConveyance],
+      ["Misc", exp.misc]
     ].forEach(([label, amt]) => {
       amt = Number(amt) || 0;
       if (amt > 0) items.push(`${label}: ₹${amt}`);
@@ -153,15 +154,16 @@ async function renderManagerClaims() {
     return items.length > 0 ? items.join("<br>") : `<em>No breakdown available</em>`;
   }
 
+  // For each row, show total (excluding advanceCash)
   for (let i = 0; i < records.length; i++) {
     const exp = records[i];
     const sn = i + 1;
+    // EXCLUDE advanceCash from total:
     const total =
-      (Number(exp.advanceCash) || 0) + (Number(exp.monthlyConveyance) || 0) +
-      (Number(exp.monthlyPhone) || 0) + (Number(exp.fuel) || 0) +
-      (Number(exp.fare) || 0) + (Number(exp.boarding) || 0) +
-      (Number(exp.food) || 0) + (Number(exp.localConveyance) || 0) +
-      (Number(exp.misc) || 0);
+      (Number(exp.monthlyConveyance) || 0) + (Number(exp.monthlyPhone) || 0) +
+      (Number(exp.fuel) || 0) + (Number(exp.fare) || 0) +
+      (Number(exp.boarding) || 0) + (Number(exp.food) || 0) +
+      (Number(exp.localConveyance) || 0) + (Number(exp.misc) || 0);
 
     const employeeName = await getEmployeeName(exp.userId);
 
@@ -209,19 +211,18 @@ async function renderManagerClaims() {
     });
   });
 
-  // Summary calculations and rows
+  // Summary calculations: total amounts EXCLUDE advanceCash
   const totalSubmittedAmount = records.reduce(
     (sum, exp) => sum + (
-      (Number(exp.advanceCash) || 0) + (Number(exp.monthlyConveyance) || 0) +
-      (Number(exp.monthlyPhone) || 0) + (Number(exp.fuel) || 0) +
-      (Number(exp.fare) || 0) + (Number(exp.boarding) || 0) +
-      (Number(exp.food) || 0) + (Number(exp.localConveyance) || 0) +
-      (Number(exp.misc) || 0)
+      (Number(exp.monthlyConveyance) || 0) + (Number(exp.monthlyPhone) || 0) +
+      (Number(exp.fuel) || 0) + (Number(exp.fare) || 0) +
+      (Number(exp.boarding) || 0) + (Number(exp.food) || 0) +
+      (Number(exp.localConveyance) || 0) + (Number(exp.misc) || 0)
     ), 0);
 
   summaryRow.innerHTML = `
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="9" style="text-align:right;">📊 Total of all the expenses ${selectedMonth}:</td>
+      <td colspan="9" style="text-align:right;">📊 Total of all the expenses (excluding Advance Cash) ${selectedMonth}:</td>
       <td>₹${totalSubmittedAmount}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
