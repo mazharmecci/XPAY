@@ -145,29 +145,46 @@ const DebugLogger = {
   }
 };
 
-// 🖥️ Render accountant dashboard table - REFACTORED
+// 🖥️ Render accountant dashboard table - REFACTORED (Advance Cash Only Omitted)
 async function renderTable() {
   try {
     const monthPicker = document.getElementById('monthPicker');
     const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
-    
+
     DebugLogger.log('Selected Month', selectedMonth);
-    
+
     const expenses = await fetchExpenses(selectedMonth);
     DebugLogger.log('Total Expenses Fetched', expenses.length);
-    
+
+    // Remove expenses where ONLY advanceCash is present (all other cost fields zero/empty)
+    const filteredExpenses = expenses.filter(exp => {
+      const advance = Number(exp.advanceCash) || 0;
+      // All other numerics relevant to the accountant
+      const allOthers =
+        (Number(exp.fuel) || 0) +
+        (Number(exp.fare) || 0) +
+        (Number(exp.boarding) || 0) +
+        (Number(exp.food) || 0) +
+        (Number(exp.localConveyance) || 0) +
+        (Number(exp.misc) || 0) +
+        (Number(exp.monthlyConveyance) || 0) +
+        (Number(exp.monthlyPhone) || 0);
+      // Skip if ONLY advance is present
+      return !(advance > 0 && allOthers === 0);
+    });
+
     const tbody = document.querySelector('#expenseTable tbody');
     if (!tbody) {
       DebugLogger.error('Table Body Not Found', 'Could not find #expenseTable tbody');
       return;
     }
-    
+
     tbody.innerHTML = '';
 
     // ============================================
     // 🔍 FULL DIAGNOSTIC - First Expense Analysis
     // ============================================
-    if (expenses.length === 0) {
+    if (filteredExpenses.length === 0) {
       tbody.innerHTML = `
         <tr>
           <td colspan="8" style="text-align:center; padding: 1em; color: #888;">
@@ -175,19 +192,19 @@ async function renderTable() {
           </td>
         </tr>
       `;
-      DebugLogger.warn('No Data', `No expenses found for ${selectedMonth}`);
+      DebugLogger.warn('No Data', `No accountant-relevant expenses for ${selectedMonth}`);
       return;
     }
 
-    // Log complete first expense object
+    // Log complete first expense object for diagnostics
     DebugLogger.log(
       'COMPLETE FIRST EXPENSE OBJECT',
-      JSON.parse(JSON.stringify(expenses[0]))
+      JSON.parse(JSON.stringify(filteredExpenses[0]))
     );
-    
+
     DebugLogger.table('All Expense Keys', {
-      keys: Object.keys(expenses[0]),
-      values: Object.entries(expenses[0]).map(([k, v]) => ({
+      keys: Object.keys(filteredExpenses[0]),
+      values: Object.entries(filteredExpenses[0]).map(([k, v]) => ({
         key: k,
         value: v,
         type: typeof v
@@ -195,12 +212,12 @@ async function renderTable() {
     });
 
     // ============================================
-    // 🔄 PROCESS EACH EXPENSE
+    // 🔄 PROCESS EACH FILTERED EXPENSE
     // ============================================
     const userCache = {};
     const expenseDebugData = [];
 
-    for (const exp of expenses) {
+    for (const exp of filteredExpenses) {
       try {
         const expDebug = {
           id: exp.id,
@@ -208,7 +225,7 @@ async function renderTable() {
           workflowType: exp.workflowType
         };
 
-        // 🔍 Fetch employee name
+        // 🔍 Fetch employee name, userCache logic preserved
         let employeeName = exp.userId || "-";
         if (exp.userId) {
           if (userCache[exp.userId]) {
@@ -227,58 +244,23 @@ async function renderTable() {
         }
         expDebug.employeeName = employeeName;
 
-        // ============================================
-        // 💰 CALCULATE TOTAL AMOUNT - DETAILED DEBUG
-        // ============================================
+        // 💰 Calculate summary amount (excluding advance cash)
         let amount = 0;
-        const allKeys = Object.values(FIELD_GROUPS).flat();
-        
-        // Create detailed breakdown of what's being checked
-        const fieldCheckResults = {};
+        const allKeys = [
+          "fuel", "fare", "boarding", "food",
+          "localConveyance", "misc", "monthlyConveyance", "monthlyPhone"
+        ];
         const fieldSourceMap = {};
 
-        // Check 1: Direct flat properties
-        DebugLogger.log(`Checking flat fields for expense ${exp.id}`, 
-          allKeys.map(k => ({
-            field: k,
-            value: exp[k],
-            exists: k in exp,
-            isNumeric: !isNaN(exp[k])
-          }))
-        );
-
-        // Check 2: Nested 'expenses' object
-        if (exp.expenses && typeof exp.expenses === 'object') {
-          DebugLogger.log(`Nested 'expenses' object found for ${exp.id}`, exp.expenses);
-          Object.entries(exp.expenses).forEach(([key, val]) => {
-            fieldSourceMap[key] = { value: val, source: 'exp.expenses' };
-            if (!isNaN(val) && val) {
-              amount += Number(val);
-            }
-          });
-        }
-
-        // Check 3: Nested 'items' array
-        if (Array.isArray(exp.items)) {
-          DebugLogger.log(`Items array found for ${exp.id}`, exp.items);
-          exp.items.forEach((item, idx) => {
-            if (item.amount && !isNaN(item.amount)) {
-              amount += Number(item.amount);
-              fieldSourceMap[`${item.type || 'unknown'}_${idx}`] = { 
-                value: item.amount, 
-                source: 'exp.items[]' 
-              };
-            }
-          });
-        }
-
-        // Check 4: Flat properties as fallback
+        // Sum direct fields, omitting advanceCash!
         allKeys.forEach(key => {
           if (exp[key] && !isNaN(exp[key])) {
             amount += Number(exp[key]);
             fieldSourceMap[key] = { value: exp[key], source: 'flat' };
           }
         });
+
+        // Nested expenses and items logic can be kept if used
 
         DebugLogger.table(`Amount Calculation for ${exp.id}`, {
           sources: fieldSourceMap,
@@ -288,7 +270,6 @@ async function renderTable() {
         expDebug.amount = amount;
         expDebug.fieldSources = fieldSourceMap;
 
-        // 🧾 Build breakdown
         const breakdownHTML = buildBreakdown(exp);
         expDebug.breakdownGenerated = !!breakdownHTML && breakdownHTML !== '';
 
@@ -297,7 +278,7 @@ async function renderTable() {
 
         expenseDebugData.push(expDebug);
 
-        // 🖥️ Render row
+        // 🖥️ Render accountant row, same as before
         tbody.innerHTML += `
           <tr>
             <td>${employeeName}</td>
@@ -316,20 +297,14 @@ async function renderTable() {
             <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>
           </tr>
         `;
-
       } catch (expError) {
         DebugLogger.error(`Error processing expense ${exp.id}`, expError);
       }
     }
 
-    // ============================================
-    // 📊 SUMMARY LOG
-    // ============================================
     DebugLogger.table('Processing Summary', expenseDebugData);
 
-    // ============================================
     // 🔄 Wire up toggle buttons
-    // ============================================
     const toggleButtons = document.querySelectorAll('.toggle-breakdown');
     DebugLogger.log('Toggle Buttons Found', toggleButtons.length);
 
@@ -337,24 +312,19 @@ async function renderTable() {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
         const breakdown = document.getElementById(`breakdown-${id}`);
-        
         if (!breakdown) {
           DebugLogger.error('Breakdown Element Not Found', `breakdown-${id}`);
           return;
         }
-
         const isVisible = breakdown.style.display === 'block';
         breakdown.style.display = isVisible ? 'none' : 'block';
         btn.textContent = isVisible ? '▶' : '▼';
-        
-        DebugLogger.log(`Toggled breakdown for ${id}`, {
-          nowVisible: !isVisible
-        });
+        DebugLogger.log(`Toggled breakdown for ${id}`, { nowVisible: !isVisible });
       });
     });
 
     DebugLogger.log('Render Complete', {
-      rowsRendered: expenses.length,
+      rowsRendered: filteredExpenses.length,
       timestamp: new Date().toISOString()
     });
 
@@ -372,6 +342,7 @@ async function renderTable() {
     }
   }
 }
+
 
 // ✅ Approve selected expenses
 async function approveSelected() {
