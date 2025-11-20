@@ -188,10 +188,6 @@ async function renderExpenses() {
       <td colspan="5" style="text-align:right;">🪙 Advance Cash Received (${selectedMonth}):</td>
       <td>₹${totalAdvanceReceived}</td>
     </tr>
-    <tr style="font-weight:bold; background:#e8ffe8;">
-      <td colspan="5" style="text-align:right;">💰 Net Reimbursement Due (${selectedMonth}):</td>
-      <td>₹${netReimbursementDue}</td>
-    </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
       <td colspan="5" style="text-align:right;">✅ Approved by Accountant (excluding Advance) for ${selectedMonth}:</td>
       <td>₹${totalApproved}</td>
@@ -203,6 +199,10 @@ async function renderExpenses() {
     <tr style="font-weight:bold; background:#f9f9f9;">
       <td colspan="5" style="text-align:right;">⏳ Actual Amount Pending (excluding Advance) for ${selectedMonth}:</td>
       <td>₹${totalPending}</td>
+    </tr>
+    <tr style="font-weight:bold; background:#e8ffe8;">
+      <td colspan="5" style="text-align:right;">💰 Net Reimbursement Due (${selectedMonth}):</td>
+      <td>₹${netReimbursementDue}</td>
     </tr>
   `;
 } // closes renderExpenses
