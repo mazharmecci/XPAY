@@ -97,11 +97,16 @@ function calculateExpenseTotal(exp) {
 
 // 📊 Render Manager Claims
 
+Here is your clean, manager workflow JavaScript code—fully matches the refined table columns, includes employee name lookup, and provides a toggleable breakdown (as in accountant workflow).
+
+Use this full function (replace your renderManagerClaims in manager.js):
+
+javascript
+// 📊 Render Manager Claims (with Employee name & Breakdown column)
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   const summaryRow = document.querySelector("#managerSummaryRow");
   const selectedMonth = document.getElementById("monthPicker")?.value || new Date().toISOString().slice(0, 7);
-
   if (!tableBody || !summaryRow) return;
 
   tableBody.innerHTML = "";
@@ -109,81 +114,137 @@ async function renderManagerClaims() {
 
   const snapshot = await getDocs(collection(db, "expenses"));
   const records = [];
+  const userCache = {};
 
+  // Build record list for the month
   snapshot.forEach(docSnap => {
     const exp = docSnap.data();
-    const dateStr = typeof exp.date === 'string' ? exp.date : '';
+    const dateStr = typeof exp.date === "string" ? exp.date : "";
     if (dateStr.slice(0, 7) === selectedMonth) {
       records.push({ id: docSnap.id, ...exp });
     }
   });
+  records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-  records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  let totalApproved = 0, totalRejected = 0, totalPending = 0, totalFinalApproved = 0;
 
-  let totalApproved = 0;
-  let totalRejected = 0;
-  let totalPending = 0;
-  let totalFinalApproved = 0;
+  // Employee name fetch utility
+  async function getEmployeeName(userId) {
+    if (!userId) return "-";
+    if (userCache[userId]) return userCache[userId];
+    try {
+      const docRef = doc(db, "users", userId);
+      const userDoc = await getDoc(docRef);
+      const name = userDoc.exists() ? userDoc.data().name || "-" : "-";
+      userCache[userId] = name;
+      return name;
+    } catch {
+      userCache[userId] = "-";
+      return "-";
+    }
+  }
 
-  records.forEach((exp, index) => {
-    const sn = index + 1;
-    const total = calculateExpenseTotal(exp);
+  // Breakdown HTML builder
+  function buildBreakdown(exp) {
+    const items = [];
+    if (exp.placeVisited) items.push(`Place Visited: ${exp.placeVisited}`);
+    [
+      ["Advance Cash", exp.advanceCash], ["Monthly Conveyance", exp.monthlyConveyance],
+      ["Monthly Phone", exp.monthlyPhone], ["Fuel", exp.fuel], ["Fare", exp.fare],
+      ["Boarding", exp.boarding], ["Food", exp.food],
+      ["Local Conveyance", exp.localConveyance], ["Misc", exp.misc]
+    ].forEach(([label, amt]) => {
+      amt = Number(amt) || 0;
+      if (amt > 0) items.push(`${label}: ₹${amt}`);
+    });
+    return items.length > 0 ? items.join("<br>") : `<em>No breakdown available</em>`;
+  }
 
-    let badgeClass = "";
-    let badgeText = "";
+  for (let i = 0; i < records.length; i++) {
+    const exp = records[i];
+    const sn = i + 1;
+    const total =
+      (Number(exp.advanceCash) || 0) + (Number(exp.monthlyConveyance) || 0) +
+      (Number(exp.monthlyPhone) || 0) + (Number(exp.fuel) || 0) +
+      (Number(exp.fare) || 0) + (Number(exp.boarding) || 0) +
+      (Number(exp.food) || 0) + (Number(exp.localConveyance) || 0) +
+      (Number(exp.misc) || 0);
+
+    const employeeName = await getEmployeeName(exp.userId);
+
+    let badgeClass = "", badgeText = "";
     if (exp.status === "Approved") {
-      badgeClass = "badge approved";
-      badgeText = "Accountant Approved";
-      totalApproved += total;
+      badgeClass = "badge approved"; badgeText = "Accountant Approved"; totalApproved += total;
     } else if (exp.status === "Rejected") {
-      badgeClass = "badge rejected";
-      badgeText = "Rejected";
-      totalRejected += total;
+      badgeClass = "badge rejected"; badgeText = "Rejected"; totalRejected += total;
     } else if (exp.status === "FinalApproved") {
-      badgeClass = "badge final-approved";
-      badgeText = "Final Approved";
-      totalFinalApproved += total;
+      badgeClass = "badge final-approved"; badgeText = "Final Approved"; totalFinalApproved += total;
     } else {
-      badgeClass = "badge pending";
-      badgeText = "Pending";
-      totalPending += total;
+      badgeClass = "badge pending"; badgeText = "Pending"; totalPending += total;
     }
 
     tableBody.innerHTML += `
       <tr>
         <td>${sn}</td>
+        <td>${employeeName}</td>
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
-        <td>${exp.placeVisited || "-"}</td>
+        <td>
+          <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
+          <span style="margin-left:0.5em;">Click to view breakdown</span>
+          <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
+            ${buildBreakdown(exp)}
+          </div>
+        </td>
         <td>₹${total}</td>
         <td><span class="${badgeClass}">${badgeText}</span></td>
         <td><input type="checkbox" class="select-claim" data-id="${exp.id}"></td>
         <td><input type="text" class="manager-comment" placeholder="Comment (optional)"></td>
       </tr>
     `;
+  }
+
+  // After rendering, setup breakdown toggles
+  document.querySelectorAll('.toggle-breakdown').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const breakdown = document.getElementById(`breakdown-${id}`);
+      if (!breakdown) return;
+      const isVisible = breakdown.style.display === 'block';
+      breakdown.style.display = isVisible ? 'none' : 'block';
+      btn.textContent = isVisible ? '▶' : '▼';
+    });
   });
 
-  const totalSubmittedAmount = records.reduce((sum, exp) => sum + calculateExpenseTotal(exp), 0);
+  // Summary calculations and rows
+  const totalSubmittedAmount = records.reduce(
+    (sum, exp) => sum + (
+      (Number(exp.advanceCash) || 0) + (Number(exp.monthlyConveyance) || 0) +
+      (Number(exp.monthlyPhone) || 0) + (Number(exp.fuel) || 0) +
+      (Number(exp.fare) || 0) + (Number(exp.boarding) || 0) +
+      (Number(exp.food) || 0) + (Number(exp.localConveyance) || 0) +
+      (Number(exp.misc) || 0)
+    ), 0);
 
   summaryRow.innerHTML = `
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="7" style="text-align:right;">📊 Total of all the expenses ${selectedMonth}:</td>
+      <td colspan="9" style="text-align:right;">📊 Total of all the expenses ${selectedMonth}:</td>
       <td>₹${totalSubmittedAmount}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="7" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
+      <td colspan="9" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
       <td>₹${totalApproved}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="7" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
+      <td colspan="9" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
       <td>₹${totalRejected}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="7" style="text-align:right;">⏳ Still Pending for ${selectedMonth}:</td>
+      <td colspan="9" style="text-align:right;">⏳ Actual Pending Expenses - excluding advanced cash for ${selectedMonth}:</td>
       <td>₹${totalPending}</td>
     </tr>
     <tr style="font-weight:bold; background:#e8ffe8;">
-      <td colspan="7" style="text-align:right;">💰 Final Approved by Manager for ${selectedMonth}:</td>
+      <td colspan="9" style="text-align:right;">💰 Final Approved by Manager for ${selectedMonth}:</td>
       <td>₹${totalFinalApproved}</td>
     </tr>
   `;
