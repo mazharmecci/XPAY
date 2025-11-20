@@ -110,7 +110,6 @@ async function renderManagerClaims() {
   const records = [];
   const userCache = {};
 
-  // Build record list for the month
   snapshot.forEach(docSnap => {
     const exp = docSnap.data();
     const dateStr = typeof exp.date === "string" ? exp.date : "";
@@ -122,7 +121,6 @@ async function renderManagerClaims() {
 
   let totalApproved = 0, totalRejected = 0, totalPending = 0, totalFinalApproved = 0;
 
-  // Employee name fetch utility
   async function getEmployeeName(userId) {
     if (!userId) return "-";
     if (userCache[userId]) return userCache[userId];
@@ -138,7 +136,6 @@ async function renderManagerClaims() {
     }
   }
 
-  // Breakdown HTML builder (Advance Cash included)
   function buildBreakdown(exp) {
     const items = [];
     if (exp.placeVisited) items.push(`Place Visited: ${exp.placeVisited}`);
@@ -154,11 +151,9 @@ async function renderManagerClaims() {
     return items.length > 0 ? items.join("<br>") : `<em>No breakdown available</em>`;
   }
 
-  // For each row, show total (excluding advanceCash)
   for (let i = 0; i < records.length; i++) {
     const exp = records[i];
-    const sn = i + 1;
-    // EXCLUDE advanceCash from total:
+    // No S.No!
     const total =
       (Number(exp.monthlyConveyance) || 0) + (Number(exp.monthlyPhone) || 0) +
       (Number(exp.fuel) || 0) + (Number(exp.fare) || 0) +
@@ -180,7 +175,6 @@ async function renderManagerClaims() {
 
     tableBody.innerHTML += `
       <tr>
-        <td>${sn}</td>
         <td>${employeeName}</td>
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
@@ -199,7 +193,6 @@ async function renderManagerClaims() {
     `;
   }
 
-  // After rendering, setup breakdown toggles
   document.querySelectorAll('.toggle-breakdown').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
@@ -211,7 +204,6 @@ async function renderManagerClaims() {
     });
   });
 
-  // Summary calculations: total amounts EXCLUDE advanceCash
   const totalSubmittedAmount = records.reduce(
     (sum, exp) => sum + (
       (Number(exp.monthlyConveyance) || 0) + (Number(exp.monthlyPhone) || 0) +
@@ -222,23 +214,23 @@ async function renderManagerClaims() {
 
   summaryRow.innerHTML = `
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="9" style="text-align:right;">📊 Total of all the expenses (excluding Advance Cash) ${selectedMonth}:</td>
+      <td colspan="7" style="text-align:right;">📊 Total of all the expenses (excluding Advance Cash) ${selectedMonth}:</td>
       <td>₹${totalSubmittedAmount}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="9" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
+      <td colspan="7" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
       <td>₹${totalApproved}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="9" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
+      <td colspan="7" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
       <td>₹${totalRejected}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="9" style="text-align:right;">⏳ Actual Pending Expenses - excluding advanced cash for ${selectedMonth}:</td>
+      <td colspan="7" style="text-align:right;">⏳ Actual Pending Expenses - excluding advanced cash for ${selectedMonth}:</td>
       <td>₹${totalPending}</td>
     </tr>
     <tr style="font-weight:bold; background:#e8ffe8;">
-      <td colspan="9" style="text-align:right;">💰 Final Approved by Manager for ${selectedMonth}:</td>
+      <td colspan="7" style="text-align:right;">💰 Final Approved by Manager for ${selectedMonth}:</td>
       <td>₹${totalFinalApproved}</td>
     </tr>
   `;
