@@ -171,6 +171,7 @@ async function renderExpenses() {
     // Sum all advances for the month, regardless of status for audit summary
     totalAdvanceReceived += advance;
   });
+  
   // 🧾 Final Summary Block
   const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
     month: "long",
@@ -178,44 +179,6 @@ async function renderExpenses() {
   });
   const totalSubmittedAmount = totalApproved + totalRejected + totalPending;
   const netReimbursementDue = (monthlyTotal + travelTotal) - totalAdvanceReceived;
-  monthlyClaimsTable.innerHTML += `
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">📊 Total of claims (excluding Advance) for ${selectedMonth}:</td>
-      <td>₹${monthlyTotal + travelTotal}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#e6f7ff;">
-      <td colspan="5" style="text-align:right;">🪙 Advance Cash Received (${selectedMonth}):</td>
-      <td>₹${totalAdvanceReceived}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#e8ffe8;">
-      <td colspan="5" style="text-align:right;">💰 Net Reimbursement Due (${selectedMonth}):</td>
-      <td>₹${netReimbursementDue}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">✅ Approved by Accountant (excluding Advance) for ${selectedMonth}:</td>
-      <td>₹${totalApproved}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">❌ Rejected by Accountant (excluding Advance) for ${selectedMonth}:</td>
-      <td>₹${totalRejected}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">⏳ Still Pending for ${selectedMonth}:</td>
-      <td>₹${totalPending}</td>
-    </tr>
-  `;
-}
-
-
-  // 🧾 Final Summary Block
-  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
-    month: "long",
-    year: "numeric"
-  });
-
-  const totalSubmittedAmount = totalApproved + totalRejected + totalPending;
-  const netReimbursementDue = (monthlyTotal + travelTotal) - totalAdvanceReceived;
-
   monthlyClaimsTable.innerHTML += `
     <tr style="font-weight:bold; background:#f9f9f9;">
       <td colspan="5" style="text-align:right;">📊 Total of claims (excluding Advance) for ${selectedMonth}:</td>
@@ -243,6 +206,7 @@ async function renderExpenses() {
     </tr>
   `;
 } // closes renderExpenses
+
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
