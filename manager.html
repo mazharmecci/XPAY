@@ -23,11 +23,27 @@
 
       <hr class="section-divider" />
 
-      <select id="monthPicker">
-        <option value="2025-11">November 2025</option>
-        <option value="2025-12">December 2025</option>        
-  <!-- Add more months manually -->        
-      </select>
+      <!-- Expense Review Table -->
+      <!-- 🔍 Filter Controls -->
+      <div style="display: flex; gap: 1.5em; align-items: center; margin-bottom: 1em;">
+        <h2 style="margin: 0;">Manager Dashboard – Require Final Approval</h2>
+      </div>
+      
+      <div style="display: flex; gap: 1em; align-items: center; margin-bottom: 1em;">
+        <!-- 📅 Month Filter -->
+        <label for="monthPicker">Select Month:</label>
+        <select id="monthPicker">
+          <option value="2025-11">November 2025</option>
+          <option value="2025-12">December 2025</option>
+        </select>
+      
+        <!-- 👤 Employee Filter -->
+        <label for="employeeFilter">Employee:</label>
+        <select id="employeeFilter">
+          <option value="">All Employees</option>
+          <!-- Dynamically populated via JS -->
+        </select>
+      </div>
 
       <!-- 📊 Expense Review Table -->
       <section id="managerReview" class="report-section">
