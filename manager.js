@@ -97,6 +97,25 @@ function calculateExpenseTotal(exp) {
 
 // 📊 Render Manager Claims (with Employee name & Breakdown column)
 
+const FIELD_LABELS = {
+  advanceCash: "Advance Cash",
+  monthlyConveyance: "Monthly Conveyance",
+  monthlyPhone: "Monthly Phone",
+  fuel: "Fuel",
+  fare: "Fare",
+  boarding: "Boarding",
+  food: "Food",
+  localConveyance: "Local Conveyance",
+  misc: "Misc",
+  placeVisited: "Place Visited"
+};
+
+const FIELD_GROUPS = {
+  "🕓 Trip Info": ["placeVisited"],
+  "🗓️ Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone"],
+  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "misc"]
+};
+
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   const summaryRow = document.querySelector("#managerSummaryRow");
@@ -137,28 +156,28 @@ async function renderManagerClaims() {
   }
 
   function buildBreakdown(exp) {
-    const items = [];
-    if (exp.placeVisited) items.push(`Place Visited: ${exp.placeVisited}`);
-    [
-      ["Advance Cash", exp.advanceCash], ["Monthly Conveyance", exp.monthlyConveyance],
-      ["Monthly Phone", exp.monthlyPhone], ["Fuel", exp.fuel], ["Fare", exp.fare],
-      ["Boarding", exp.boarding], ["Food", exp.food], ["Local Conveyance", exp.localConveyance],
-      ["Misc", exp.misc]
-    ].forEach(([label, amt]) => {
-      amt = Number(amt) || 0;
-      if (amt > 0) items.push(`${label}: ₹${amt}`);
-    });
-    return items.length > 0 ? items.join("<br>") : `<em>No breakdown available</em>`;
+    return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
+      const items = keys
+        .map(key => {
+          const value = Number(exp[key]) || 0;
+          if (key === "placeVisited" && exp[key]) return `${FIELD_LABELS[key]}: ${exp[key]}`;
+          return value > 0 ? `${FIELD_LABELS[key]}: ₹${value}` : '';
+        })
+        .filter(Boolean);
+      return items.length
+        ? `<strong>${groupName}</strong><br>${items.join(', ')}`
+        : '';
+    }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
   }
 
   for (let i = 0; i < records.length; i++) {
     const exp = records[i];
     // No S.No!
-    const total =
-      (Number(exp.monthlyConveyance) || 0) + (Number(exp.monthlyPhone) || 0) +
-      (Number(exp.fuel) || 0) + (Number(exp.fare) || 0) +
-      (Number(exp.boarding) || 0) + (Number(exp.food) || 0) +
-      (Number(exp.localConveyance) || 0) + (Number(exp.misc) || 0);
+         const totalKeys = [
+        "monthlyConveyance", "monthlyPhone", "fuel", "fare",
+        "boarding", "food", "localConveyance", "misc"
+      ];
+      const total = totalKeys.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
 
     const employeeName = await getEmployeeName(exp.userId);
 
