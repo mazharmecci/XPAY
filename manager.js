@@ -95,13 +95,6 @@ function calculateExpenseTotal(exp) {
        + safeAmount(exp.misc);
 }
 
-// 📊 Render Manager Claims
-
-Here is your clean, manager workflow JavaScript code—fully matches the refined table columns, includes employee name lookup, and provides a toggleable breakdown (as in accountant workflow).
-
-Use this full function (replace your renderManagerClaims in manager.js):
-
-javascript
 // 📊 Render Manager Claims (with Employee name & Breakdown column)
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
