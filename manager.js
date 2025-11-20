@@ -11,92 +11,7 @@ import {
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// 🧾 Toast Alert
-function showToast(message, type = 'success') {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.className = `toast ${type}`;
-  toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 3000);
-}
-
-// 📅 Format Date
-function formatDate(dateStr) {
-  const date = new Date(dateStr);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-}
-
-// 🚪 Logout
-function setupLogout() {
-  const logoutBtn = document.querySelector(".logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-        showToast("Logged out successfully!");
-        setTimeout(() => window.location.href = 'login.html', 1500);
-      } catch (error) {
-        console.error("Logout error:", error);
-        showToast("Logout failed. Try again.", 'error');
-      }
-    });
-  }
-}
-
-// 🗓️ Month Filter
-function setupMonthFilter() {
-  document.getElementById("monthPicker")?.addEventListener("change", renderManagerClaims);
-}
-
-// ✅ Approval Buttons
-function setupApprovalButtons() {
-  document.getElementById("finalApproveBtn")?.addEventListener("click", () =>
-    handleFinalAction("FinalApproved", "Final approvals submitted.", "success")
-  );
-  document.getElementById("finalRejectBtn")?.addEventListener("click", () =>
-    handleFinalAction("RejectedByManager", "Selected claims rejected.", "error")
-  );
-}
-
-// 🔄 Handle Final Action
-async function handleFinalAction(newStatus, toastMessage, toastType) {
-  const selected = document.querySelectorAll(".select-claim:checked");
-  for (const checkbox of selected) {
-    const id = checkbox.dataset.id;
-    const comment = checkbox.closest("tr").querySelector(".manager-comment")?.value || "";
-    await updateDoc(doc(db, "expenses", id), {
-      status: newStatus,
-      finalComment: comment
-    });
-  }
-  showToast(toastMessage, toastType);
-  await renderManagerClaims();
-}
-
-// 🛡️ Safe Amount Helper
-function safeAmount(value) {
-  const num = Number(value);
-  return isNaN(num) ? 0 : num;
-}
-
-// 🧮 Unified Expense Total Calculator
-function calculateExpenseTotal(exp) {
-  return safeAmount(exp.advanceCash) 
-       + safeAmount(exp.monthlyConveyance) 
-       + safeAmount(exp.monthlyPhone)
-       + safeAmount(exp.fuel) 
-       + safeAmount(exp.fare) 
-       + safeAmount(exp.boarding)
-       + safeAmount(exp.food) 
-       + safeAmount(exp.localConveyance) 
-       + safeAmount(exp.misc);
-}
-
-// 📊 Render Manager Claims (with Employee name & Breakdown column)
-
+// Field labels and grouping
 const FIELD_LABELS = {
   advanceCash: "Advance Cash",
   monthlyConveyance: "Monthly Conveyance",
@@ -116,10 +31,129 @@ const FIELD_GROUPS = {
   "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "misc"]
 };
 
+// Toast notification
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `toast ${type}`;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+// Populate employee filter dropdown
+async function populateEmployeeFilter() {
+  const empSel = document.getElementById("employeeFilter");
+  if (!empSel) return;
+  empSel.innerHTML = `<option value="">All Employees</option>`;
+  try {
+    const usersSnap = await getDocs(collection(db, "users"));
+    const userList = [];
+    usersSnap.forEach(docSnap => {
+      const dat = docSnap.data();
+      if (dat.role && dat.role.toLowerCase() === "employee") {
+        userList.push({ id: docSnap.id, name: dat.name || docSnap.id });
+      }
+    });
+    userList.sort((a, b) => a.name.localeCompare(b.name));
+    userList.forEach(user => {
+      const opt = document.createElement("option");
+      opt.value = user.id;
+      opt.textContent = user.name;
+      empSel.appendChild(opt);
+    });
+  } catch (e) {
+    showToast("Error loading employees.", "error");
+  }
+}
+
+// Logout button setup
+function setupLogout() {
+  const logoutBtn = document.querySelector(".logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        showToast("Logged out successfully!");
+        setTimeout(() => window.location.href = 'login.html', 1500);
+      } catch (error) {
+        console.error("Logout error:", error);
+        showToast("Logout failed. Try again.", 'error');
+      }
+    });
+  }
+}
+
+// Month filter setup
+function setupMonthFilter() {
+  document.getElementById("monthPicker")?.addEventListener("change", renderManagerClaims);
+  document.getElementById("employeeFilter")?.addEventListener("change", renderManagerClaims);
+}
+
+// Approval buttons setup
+function setupApprovalButtons() {
+  document.getElementById("finalApproveBtn")?.addEventListener("click", () =>
+    handleFinalAction("FinalApproved", "Final approvals submitted.", "success")
+  );
+  document.getElementById("finalRejectBtn")?.addEventListener("click", () =>
+    handleFinalAction("RejectedByManager", "Selected claims rejected.", "error")
+  );
+}
+
+// Handle status update for selected claims
+async function handleFinalAction(newStatus, toastMessage, toastType) {
+  const selected = document.querySelectorAll(".select-claim:checked");
+  for (const checkbox of selected) {
+    const id = checkbox.dataset.id;
+    const comment = checkbox.closest("tr").querySelector(".manager-comment")?.value || "";
+    await updateDoc(doc(db, "expenses", id), {
+      status: newStatus,
+      finalComment: comment
+    });
+  }
+  showToast(toastMessage, toastType);
+  await renderManagerClaims();
+}
+
+// Utility: get employee name and cache
+async function getEmployeeName(userId, cache) {
+  if (!userId) return "-";
+  if (cache[userId]) return cache[userId];
+  try {
+    const userDoc = await getDoc(doc(db, "users", userId));
+    if (userDoc.exists()) {
+      const name = userDoc.data().name || "-";
+      cache[userId] = name;
+      return name;
+    }
+  } catch { }
+  cache[userId] = "-";
+  return "-";
+}
+
+// Utility: build breakdown display
+function buildBreakdown(exp) {
+  return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
+    const items = keys
+      .map(key => {
+        const value = Number(exp[key]) || 0;
+        if (key === "placeVisited" && exp[key]) return `${FIELD_LABELS[key]}: ${exp[key]}`;
+        return value > 0 ? `${FIELD_LABELS[key]}: ₹${value}` : '';
+      })
+      .filter(Boolean);
+    return items.length
+      ? `<strong>${groupName}</strong><br>${items.join(', ')}`
+      : '';
+  }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
+}
+
+// Main render function with employee filter support
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   const summaryRow = document.querySelector("#managerSummaryRow");
-  const selectedMonth = document.getElementById("monthPicker")?.value || new Date().toISOString().slice(0, 7);
+  const monthPicker = document.getElementById("monthPicker");
+  const empSel = document.getElementById("employeeFilter");
+  const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+  const selectedEmployee = empSel?.value || "";
   if (!tableBody || !summaryRow) return;
 
   tableBody.innerHTML = "";
@@ -132,7 +166,10 @@ async function renderManagerClaims() {
   snapshot.forEach(docSnap => {
     const exp = docSnap.data();
     const dateStr = typeof exp.date === "string" ? exp.date : "";
-    if (dateStr.slice(0, 7) === selectedMonth) {
+    if (
+      dateStr.slice(0, 7) === selectedMonth &&
+      (!selectedEmployee || exp.userId === selectedEmployee)
+    ) {
       records.push({ id: docSnap.id, ...exp });
     }
   });
@@ -140,46 +177,16 @@ async function renderManagerClaims() {
 
   let totalApproved = 0, totalRejected = 0, totalPending = 0, totalFinalApproved = 0;
 
-  async function getEmployeeName(userId) {
-    if (!userId) return "-";
-    if (userCache[userId]) return userCache[userId];
-    try {
-      const docRef = doc(db, "users", userId);
-      const userDoc = await getDoc(docRef);
-      const name = userDoc.exists() ? userDoc.data().name || "-" : "-";
-      userCache[userId] = name;
-      return name;
-    } catch {
-      userCache[userId] = "-";
-      return "-";
-    }
-  }
-
-  function buildBreakdown(exp) {
-    return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
-      const items = keys
-        .map(key => {
-          const value = Number(exp[key]) || 0;
-          if (key === "placeVisited" && exp[key]) return `${FIELD_LABELS[key]}: ${exp[key]}`;
-          return value > 0 ? `${FIELD_LABELS[key]}: ₹${value}` : '';
-        })
-        .filter(Boolean);
-      return items.length
-        ? `<strong>${groupName}</strong><br>${items.join(', ')}`
-        : '';
-    }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
-  }
-
   for (let i = 0; i < records.length; i++) {
     const exp = records[i];
     // No S.No!
-         const totalKeys = [
-        "monthlyConveyance", "monthlyPhone", "fuel", "fare",
-        "boarding", "food", "localConveyance", "misc"
-      ];
-      const total = totalKeys.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
+    const totalKeys = [
+      "monthlyConveyance", "monthlyPhone", "fuel", "fare",
+      "boarding", "food", "localConveyance", "misc"
+    ];
+    const total = totalKeys.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
 
-    const employeeName = await getEmployeeName(exp.userId);
+    const employeeName = await getEmployeeName(exp.userId, userCache);
 
     let badgeClass = "", badgeText = "";
     if (exp.status === "Approved") {
@@ -255,26 +262,21 @@ async function renderManagerClaims() {
   `;
 }
 
-// ✅ Cleaned CSV Export for Manager Final Approved Expenses
+// Export to CSV
 function downloadFinalApproved() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   if (!tableBody) {
     alert("No expenses table found.");
     return;
   }
-
   const rows = Array.from(tableBody.querySelectorAll("tr"));
   const approvedExpenses = [];
-
   rows.forEach((row, i) => {
     const cells = row.querySelectorAll("td");
     if (cells.length < 8) return;
-
     const statusSpan = cells[5].querySelector("span");
     const statusText = statusSpan ? statusSpan.textContent.trim().toLowerCase() : "";
-
     if (!statusText.includes("final approved")) return;
-
     approvedExpenses.push([
       i + 1,
       sanitize(cells[1].textContent), // Date
@@ -295,12 +297,10 @@ function downloadFinalApproved() {
     ["S.No", "Date", "Type", "Place/Details", "Total Amount", "Status", "Comment"],
     ...approvedExpenses
   ];
-
   const BOM = "\uFEFF"; // UTF-8 BOM for Excel
   const csvContent = csvRows
     .map(row => row.map(escapeCSV).join(","))
     .join("\n");
-
   const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -311,33 +311,29 @@ function downloadFinalApproved() {
   URL.revokeObjectURL(link.href);
 }
 
-// 🔧 Escape CSV values (quotes, commas, line breaks)
 function escapeCSV(val) {
-  const str = String(val ?? ""); // ensure it's a string
+  const str = String(val ?? "");
   const clean = str.replace(/\n/g, " ").replace(/\r/g, " ").trim();
   if (/[,"\n]/.test(clean)) {
     return `"${clean.replace(/"/g, '""')}"`;
   }
   return clean;
 }
-
 function sanitize(val) {
-  const str = String(val ?? ""); // ensure it's a string
+  const str = String(val ?? "");
   return str
-    .replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '') // remove emojis and symbols
-    .replace(/\s+/g, ' ') // collapse whitespace
+    .replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '') // remove emojis
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
-
 // 🚦 Init
-
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   setupLogout();
+  await populateEmployeeFilter();
   setupMonthFilter();
   setupApprovalButtons();
 
-  // Export CSV for Final Approved
   const dlBtn = document.getElementById("downloadApprovedBtn");
   if (dlBtn) {
     dlBtn.addEventListener("click", downloadFinalApproved);
@@ -349,16 +345,13 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => window.location.href = "login.html", 1500);
       return;
     }
-
     const userDoc = await getDoc(doc(db, "users", user.uid));
     const role = (userDoc.exists() ? userDoc.data().role : "").toLowerCase();
-
     if (role !== "manager") {
       alert("Access denied. Manager role required.");
       window.location.href = "login.html";
       return;
     }
-
     await renderManagerClaims();
-  }); // closes onAuthStateChanged
-});   // closes DOMContentLoaded
+  });
+});
