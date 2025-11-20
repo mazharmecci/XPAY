@@ -39,14 +39,6 @@ function getStatusBadge(status) {
   if (s === 'rejected') return `<span style="color:red;">❌ Rejected</span>`;
   return `<span style="color:orange;">⏳ Pending</span>`;
 }
-function getStatusBadge(status) {
-  const s = (status || '').toLowerCase();
-  if (s === 'approved') return `<span style="color:green;">✅ Approved</span>`;
-  if (s === 'finalapproved') return `<span style="color:blue;">🔷 Final Approved</span>`;
-  if (s === 'rejected') return `<span style="color:red;">❌ Rejected</span>`;
-  return `<span style="color:orange;">⏳ Pending</span>`;
-}
-
 
 // 🧾 Build Expense Data
 function buildExpenseData() {
@@ -88,8 +80,7 @@ function safeAmount(val) {
   return (val === null || val === undefined || isNaN(val)) ? 0 : Number(val);
 }
 
-// 📊 Render Employee Expenses
-
+// 📊 Render Employee Expenses (refactored)
 async function renderExpenses() {
   const tripInfoTable = document.querySelector("#tripInfoTable tbody");
   const travelCostTable = document.querySelector("#travelCostTable tbody");
@@ -119,6 +110,7 @@ async function renderExpenses() {
   let totalApproved = 0;
   let totalRejected = 0;
   let totalPending = 0;
+  let totalAdvanceReceived = 0;
 
   records.forEach((exp, index) => {
     const badge = getStatusBadge(exp.status);
@@ -160,11 +152,11 @@ async function renderExpenses() {
       </tr>
     `;
 
-    // Monthly Claims
+    // Monthly Claims (but exclude advanceCash from totals)
     const advance = safeAmount(exp.advanceCash);
     const convey = safeAmount(exp.monthlyConveyance);
     const phone = safeAmount(exp.monthlyPhone);
-    const monthlySum = advance + convey + phone;
+    const monthlySum = convey + phone; // Only these two, NOT advance
     monthlyTotal += monthlySum;
 
     monthlyClaimsTable.innerHTML += `
@@ -178,9 +170,11 @@ async function renderExpenses() {
       </tr>
     `;
 
+    // Only sum status for travelTotal+monthlyTotal, advance handled below
     const totalForRecord = travelSum + monthlySum;
-    if (exp.status === "Approved") {
+    if (exp.status === "Approved" || exp.status === "FinalApproved") {
       totalApproved += totalForRecord;
+      totalAdvanceReceived += advance; // total advance cash received for the month (only approved/final)
     } else if (exp.status === "Rejected") {
       totalRejected += totalForRecord;
     } else {
@@ -189,34 +183,41 @@ async function renderExpenses() {
   });
 
   // 🧾 Final Summary Block
-
   const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
-  month: "long",
-  year: "numeric"
-});
+    month: "long",
+    year: "numeric"
+  });
 
-const totalSubmittedAmount = totalApproved + totalRejected + totalPending;
+  const totalSubmittedAmount = totalApproved + totalRejected + totalPending;
+  const netReimbursementDue = (monthlyTotal + travelTotal) - totalAdvanceReceived;
 
-monthlyClaimsTable.innerHTML += `
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">📊 Total of all the expenses ${selectedMonth}:</td>
-    <td>₹${totalSubmittedAmount}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
-    <td>₹${totalApproved}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
-    <td>₹${totalRejected}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">⏳ Still Pending for ${selectedMonth}:</td>
-    <td>₹${totalPending}</td>
-  </tr>
-`;
-
-} // ✅ this was missing — closes renderExpenses
+  monthlyClaimsTable.innerHTML += `
+    <tr style="font-weight:bold; background:#f9f9f9;">
+      <td colspan="5" style="text-align:right;">📊 Total of claims (excluding Advance) for ${selectedMonth}:</td>
+      <td>₹${monthlyTotal + travelTotal}</td>
+    </tr>
+    <tr style="font-weight:bold; background:#e6f7ff;">
+      <td colspan="5" style="text-align:right;">🪙 Advance Cash Received (${selectedMonth}):</td>
+      <td>₹${totalAdvanceReceived}</td>
+    </tr>
+    <tr style="font-weight:bold; background:#e8ffe8;">
+      <td colspan="5" style="text-align:right;">💰 Net Reimbursement Due (${selectedMonth}):</td>
+      <td>₹${netReimbursementDue}</td>
+    </tr>
+    <tr style="font-weight:bold; background:#f9f9f9;">
+      <td colspan="5" style="text-align:right;">✅ Approved by Accountant (excluding Advance) for ${selectedMonth}:</td>
+      <td>₹${totalApproved}</td>
+    </tr>
+    <tr style="font-weight:bold; background:#f9f9f9;">
+      <td colspan="5" style="text-align:right;">❌ Rejected by Accountant (excluding Advance) for ${selectedMonth}:</td>
+      <td>₹${totalRejected}</td>
+    </tr>
+    <tr style="font-weight:bold; background:#f9f9f9;">
+      <td colspan="5" style="text-align:right;">⏳ Still Pending for ${selectedMonth}:</td>
+      <td>₹${totalPending}</td>
+    </tr>
+  `;
+} // closes renderExpenses
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
@@ -247,4 +248,3 @@ document.addEventListener("DOMContentLoaded", () => {
     await renderExpenses();
   });
 });
-
