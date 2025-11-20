@@ -20,13 +20,28 @@
 
       <hr class="section-divider" />
 
+      
       <!-- Expense Review Table -->
-      <h2>Accountant Dashboard – Pending Expense Approvals</h2>
-      <label for="monthPicker">Select Month:</label>
-      <select id="monthPicker">
-        <option value="2025-11">November 2025</option>
-        <option value="2025-12">December 2025</option>
-      </select>
+      <!-- 🔍 Filter Controls -->
+      <div style="display: flex; gap: 1.5em; align-items: center; margin-bottom: 1em;">
+        <h2 style="margin: 0;">Accountant Dashboard – Pending Expense Approvals</h2>
+      </div>
+      
+      <div style="display: flex; gap: 1em; align-items: center; margin-bottom: 1em;">
+        <!-- 📅 Month Filter -->
+        <label for="monthPicker">Select Month:</label>
+        <select id="monthPicker">
+          <option value="2025-11">November 2025</option>
+          <option value="2025-12">December 2025</option>
+        </select>
+      
+        <!-- 👤 Employee Filter -->
+        <label for="employeeFilter">Employee:</label>
+        <select id="employeeFilter">
+          <option value="">All Employees</option>
+          <!-- Dynamically populated via JS -->
+        </select>
+      </div>
 
       <table id="expenseTable">
         <thead>
