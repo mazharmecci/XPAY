@@ -201,7 +201,7 @@ async function renderExpenses() {
       <td>₹${totalRejected}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">⏳ Still Pending for ${selectedMonth}:</td>
+      <td colspan="5" style="text-align:right;">⏳ Actual Amount Pending (excluding Advance) for ${selectedMonth}:</td>
       <td>₹${totalPending}</td>
     </tr>
   `;
