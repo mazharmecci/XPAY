@@ -257,21 +257,28 @@ async function renderAdvanceCashTable() {
 
 async function recordAdvanceCash(e) {
   e.preventDefault();
+
+  // Get and validate form values
+  const employeeNameInput = document.getElementById("employeeName");
+  const advanceDateInput = document.getElementById("advanceDate");
+  const advanceAmountInput = document.getElementById("advanceAmount");
+  const advanceNoteInput = document.getElementById("advanceNote");
+
+  const employeeName = employeeNameInput?.value.trim().toLowerCase() || "";
+  const advanceDate = advanceDateInput?.value || "";
+  const advanceAmount = Number(advanceAmountInput?.value) || 0;
+  const advanceNote = advanceNoteInput?.value.trim() || "";
+
+  if (!employeeName || !advanceDate || advanceAmount <= 0) {
+    showToast("Please fill all required fields correctly.", "error");
+    return;
+  }
+
   try {
-    const employeeName = document.getElementById("employeeName").value.trim();
-    const advanceDate = document.getElementById("advanceDate").value;
-    const advanceAmount = Number(document.getElementById("advanceAmount").value) || 0;
-    const advanceNote = document.getElementById("advanceNote").value.trim();
-
-    if (!employeeName || !advanceDate || advanceAmount <= 0) {
-      showToast("Please fill all required fields correctly.", "error");
-      return;
-    }
-
-    // 🔍 Lookup employee UID from name
+    // Lookup employee UID from name (case-insensitive, assumes user.name is stored lowercase)
     const usersSnapshot = await getDocs(collection(db, "users"));
     const matchedUser = usersSnapshot.docs.find(doc =>
-      doc.data().name?.toLowerCase() === employeeName.toLowerCase()
+      (doc.data().name||"").toLowerCase() === employeeName
     );
 
     if (!matchedUser) {
@@ -281,9 +288,9 @@ async function recordAdvanceCash(e) {
 
     const employeeId = matchedUser.id;
 
-    // ✅ Build the data object
+    // Build and save advance cash record
     const advanceData = {
-      employeeName,
+      employeeName, // Always lowercase for reliable querying
       employeeId,
       date: advanceDate,
       advanceCash: advanceAmount,
