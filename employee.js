@@ -55,7 +55,7 @@ function buildExpenseData() {
     boarding: getVal("boarding", true),
     food: getVal("food", true),
     localConveyance: getVal("localConveyance", true),
-    misc: getVal("misc", true),
+    PostCourier: getVal("PostCourier", true),
     status: "Pending"
   };
 }
@@ -127,8 +127,8 @@ async function renderExpenses() {
     const boarding = safeAmount(exp.boarding);
     const food = safeAmount(exp.food);
     const local = safeAmount(exp.localConveyance);
-    const misc = safeAmount(exp.misc);
-    const travelSum = fuel + fare + boarding + food + local + misc;
+    const PostCourier = safeAmount(exp.PostCourier);
+    const travelSum = fuel + fare + boarding + food + local + PostCourier;
     travelTotal += travelSum;
     travelCostTable.innerHTML += `
       <tr>
@@ -139,7 +139,7 @@ async function renderExpenses() {
         <td>${boarding}</td>
         <td>${food}</td>
         <td>${local}</td>
-        <td>${misc}</td>
+        <td>${PostCourier}</td>
         <td>${badge}</td>
       </tr>
     `;
