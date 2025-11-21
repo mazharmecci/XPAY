@@ -211,32 +211,7 @@ async function renderTable() {
   }
 }
 
-// ✅ Advance cash logic
-
-async function recordAdvanceCash(e) {
-  e.preventDefault();
-  try {
-    const employeeName = document.getElementById("employeeName").value.trim();
-    const advanceDate = document.getElementById("advanceDate").value;
-    const advanceAmount = Number(document.getElementById("advanceAmount").value) || 0;
-    const advanceNote = document.getElementById("advanceNote").value.trim();
-
-    if (!employeeName || !advanceDate || advanceAmount <= 0) {
-      showToast("Please fill all required fields correctly.", "error");
-      return;
-    }
-
-    const advanceData = {
-      employeeName,
-      date: advanceDate,
-      advanceCash: advanceAmount,
-      note: advanceNote,
-      status: "Recorded",
-      createdBy: auth.currentUser?.uid || ""
-    };
-
-// ✅ Advance cash table
-    
+// ✅ Advance cash table (standalone function)
 async function renderAdvanceCashTable() {
   const tableBody = document.querySelector("#advanceCashTable tbody");
   if (!tableBody) return;
@@ -265,10 +240,35 @@ async function renderAdvanceCashTable() {
     `;
   });
 }
-    
+
+// ✅ Advance cash logic
+async function recordAdvanceCash(e) {
+  e.preventDefault();
+  try {
+    const employeeName = document.getElementById("employeeName").value.trim();
+    const advanceDate = document.getElementById("advanceDate").value;
+    const advanceAmount = Number(document.getElementById("advanceAmount").value) || 0;
+    const advanceNote = document.getElementById("advanceNote").value.trim();
+
+    if (!employeeName || !advanceDate || advanceAmount <= 0) {
+      showToast("Please fill all required fields correctly.", "error");
+      return;
+    }
+
+    const advanceData = {
+      employeeName,
+      date: advanceDate,
+      advanceCash: advanceAmount,
+      note: advanceNote,
+      status: "Recorded",
+      createdBy: auth.currentUser?.uid || ""
+    };
+
     await addDoc(collection(db, "advanceCash"), advanceData);
     showToast("Advance cash recorded ✅", "success");
     document.getElementById("advanceCashForm").reset();
+
+    // ✅ Now this works because renderAdvanceCashTable is global
     await renderAdvanceCashTable();
   } catch (err) {
     console.error("Error recording advance cash:", err);
