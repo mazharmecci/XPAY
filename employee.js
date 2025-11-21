@@ -286,7 +286,7 @@ async function renderExpenses() {
           <td>${INR.format(Number(record.advanceCash) || 0)}</td>
           <td>-</td>
           <td>-</td>
-          <td><span style="color:green;">✅ Accountant Recorded</span></td>
+          <td><span style="color:green;">✅ Cash Advance Recorded</span></td>
         </tr>
       `;
       totalAdvanceReceived += Number(record.advanceCash) || 0;
