@@ -600,3 +600,29 @@ span[style*="orange"] {
 #advanceCash {
   display: none;
 }
+
+/* Advance Cash Table Styling */
+.advance-cash-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.advance-cash-table th,
+.advance-cash-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.advance-cash-table td.amount-cell {
+  text-align: right;
+  font-weight: bold;
+  color: #333;
+}
+
+.advance-cash-table tr:hover {
+  background-color: #f9f9f9;
+}
+
