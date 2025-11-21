@@ -6,7 +6,7 @@ import { getDoc, getDocs, collection, updateDoc, doc } from "https://www.gstatic
 // 🧩 Field Labels and Grouping
 const FIELD_GROUPS = {
   "🧭 Trip Info": ["placeVisited"],
-  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "misc"],
+  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier"],
   "📅 Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone"]
 };
 
@@ -17,7 +17,7 @@ const FIELD_LABELS = {
   boarding: "Boarding",
   food: "Food",
   localConveyance: "Local Conveyance",
-  misc: "Misc",
+  PostCourier: "PostCourier",
   advanceCash: "Advance Cash",
   monthlyConveyance: "Monthly Conveyance",
   monthlyPhone: "Monthly Phone"
@@ -173,7 +173,7 @@ async function renderTable() {
         (Number(exp.boarding) || 0) +
         (Number(exp.food) || 0) +
         (Number(exp.localConveyance) || 0) +
-        (Number(exp.misc) || 0) +
+        (Number(exp.PostCourier) || 0) +
         (Number(exp.monthlyConveyance) || 0) +
         (Number(exp.monthlyPhone) || 0);
       return !(advance > 0 && allOthers === 0);
@@ -221,7 +221,7 @@ async function renderTable() {
       let amount = 0;
       [
         "fuel", "fare", "boarding", "food",
-        "localConveyance", "misc", "monthlyConveyance", "monthlyPhone"
+        "localConveyance", "PostCourier", "monthlyConveyance", "monthlyPhone"
       ].forEach(key => {
         if (exp[key] && !isNaN(exp[key])) {
           amount += Number(exp[key]);
