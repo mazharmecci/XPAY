@@ -68,6 +68,9 @@
         <button id="rejectBtn">❌ Reject Selected</button>
       </div>
 
+
+      <!-- Buttons and logic for Advance cash workflow -->
+      
       <div class="workflow-block">
         <h3 class="workflow-title">✅ Download Final Approved Expenses</h3>
         <p class="workflow-caption">
@@ -77,14 +80,16 @@
           <button id="downloadApprovedBtn" type="button">
             Download Approved Expenses (CSV)
           </button>
-          <!-- New button to open Advance Cash workflow -->
+          <!-- New toggle button -->
           <button id="goToAdvanceCashBtn" type="button" style="margin-left:10px;">
-            💵 Go to Advance Cash Workflow
+            💵 Toggle Advance Cash Workflow
           </button>
         </div>
       </div>
       
-      <div class="workflow-block">
+      <!-- Advance Cash Workflow section -->
+      
+      <div class="workflow-block" id="advanceCashWorkflow" style="display:none;">
         <h3 class="workflow-title">💵 Manage Advance Cash Payments</h3>
         <p class="workflow-caption">Record advance cash disbursements to employees.</p>
       
@@ -126,7 +131,7 @@
             <!-- Filled dynamically by accountant.js -->
           </tbody>
         </table>
-      </div> 
+      </div>
 
       <div class="logout-container">
         <button id="logoutBtn" class="logout-btn inside-form">🚪 Logout</button>
