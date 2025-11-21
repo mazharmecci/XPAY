@@ -47,7 +47,6 @@ function buildExpenseData() {
     workflowType: getVal("workflowType"),
     date: getVal("date"),
     placeVisited: getVal("placeVisited"),
-    advanceCash: getVal("advanceCash", true),
     monthlyConveyance: getVal("monthlyConveyance", true),
     monthlyPhone: getVal("monthlyPhone", true),
     fuel: getVal("fuel", true),
@@ -153,7 +152,6 @@ async function renderExpenses() {
       <tr>
         <td>${sn}</td>
         <td>${date}</td>
-        <td>${advance}</td>
         <td>${convey}</td>
         <td>${phone}</td>
         <td>${badge}</td>
@@ -184,24 +182,16 @@ async function renderExpenses() {
       <td colspan="5" style="text-align:right;">📊 Total of claims (excluding Advance) for ${selectedMonth}:</td>
       <td>₹${monthlyTotal + travelTotal}</td>
     </tr>
-    <tr style="font-weight:bold; background:#e6f7ff;">
-      <td colspan="5" style="text-align:right;">🪙 Advance Cash Received (${selectedMonth}):</td>
-      <td>₹${totalAdvanceReceived}</td>
-    </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">✅ Approved by Accountant (excluding Advance) for ${selectedMonth}:</td>
+      <td colspan="5" style="text-align:right;">✅ Approved expenses by Accountant for ${selectedMonth}:</td>
       <td>₹${totalApproved}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">❌ Rejected by Accountant (excluding Advance) for ${selectedMonth}:</td>
+      <td colspan="5" style="text-align:right;">❌ Rejected expenses by Accountant for ${selectedMonth}:</td>
       <td>₹${totalRejected}</td>
     </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">⏳ Actual Amount Pending (excluding Advance) for ${selectedMonth}:</td>
-      <td>₹${totalPending}</td>
-    </tr>
     <tr style="font-weight:bold; background:#e8ffe8;">
-      <td colspan="5" style="text-align:right;">💰 Net reimbursement due to the emp (${selectedMonth}):</td>
+      <td colspan="5" style="text-align:right;">💰 Net amount payable (${selectedMonth}):</td>
       <td>₹${netReimbursementDue}</td>
     </tr>
   `;
