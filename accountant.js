@@ -241,7 +241,9 @@ async function renderAdvanceCashTable() {
   });
 }
 
+
 // ✅ Advance cash logic
+
 async function recordAdvanceCash(e) {
   e.preventDefault();
   try {
@@ -255,6 +257,7 @@ async function recordAdvanceCash(e) {
       return;
     }
 
+    // Build the data object
     const advanceData = {
       employeeName,
       date: advanceDate,
@@ -264,11 +267,14 @@ async function recordAdvanceCash(e) {
       createdBy: auth.currentUser?.uid || ""
     };
 
+    // ✅ Paste the addDoc line here
     await addDoc(collection(db, "advanceCash"), advanceData);
+
+    // Success feedback
     showToast("Advance cash recorded ✅", "success");
     document.getElementById("advanceCashForm").reset();
 
-    // ✅ Now this works because renderAdvanceCashTable is global
+    // Refresh the table
     await renderAdvanceCashTable();
   } catch (err) {
     console.error("Error recording advance cash:", err);
