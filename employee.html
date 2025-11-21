@@ -64,7 +64,7 @@
   <fieldset>
     <legend>Monthly Claims</legend>
     <div class="form-row">
-    <input type="number" id="advanceCash" name="advanceCash" placeholder="Advance Cash 💵" style="display:none;">
+      <input type="number" id="advanceCash" name="advanceCash" placeholder="Advance Cash 💵">
     </div>
     <div class="form-row">
       <input type="number" id="monthlyConveyance" name="monthlyConveyance" placeholder="Monthly Conveyance 🚌">
@@ -81,7 +81,7 @@
     <div class="form-row"><input type="number" id="boarding" name="boarding" placeholder="Boarding 🛏️"></div>
     <div class="form-row"><input type="number" id="food" name="food" placeholder="Food 🍽️"></div>
     <div class="form-row"><input type="number" id="localConveyance" name="localConveyance" placeholder="Local Conveyance 🚖"></div>
-    <div class="form-row"><input type="number" id="PostCourier" name="PostCourier" placeholder="Post Courier 📦"></div>
+    <div class="form-row"><input type="number" id="misc" name="misc" placeholder="Misc 📦"></div>
 
     <!-- Submit -->
     <div class="form-row">
@@ -124,28 +124,6 @@
     </table>
   </div>
 
-  <!-- Monthly Claims -->
-  <div class="expense-group">
-    <div class="expense-group-header">Monthly Claims</div>
-    <table id="monthlyClaimsTable">
-      <thead>
-        <tr>
-          <th>S.No</th>
-          <th>Date</th>
-          <!-- Advance Cash column commented out for now -->
-          <!-- <th>Advance Cash</th> -->
-          <th>Monthly Conveyance</th>
-          <th>Monthly Phone</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Render monthly claims dynamically here -->
-      </tbody>
-    </table>
-  </div>
-  </section>
-      
   <!-- Travel Costs Claims -->
   <div class="expense-group">
     <div class="expense-group-header">Travel Costs Claims</div>
@@ -159,7 +137,7 @@
           <th>Boarding</th>
           <th>Food</th>
           <th>Local Conveyance</th>
-          <th>Post Courier</th>
+          <th>Misc</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -169,6 +147,26 @@
     </table>
   </div>
 
+  <!-- Monthly Claims -->
+  <div class="expense-group">
+    <div class="expense-group-header">Monthly Claims</div>
+    <table id="monthlyClaimsTable">
+      <thead>
+        <tr>
+          <th>S.No</th>
+          <th>Date</th>
+          <th>Advance Cash</th>
+          <th>Monthly Conveyance</th>
+          <th>Monthly Phone</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Render monthly claims dynamically here -->
+      </tbody>
+    </table>
+  </div>
+</section>
 
 <!-- 🚪 Logout Button -->
 <div class="logout-container">
