@@ -298,7 +298,7 @@ async function renderExpenses() {
 
     monthlyClaimsTable.innerHTML += `
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">📝 Total submitted (before approval):</td>
+        <td colspan="5" style="text-align:right;">📝 Total expenses submitted (for approval):</td>
         <td>${INR.format(totalSubmitted)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
