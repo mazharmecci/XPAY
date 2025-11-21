@@ -1,27 +1,13 @@
-// 🔥 Advance cash workflow - employee can see readonly entries
-
-import { getDocs, collection } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-
-async function fetchAdvanceCashRecords(employeeName, selectedMonth) {
-  const snapshot = await getDocs(collection(db, "advanceCash"));
-  const records = [];
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
-    const dateStr = typeof data.date === 'string' ? data.date : '';
-    if (
-      data.employeeName?.toLowerCase() === employeeName?.toLowerCase() &&
-      dateStr.slice(0, 7) === selectedMonth
-    ) {
-      records.push(data);
-    }
-  });
-  return records;
-}
-
 // 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { addDoc, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { 
+  addDoc, 
+  collection, 
+  getDocs, 
+  doc, 
+  getDoc 
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 // 🛡️ Safe value getter
 function getVal(id, numeric = false) {
