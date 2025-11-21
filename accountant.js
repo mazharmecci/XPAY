@@ -211,6 +211,71 @@ async function renderTable() {
   }
 }
 
+// ✅ Advance cash logic
+
+async function recordAdvanceCash(e) {
+  e.preventDefault();
+  try {
+    const employeeName = document.getElementById("employeeName").value.trim();
+    const advanceDate = document.getElementById("advanceDate").value;
+    const advanceAmount = Number(document.getElementById("advanceAmount").value) || 0;
+    const advanceNote = document.getElementById("advanceNote").value.trim();
+
+    if (!employeeName || !advanceDate || advanceAmount <= 0) {
+      showToast("Please fill all required fields correctly.", "error");
+      return;
+    }
+
+    const advanceData = {
+      employeeName,
+      date: advanceDate,
+      advanceCash: advanceAmount,
+      note: advanceNote,
+      status: "Recorded",
+      createdBy: auth.currentUser?.uid || ""
+    };
+
+// ✅ Advance cash table
+    
+async function renderAdvanceCashTable() {
+  const tableBody = document.querySelector("#advanceCashTable tbody");
+  if (!tableBody) return;
+  tableBody.innerHTML = "";
+
+  const snapshot = await getDocs(collection(db, "advanceCash"));
+  const records = [];
+  snapshot.forEach(docSnap => records.push(docSnap.data()));
+
+  records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  if (records.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">📭 No advance cash records found.</td></tr>`;
+    return;
+  }
+
+  records.forEach(record => {
+    tableBody.innerHTML += `
+      <tr>
+        <td>${record.employeeName || "-"}</td>
+        <td>${record.date || "-"}</td>
+        <td>₹${record.advanceCash || 0}</td>
+        <td>${record.note || "-"}</td>
+        <td>${record.status || "Recorded"}</td>
+      </tr>
+    `;
+  });
+}
+    
+    await addDoc(collection(db, "advanceCash"), advanceData);
+    showToast("Advance cash recorded ✅", "success");
+    document.getElementById("advanceCashForm").reset();
+    await renderAdvanceCashTable();
+  } catch (err) {
+    console.error("Error recording advance cash:", err);
+    showToast("Error recording advance ❌", "error");
+  }
+}
+
 // ✅ Approve selected expenses
 async function approveSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
@@ -321,6 +386,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
 
+  // 🔄 Accountant dashboard controls
   await populateEmployeeFilter();
   document.getElementById('approveBtn')?.addEventListener('click', approveSelected);
   document.getElementById('rejectBtn')?.addEventListener('click', rejectSelected);
@@ -328,21 +394,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('employeeFilter')?.addEventListener('change', renderTable);
   document.getElementById("downloadApprovedBtn")?.addEventListener("click", downloadApprovedCSV);
 
-  // Auth/role logic and initial render
+  // 💵 Advance Cash Form
+  const advanceForm = document.getElementById("advanceCashForm");
+  if (advanceForm) advanceForm.addEventListener("submit", recordAdvanceCash);
+
+  // 🔍 Auth check and initial render
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
       setTimeout(() => (window.location.href = "login.html"), 1500);
       return;
     }
+
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     const role = (userDoc.exists() ? userDoc.data().role : '').toLowerCase();
+
     if (role !== 'accountant') {
       alert("Access denied. Accountant role required.");
       window.location.href = "login.html";
       return;
     }
+
     if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
+
+    // ✅ Initial dashboard render
     await renderTable();
+    await renderAdvanceCashTable(); // ← Add this to show advance cash records
   });
 });
