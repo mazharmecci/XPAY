@@ -143,7 +143,6 @@ async function renderExpenses() {
       </tr>
     `;
     // Monthly Claims (but exclude advanceCash from totals)
-    const advance = safeAmount(exp.advanceCash);
     const convey = safeAmount(exp.monthlyConveyance);
     const phone = safeAmount(exp.monthlyPhone);
     const monthlySum = convey + phone; // Only these two, NOT advance
@@ -176,7 +175,7 @@ async function renderExpenses() {
     year: "numeric"
   });
   const totalSubmittedAmount = totalApproved + totalRejected + totalPending;
-  const netReimbursementDue = (monthlyTotal + travelTotal) - totalAdvanceReceived;
+  const netReimbursementDue = (monthlyTotal + travelTotal);
   monthlyClaimsTable.innerHTML += `
     <tr style="font-weight:bold; background:#f9f9f9;">
       <td colspan="5" style="text-align:right;">📊 Total of claims (excluding Advance) for ${selectedMonth}:</td>
