@@ -40,14 +40,14 @@ function getStatusBadge(status) {
   return `<span style="color:orange;">⏳ Pending</span>`;
 }
 
-// 🧾 Build Expense Data
+// 🧾 Build Expense Data (advanceCash excluded for employees)
 function buildExpenseData() {
   return {
     userId: auth.currentUser?.uid || "",
     workflowType: getVal("workflowType"),
     date: getVal("date"),
     placeVisited: getVal("placeVisited"),
-    advanceCash: getVal("advanceCash", true),
+    // advanceCash intentionally excluded for employees
     monthlyConveyance: getVal("monthlyConveyance", true),
     monthlyPhone: getVal("monthlyPhone", true),
     fuel: getVal("fuel", true),
@@ -80,17 +80,18 @@ function safeAmount(val) {
   return (val === null || val === undefined || isNaN(val)) ? 0 : Number(val);
 }
 
-// 📊 Render Employee Expenses (refactored)
-
+// 📊 Render Employee Expenses
 async function renderExpenses() {
   const tripInfoTable = document.querySelector("#tripInfoTable tbody");
   const travelCostTable = document.querySelector("#travelCostTable tbody");
   const monthlyClaimsTable = document.querySelector("#monthlyClaimsTable tbody");
   const selectedMonth = document.getElementById("monthPicker")?.value || new Date().toISOString().slice(0, 7);
   const currentUserId = auth.currentUser?.uid;
+
   tripInfoTable.innerHTML = "";
   travelCostTable.innerHTML = "";
   monthlyClaimsTable.innerHTML = "";
+
   const snapshot = await getDocs(collection(db, "expenses"));
   const records = [];
   snapshot.forEach(docSnap => {
@@ -100,17 +101,21 @@ async function renderExpenses() {
       records.push(exp);
     }
   });
+
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
   let monthlyTotal = 0;
   let travelTotal = 0;
   let totalApproved = 0;
   let totalRejected = 0;
   let totalPending = 0;
-  let totalAdvanceReceived = 0; // <-- Summing for audit, regardless of status
+  let totalAdvanceReceived = 0;
+
   records.forEach((exp, index) => {
     const badge = getStatusBadge(exp.status);
     const sn = index + 1;
     const date = exp.date || "-";
+
     // Trip Info
     tripInfoTable.innerHTML += `
       <tr>
@@ -121,6 +126,7 @@ async function renderExpenses() {
         <td>${badge}</td>
       </tr>
     `;
+
     // Travel Costs
     const fuel = safeAmount(exp.fuel);
     const fare = safeAmount(exp.fare);
@@ -130,6 +136,7 @@ async function renderExpenses() {
     const misc = safeAmount(exp.misc);
     const travelSum = fuel + fare + boarding + food + local + misc;
     travelTotal += travelSum;
+
     travelCostTable.innerHTML += `
       <tr>
         <td>${sn}</td>
@@ -143,23 +150,25 @@ async function renderExpenses() {
         <td>${badge}</td>
       </tr>
     `;
-    // Monthly Claims (but exclude advanceCash from totals)
-    const advance = safeAmount(exp.advanceCash);
+
+    // Monthly Claims (Advance Cash shown but not submitted by employees)
+    const advance = safeAmount(exp.advanceCash); // only populated if accountant entered
     const convey = safeAmount(exp.monthlyConveyance);
     const phone = safeAmount(exp.monthlyPhone);
-    const monthlySum = convey + phone; // Only these two, NOT advance
+    const monthlySum = convey + phone;
     monthlyTotal += monthlySum;
+
     monthlyClaimsTable.innerHTML += `
       <tr>
         <td>${sn}</td>
         <td>${date}</td>
-        <td>${advance}</td>
+        <td>${advance}</td> <!-- Advance Cash hidden for employees -->
         <td>${convey}</td>
         <td>${phone}</td>
         <td>${badge}</td>
       </tr>
     `;
-    // Only sum status for travelTotal+monthlyTotal, advance handled below
+
     const totalForRecord = travelSum + monthlySum;
     if (exp.status === "Approved" || exp.status === "FinalApproved") {
       totalApproved += totalForRecord;
@@ -168,20 +177,20 @@ async function renderExpenses() {
     } else {
       totalPending += totalForRecord;
     }
-    // Sum all advances for the month, regardless of status for audit summary
+
     totalAdvanceReceived += advance;
   });
-  
+
   // 🧾 Final Summary Block
   const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
     month: "long",
     year: "numeric"
   });
-  const totalSubmittedAmount = totalApproved + totalRejected + totalPending;
   const netReimbursementDue = (monthlyTotal + travelTotal) - totalAdvanceReceived;
+
   monthlyClaimsTable.innerHTML += `
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">📊 Total of claims (excluding Advance) for ${selectedMonth}:</td>
+      <td colspan="5" style="text-align:right;">📊 Total expenses submitted for ${selectedMonth}:</td>
       <td>₹${monthlyTotal + travelTotal}</td>
     </tr>
     <tr style="font-weight:bold; background:#e6f7ff;">
@@ -189,24 +198,19 @@ async function renderExpenses() {
       <td>₹${totalAdvanceReceived}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">✅ Approved by Accountant (excluding Advance) for ${selectedMonth}:</td>
+      <td colspan="5" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
       <td>₹${totalApproved}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">❌ Rejected by Accountant (excluding Advance) for ${selectedMonth}:</td>
+      <td colspan="5" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
       <td>₹${totalRejected}</td>
     </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">⏳ Actual Amount Pending (excluding Advance) for ${selectedMonth}:</td>
-      <td>₹${totalPending}</td>
-    </tr>
     <tr style="font-weight:bold; background:#e8ffe8;">
-      <td colspan="5" style="text-align:right;">💰 Net reimbursement due to the emp (${selectedMonth}):</td>
+      <td colspan="5" style="text-align:right;">💰 Net payable to the emp (${selectedMonth}):</td>
       <td>₹${netReimbursementDue}</td>
     </tr>
   `;
-} // closes renderExpenses
-
+}
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
