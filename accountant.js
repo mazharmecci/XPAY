@@ -212,6 +212,7 @@ async function renderTable() {
 }
 
 // ✅ Advance cash table (standalone function)
+
 async function renderAdvanceCashTable() {
   const tableBody = document.querySelector("#advanceCashTable tbody");
   if (!tableBody) return;
@@ -221,14 +222,24 @@ async function renderAdvanceCashTable() {
   const records = [];
   snapshot.forEach(docSnap => records.push(docSnap.data()));
 
+  // 🔍 Sort by date descending
   records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-  if (records.length === 0) {
+  // 🔐 Filter for employee role
+  const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+  const role = userDoc.exists() ? userDoc.data().role?.toLowerCase() : "";
+  const userName = userDoc.exists() ? userDoc.data().name?.toLowerCase() : "";
+
+  const visibleRecords = role === "employee"
+    ? records.filter(r => r.employeeName?.toLowerCase() === userName)
+    : records;
+
+  if (visibleRecords.length === 0) {
     tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">📭 No advance cash records found.</td></tr>`;
     return;
   }
 
-  records.forEach(record => {
+  visibleRecords.forEach(record => {
     tableBody.innerHTML += `
       <tr>
         <td>${record.employeeName || "-"}</td>
@@ -257,15 +268,40 @@ async function recordAdvanceCash(e) {
       return;
     }
 
-    // Build the data object
+    // 🔍 Lookup employee UID from name
+    const usersSnapshot = await getDocs(collection(db, "users"));
+    const matchedUser = usersSnapshot.docs.find(doc =>
+      doc.data().name?.toLowerCase() === employeeName.toLowerCase()
+    );
+
+    if (!matchedUser) {
+      showToast("Employee not found. Please check the name.", "error");
+      return;
+    }
+
+    const employeeId = matchedUser.id;
+
+    // ✅ Build the data object
     const advanceData = {
       employeeName,
+      employeeId,
       date: advanceDate,
       advanceCash: advanceAmount,
       note: advanceNote,
       status: "Recorded",
       createdBy: auth.currentUser?.uid || ""
     };
+
+    await addDoc(collection(db, "advanceCash"), advanceData);
+
+    showToast("Advance cash recorded ✅", "success");
+    document.getElementById("advanceCashForm").reset();
+    await renderAdvanceCashTable();
+  } catch (err) {
+    console.error("Error recording advance cash:", err);
+    showToast("Error recording advance ❌", "error");
+  }
+}
 
     // ✅ Paste the addDoc line here
     await addDoc(collection(db, "advanceCash"), advanceData);
