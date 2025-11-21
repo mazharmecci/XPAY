@@ -21,14 +21,14 @@ const FIELD_LABELS = {
   boarding: "Boarding",
   food: "Food",
   localConveyance: "Local Conveyance",
-  misc: "Misc",
+  PostCourier: "PostCourier",
   placeVisited: "Place Visited"
 };
 
 const FIELD_GROUPS = {
   "🕓 Trip Info": ["placeVisited"],
   "🗓️ Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone"],
-  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "misc"]
+  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier"]
 };
 
 // Toast notification
@@ -182,7 +182,7 @@ async function renderManagerClaims() {
     // No S.No!
     const totalKeys = [
       "monthlyConveyance", "monthlyPhone", "fuel", "fare",
-      "boarding", "food", "localConveyance", "misc"
+      "boarding", "food", "localConveyance", "PostCourier"
     ];
     const total = totalKeys.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
 
@@ -235,7 +235,7 @@ async function renderManagerClaims() {
       (Number(exp.monthlyConveyance) || 0) + (Number(exp.monthlyPhone) || 0) +
       (Number(exp.fuel) || 0) + (Number(exp.fare) || 0) +
       (Number(exp.boarding) || 0) + (Number(exp.food) || 0) +
-      (Number(exp.localConveyance) || 0) + (Number(exp.misc) || 0)
+      (Number(exp.localConveyance) || 0) + (Number(exp.PostCourier) || 0)
     ), 0);
 
   summaryRow.innerHTML = `
