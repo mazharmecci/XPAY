@@ -61,77 +61,84 @@
         </tbody>
       </table>
 
-      <div id="toast" class="toast"></div>
+          <div id="toast" class="toast"></div>
+    
+          <div class="action-btns">
+            <button id="approveBtn">✅ Approve Selected</button>
+            <button id="rejectBtn">❌ Reject Selected</button>
+          </div>
 
-      <div class="action-btns">
-        <button id="approveBtn">✅ Approve Selected</button>
-        <button id="rejectBtn">❌ Reject Selected</button>
-      </div>
+  <hr class="section-divider" />
 
-
-      <!-- Buttons and logic for Advance cash workflow -->
-      
-      <div class="workflow-block">
-        <h3 class="workflow-title">✅ Download Final Approved Expenses</h3>
-        <p class="workflow-caption">
-          Get a CSV of all expenses approved by Manager for audit or reporting.
-        </p>
+     <!-- Buttons and logic for Advance cash workflow -->
+          
+          <div class="workflow-block">
+            <h3 class="workflow-title">✅ Download Final Approved Expenses</h3>
+            <p class="workflow-caption">
+              Get a CSV of all expenses approved by Manager for audit or reporting.
+            </p>
+            <div class="form-row">
+              <button id="downloadApprovedBtn" type="button">
+                Download Approved Expenses (CSV)
+              </button>
+              <!-- New toggle button -->
+              <button id="goToAdvanceCashBtn" type="button" style="margin-left:10px;">
+                💵 Toggle Advance Cash Workflow
+              </button>
+            </div>
+          </div>
+          
+    <!-- 💵 Advance Cash Workflow Section -->
+    <div class="workflow-block" id="advanceCashWorkflow" style="display: none;">
+      <h3 class="workflow-title">💵 Manage Advance Cash Payments</h3>
+      <p class="workflow-caption">Record advance cash disbursements to employees.</p>
+    
+      <!-- 🧾 Advance Cash Form -->
+      <form id="advanceCashForm" class="advance-form">
         <div class="form-row">
-          <button id="downloadApprovedBtn" type="button">
-            Download Approved Expenses (CSV)
-          </button>
-          <!-- New toggle button -->
-          <button id="goToAdvanceCashBtn" type="button" style="margin-left:10px;">
-            💵 Toggle Advance Cash Workflow
-          </button>
+          <label for="employeeName">Employee Name</label>
+          <input type="text" id="employeeName" name="employeeName" placeholder="Enter employee name" required />
         </div>
-      </div>
+    
+        <div class="form-row">
+          <label for="advanceDate">Date</label>
+          <input type="date" id="advanceDate" name="advanceDate" required />
+        </div>
+    
+        <div class="form-row input-rupee">
+          <label for="advanceAmount">Amount</label>
+          <input type="number" id="advanceAmount" name="advanceAmount" placeholder="0" required />
+        </div>
+    
+        <div class="form-row">
+          <label for="advanceNote">Note</label>
+          <input type="text" id="advanceNote" name="advanceNote" placeholder="Optional note" />
+        </div>
+    
+        <div class="form-row">
+          <button type="submit">Record Advance ✅</button>
+        </div>
+      </form>
+
+  <hr class="section-divider" />
       
-      <!-- Advance Cash Workflow section -->
-      
-      <div class="workflow-block" id="advanceCashWorkflow" style="display:none;">
-        <h3 class="workflow-title">💵 Manage Advance Cash Payments</h3>
-        <p class="workflow-caption">Record advance cash disbursements to employees.</p>
-      
-        <form id="advanceCashForm" class="advance-form">
-          <div class="form-row">
-            <label for="employeeName">Employee Name</label>
-            <input type="text" id="employeeName" name="employeeName" placeholder="Enter Employee Name" required>
-          </div>
-          <div class="form-row">
-            <label for="advanceDate">Date</label>
-            <input type="date" id="advanceDate" name="advanceDate" required>
-          </div>
-          <div class="form-row">
-            <label for="advanceAmount">Amount</label>
-            <input type="number" id="advanceAmount" name="advanceAmount" placeholder="₹ Amount" required>
-          </div>
-          <div class="form-row">
-            <label for="advanceNote">Note</label>
-            <input type="text" id="advanceNote" name="advanceNote" placeholder="Optional note">
-          </div>
-          <div class="form-row">
-            <button type="submit">Record Advance ✅</button>
-          </div>
-        </form>
-      
-        <!-- Advance Cash Records Table -->
-        <h4>Advance Cash Disbursements</h4>
-        <table id="advanceCashTable">
-          <thead>
-            <tr>
-              <th>Employee</th>
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Note</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Filled dynamically by accountant.js -->
-          </tbody>
-        </table>
-      </div>
+      <!-- 📊 Advance Cash Records Table -->
+      <h4 style="margin-top: 2rem;">Advance Cash Disbursements</h4>
+      <table id="advanceCashTable" class="advance-cash-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Date</th>
+            <th class="amount-cell">Amount</th>
+            <th>Note</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Filled dynamically by accountant.js -->
+        </tbody>
+      </table>
+    </div>
 
       <div class="logout-container">
         <button id="logoutBtn" class="logout-btn inside-form">🚪 Logout</button>
