@@ -179,6 +179,7 @@ function renderMonthlyClaimsRow(sn, date, advance, convey, phone, badge) {
 }
 
 // 📊 Render Employee Expenses
+
 async function renderExpenses() {
   try {
     const tripInfoTable = document.querySelector("#tripInfoTable tbody");
@@ -194,9 +195,9 @@ async function renderExpenses() {
     travelCostTable.innerHTML = "";
     monthlyClaimsTable.innerHTML = "";
 
-    // Fetch expenses
     const snapshot = await getDocs(collection(db, "expenses"));
     const records = [];
+
     snapshot.forEach(docSnap => {
       const exp = docSnap.data();
       const dateStr = typeof exp.date === 'string' ? exp.date : '';
@@ -205,7 +206,6 @@ async function renderExpenses() {
       }
     });
 
-    // Sort desc by date string
     records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
     let monthlyTotal = 0;
@@ -215,7 +215,6 @@ async function renderExpenses() {
     let totalPending = 0;
     let totalAdvanceReceived = 0;
 
-    // Render expense rows
     records.forEach((exp, index) => {
       const badge = getStatusBadge(exp.status);
       const sn = index + 1;
@@ -236,7 +235,7 @@ async function renderExpenses() {
 
       travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, misc, badge);
 
-      // Monthly Claims (employee form has no advanceCash; stays 0 here)
+      // Monthly Claims
       const advance = safeAmount(exp.advanceCash);
       const convey = safeAmount(exp.monthlyConveyance);
       const phone = safeAmount(exp.monthlyPhone);
@@ -247,6 +246,7 @@ async function renderExpenses() {
 
       const totalForRecord = travelSum + monthlySum;
       const normalized = normalizeStatus(exp.status);
+
       if (normalized === "Approved" || normalized === "FinalApproved") {
         totalApproved += totalForRecord;
       } else if (normalized === "Rejected") {
@@ -258,7 +258,7 @@ async function renderExpenses() {
       totalAdvanceReceived += advance;
     });
 
-    // 🔄 Fetch and render accountant-recorded advance cash
+    // 🔄 Fetch accountant-recorded advance cash
     let employeeName = "";
     if (currentUserId) {
       const userDoc = await getDoc(doc(db, "users", currentUserId));
@@ -267,6 +267,7 @@ async function renderExpenses() {
 
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     const advanceRecords = [];
+
     advanceSnapshot.forEach(docSnap => {
       const data = docSnap.data();
       const dateStr = typeof data.date === 'string' ? data.date : '';
@@ -292,13 +293,13 @@ async function renderExpenses() {
     });
 
     // 🧾 Final Summary Block
-    const totalExpenses = monthlyTotal + travelTotal;
-    const netReimbursementDue = totalExpenses - totalAdvanceReceived;
+    const totalSubmitted = monthlyTotal + travelTotal;
+    const netReimbursementDue = totalApproved - totalAdvanceReceived;
 
     monthlyClaimsTable.innerHTML += `
-      <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="5" style="text-align:right;">📊 Total expenses submitted for ${selectedMonth}:</td>
-        <td>${INR.format(totalExpenses)}</td>
+      <tr style="font-weight:bold; background:#fff;">
+        <td colspan="5" style="text-align:right;">📝 Total submitted (before approval):</td>
+        <td>${INR.format(totalSubmitted)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
         <td colspan="5" style="text-align:right;">🪙 Advance Cash Received (${selectedMonth}):</td>
@@ -322,6 +323,7 @@ async function renderExpenses() {
     showToast("Failed to load expenses.", "error");
   }
 }
+
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
