@@ -54,8 +54,8 @@ function logoutUser() {
 // 🏷️ Status badge
 function getStatusBadge(status) {
   const s = normalizeStatus(status);
-  if (s === 'Approved') return `<span style="color:green;">✅ Approved</span>`;
-  if (s === 'FinalApproved') return `<span style="color:blue;">🔷 Final Approved</span>`;
+  if (s === 'Approved') return `<span style="color:green;">✅ Approved by Accountant</span>`;
+  if (s === 'FinalApproved') return `<span style="color:blue;">🔷 Approved by Manager</span>`;
   if (s === 'Rejected') return `<span style="color:red;">❌ Rejected</span>`;
   return `<span style="color:orange;">⏳ Pending</span>`;
 }
