@@ -105,7 +105,7 @@ async function submitExpense(e) {
 
     // ✅ Validation
     const workflowType = expenseData.workflowType;
-    const validWorkflowTypes = ["service", "others"];
+    const validWorkflowTypes = ["sales", "service", "others"];
     if (!workflowType || !validWorkflowTypes.includes(workflowType)) {
       showToast("Please choose a valid workflow type.", "error");
       isSubmitting = false;
