@@ -595,3 +595,8 @@ span[style*="orange"] {
   transition: opacity 0.5s ease;
 }
 
+/* ✅ Advance cash input field hidden from the employee workflow */
+
+#advanceCash {
+  display: none;
+}
