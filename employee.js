@@ -1,3 +1,23 @@
+// 🔥 Advance cash workflow - employee can see readonly entries
+
+import { getDocs, collection } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+async function fetchAdvanceCashRecords(employeeName, selectedMonth) {
+  const snapshot = await getDocs(collection(db, "advanceCash"));
+  const records = [];
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const dateStr = typeof data.date === 'string' ? data.date : '';
+    if (
+      data.employeeName?.toLowerCase() === employeeName?.toLowerCase() &&
+      dateStr.slice(0, 7) === selectedMonth
+    ) {
+      records.push(data);
+    }
+  });
+  return records;
+}
+
 // 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
@@ -81,6 +101,7 @@ function safeAmount(val) {
 }
 
 // 📊 Render Employee Expenses
+
 async function renderExpenses() {
   const tripInfoTable = document.querySelector("#tripInfoTable tbody");
   const travelCostTable = document.querySelector("#travelCostTable tbody");
@@ -151,8 +172,8 @@ async function renderExpenses() {
       </tr>
     `;
 
-    // Monthly Claims (Advance Cash shown but not submitted by employees)
-    const advance = safeAmount(exp.advanceCash); // only populated if accountant entered
+    // Monthly Claims
+    const advance = safeAmount(exp.advanceCash);
     const convey = safeAmount(exp.monthlyConveyance);
     const phone = safeAmount(exp.monthlyPhone);
     const monthlySum = convey + phone;
@@ -162,7 +183,7 @@ async function renderExpenses() {
       <tr>
         <td>${sn}</td>
         <td>${date}</td>
-        <td>${advance}</td> <!-- Advance Cash hidden for employees -->
+        <td>${advance}</td>
         <td>${convey}</td>
         <td>${phone}</td>
         <td>${badge}</td>
@@ -179,6 +200,39 @@ async function renderExpenses() {
     }
 
     totalAdvanceReceived += advance;
+  });
+
+  // 🔄 Fetch and render accountant-recorded advance cash
+  const userDoc = await getDoc(doc(db, "users", currentUserId));
+  const employeeName = userDoc.exists() ? userDoc.data().name : "";
+
+  const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
+  const advanceRecords = [];
+  advanceSnapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const dateStr = typeof data.date === 'string' ? data.date : '';
+    if (
+      data.employeeName?.toLowerCase() === employeeName?.toLowerCase() &&
+      dateStr.slice(0, 7) === selectedMonth
+    ) {
+      advanceRecords.push(data);
+    }
+  });
+
+  advanceRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  advanceRecords.forEach((record, index) => {
+    monthlyClaimsTable.innerHTML += `
+      <tr style="background:#fffbe6;">
+        <td>AC-${index + 1}</td>
+        <td>${record.date || "-"}</td>
+        <td>₹${record.advanceCash || 0}</td>
+        <td>-</td>
+        <td>-</td>
+        <td><span style="color:green;">✅ Accountant Recorded</span></td>
+      </tr>
+    `;
+    totalAdvanceReceived += Number(record.advanceCash) || 0;
   });
 
   // 🧾 Final Summary Block
