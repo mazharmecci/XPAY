@@ -143,35 +143,40 @@ async function renderExpenses() {
         <td>${badge}</td>
       </tr>
     `;
-    // Monthly Claims (but exclude advanceCash from totals)
-    const advance = safeAmount(exp.advanceCash);
-    const convey = safeAmount(exp.monthlyConveyance);
-    const phone = safeAmount(exp.monthlyPhone);
-    const monthlySum = convey + phone; // Only these two, NOT advance
-    monthlyTotal += monthlySum;
-    monthlyClaimsTable.innerHTML += `
-      <tr>
-        <td>${sn}</td>
-        <td>${date}</td>
-        <td>${advance}</td>
-        <td>${convey}</td>
-        <td>${phone}</td>
-        <td>${badge}</td>
-      </tr>
-    `;
-    // Only sum status for travelTotal+monthlyTotal, advance handled below
-    const totalForRecord = travelSum + monthlySum;
-    if (exp.status === "Approved" || exp.status === "FinalApproved") {
-      totalApproved += totalForRecord;
-    } else if (exp.status === "Rejected") {
-      totalRejected += totalForRecord;
-    } else {
-      totalPending += totalForRecord;
-    }
-    // Sum all advances for the month, regardless of status for audit summary
-    totalAdvanceReceived += advance;
-  });
-  
+    
+   // Monthly Claims (but exclude advanceCash from totals)
+const advance = safeAmount(exp.advanceCash);
+const convey = safeAmount(exp.monthlyConveyance);
+const phone = safeAmount(exp.monthlyPhone);
+const monthlySum = convey + phone; // Only these two, NOT advance
+monthlyTotal += monthlySum;
+
+// Table row WITHOUT advance column
+monthlyClaimsTable.innerHTML += `
+  <tr>
+    <td>${sn}</td>
+    <td>${date}</td>
+    <!-- Advance column commented out for now -->
+    <!-- <td>${advance}</td> -->
+    <td>${convey}</td>
+    <td>${phone}</td>
+    <td>${badge}</td>
+  </tr>
+`;
+
+// Only sum status for travelTotal+monthlyTotal, advance handled below
+const totalForRecord = travelSum + monthlySum;
+if (exp.status === "Approved" || exp.status === "FinalApproved") {
+  totalApproved += totalForRecord;
+} else if (exp.status === "Rejected") {
+  totalRejected += totalForRecord;
+} else {
+  totalPending += totalForRecord;
+}
+
+// Advance accumulation commented out for now
+// totalAdvanceReceived += advance;
+
   // 🧾 Final Summary Block
   const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
     month: "long",
@@ -189,19 +194,15 @@ async function renderExpenses() {
       <td>₹${totalAdvanceReceived}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">✅ Approved by Accountant (excluding Advance) for ${selectedMonth}:</td>
+      <td colspan="5" style="text-align:right;">✅ Approved expenses by Accountant for ${selectedMonth}:</td>
       <td>₹${totalApproved}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">❌ Rejected by Accountant (excluding Advance) for ${selectedMonth}:</td>
+      <td colspan="5" style="text-align:right;">❌ Rejected expenses by Accountant for ${selectedMonth}:</td>
       <td>₹${totalRejected}</td>
     </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="5" style="text-align:right;">⏳ Actual Amount Pending (excluding Advance) for ${selectedMonth}:</td>
-      <td>₹${totalPending}</td>
-    </tr>
     <tr style="font-weight:bold; background:#e8ffe8;">
-      <td colspan="5" style="text-align:right;">💰 Net reimbursement due to the emp (${selectedMonth}):</td>
+      <td colspan="5" style="text-align:right;">💰 Net amount payable to emp (${selectedMonth}):</td>
       <td>₹${netReimbursementDue}</td>
     </tr>
   `;
