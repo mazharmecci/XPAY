@@ -61,27 +61,61 @@
     </div>
   </fieldset>  
         
-  <fieldset>
+  <!-- 🧾 Monthly Claims -->
+  <fieldset class="claims-section">
     <legend>Monthly Claims</legend>
-    <div class="form-row">
-      <input type="number" id="advanceCash" name="advanceCash" placeholder="Advance Cash 💵">
+  
+    <div class="form-row input-rupee">
+      <label for="advanceCash">Advance Cash 💵</label>
+      <input type="number" id="advanceCash" name="advanceCash" placeholder="0" />
     </div>
-    <div class="form-row">
-      <input type="number" id="monthlyConveyance" name="monthlyConveyance" placeholder="Monthly Conveyance 🚌">
+  
+    <div class="form-row input-rupee">
+      <label for="monthlyConveyance">Monthly Conveyance 🚌</label>
+      <input type="number" id="monthlyConveyance" name="monthlyConveyance" placeholder="0" />
     </div>
-    <div class="form-row">
-      <input type="number" id="monthlyPhone" name="monthlyPhone" placeholder="Monthly Phone 📱">
+  
+    <div class="form-row input-rupee">
+      <label for="monthlyPhone">Monthly Phone 📱</label>
+      <input type="number" id="monthlyPhone" name="monthlyPhone" placeholder="0" />
     </div>
-  </fieldset>        
-     
-  <fieldset>
+  </fieldset>
+  
+  <!-- 🚗 Travel Costs -->
+  <fieldset class="claims-section">
     <legend>Travel Costs</legend>
-    <div class="form-row"><input type="number" id="fuel" name="fuel" placeholder="Fuel ⛽"></div>
-    <div class="form-row"><input type="number" id="fare" name="fare" placeholder="Fare 💰"></div>
-    <div class="form-row"><input type="number" id="boarding" name="boarding" placeholder="Boarding 🛏️"></div>
-    <div class="form-row"><input type="number" id="food" name="food" placeholder="Food 🍽️"></div>
-    <div class="form-row"><input type="number" id="localConveyance" name="localConveyance" placeholder="Local Conveyance 🚖"></div>
-    <div class="form-row"><input type="number" id="misc" name="misc" placeholder="Misc 📦"></div>
+  
+    <div class="form-row input-rupee">
+      <label for="fuel">Fuel ⛽</label>
+      <input type="number" id="fuel" name="fuel" placeholder="0" />
+    </div>
+  
+    <div class="form-row input-rupee">
+      <label for="fare">Fare 💰</label>
+      <input type="number" id="fare" name="fare" placeholder="0" />
+    </div>
+  
+    <div class="form-row input-rupee">
+      <label for="boarding">Boarding 🛏️</label>
+      <input type="number" id="boarding" name="boarding" placeholder="0" />
+    </div>
+  
+    <div class="form-row input-rupee">
+      <label for="food">Food 🍽️</label>
+      <input type="number" id="food" name="food" placeholder="0" />
+    </div>
+  
+    <div class="form-row input-rupee">
+      <label for="localConveyance">Local Conveyance 🚖</label>
+      <input type="number" id="localConveyance" name="localConveyance" placeholder="0" />
+    </div>
+  
+    <div class="form-row input-rupee">
+      <label for="misc">Misc 📦</label>
+      <input type="number" id="misc" name="misc" placeholder="0" />
+    </div>
+  </fieldset>
+
 
     <!-- Submit -->
     <div class="form-row">
