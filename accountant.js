@@ -212,7 +212,6 @@ async function renderTable() {
 }
 
 // ✅ Advance cash table (standalone function)
-
 async function renderAdvanceCashTable() {
   const tableBody = document.querySelector("#advanceCashTable tbody");
   if (!tableBody) return;
@@ -252,9 +251,7 @@ async function renderAdvanceCashTable() {
   });
 }
 
-
 // ✅ Advance cash logic
-
 async function recordAdvanceCash(e) {
   e.preventDefault();
 
@@ -303,21 +300,6 @@ async function recordAdvanceCash(e) {
 
     showToast("Advance cash recorded ✅", "success");
     document.getElementById("advanceCashForm").reset();
-    await renderAdvanceCashTable();
-  } catch (err) {
-    console.error("Error recording advance cash:", err);
-    showToast("Error recording advance ❌", "error");
-  }
-}
-
-    // ✅ Paste the addDoc line here
-    await addDoc(collection(db, "advanceCash"), advanceData);
-
-    // Success feedback
-    showToast("Advance cash recorded ✅", "success");
-    document.getElementById("advanceCashForm").reset();
-
-    // Refresh the table
     await renderAdvanceCashTable();
   } catch (err) {
     console.error("Error recording advance cash:", err);
@@ -425,7 +407,7 @@ function escapeCSV(val) {
 }
 function sanitize(val) {
   const str = String(val ?? "");
-  return str.replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '') // remove emojis
+  return str.replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '')
             .replace(/\s+/g, ' ')
             .trim();
 }
@@ -479,6 +461,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ✅ Initial dashboard render
     await renderTable();
-    await renderAdvanceCashTable(); // show advance cash records
+    await renderAdvanceCashTable();
   });
 });
