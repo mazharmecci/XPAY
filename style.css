@@ -626,3 +626,22 @@ span[style*="orange"] {
   background-color: #f9f9f9;
 }
 
+/* ₹ prefix for numeric fields */
+.input-rupee {
+  position: relative;
+}
+
+.input-rupee input[type="number"] {
+  padding-left: 2rem;
+}
+
+.input-rupee::before {
+  content: "₹";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #555;
+  font-size: 1rem;
+}
+
