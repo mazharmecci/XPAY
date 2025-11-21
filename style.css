@@ -595,7 +595,23 @@ span[style*="orange"] {
   transition: opacity 0.5s ease;
 }
 
-/* ✅ Advance cash input field hidden from the employee workflow */
+/* ✅ Advance cash & Monthly claims rupee form and Advance cash input field hidden from the employee workflow */
+
+.claims-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.claims-section legend {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
 
 /* Advance Cash Form */
 .advance-form {
