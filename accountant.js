@@ -404,6 +404,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const advanceForm = document.getElementById("advanceCashForm");
   if (advanceForm) advanceForm.addEventListener("submit", recordAdvanceCash);
 
+  // 💵 Toggle Advance Cash Workflow button
+  document.getElementById("goToAdvanceCashBtn")?.addEventListener("click", () => {
+    const workflow = document.getElementById("advanceCashWorkflow");
+    if (workflow.style.display === "none") {
+      workflow.style.display = "block";
+      workflow.scrollIntoView({ behavior: "smooth" });
+    } else {
+      workflow.style.display = "none";
+    }
+  });
+
   // 🔍 Auth check and initial render
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -425,6 +436,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ✅ Initial dashboard render
     await renderTable();
-    await renderAdvanceCashTable(); // ← Add this to show advance cash records
+    await renderAdvanceCashTable(); // show advance cash records
   });
 });
