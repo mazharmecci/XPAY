@@ -597,36 +597,51 @@ span[style*="orange"] {
 
 /* ✅ Advance cash input field hidden from the employee workflow */
 
-#advanceCash {
-  display: none;
-}
-
-/* Advance Cash Table Styling */
-.advance-cash-table {
-  width: 100%;
-  border-collapse: collapse;
+/* Advance Cash Form */
+.advance-form {
+  max-width: 600px;
   margin-top: 1rem;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid #ddd;
 }
 
-.advance-cash-table th,
-.advance-cash-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid #ddd;
-  text-align: left;
-  vertical-align: middle;
+.advance-form .form-row {
+  margin-bottom: 1rem;
 }
 
-.advance-cash-table td.amount-cell {
-  text-align: right;
-  font-weight: bold;
+.advance-form label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
   color: #333;
 }
 
-.advance-cash-table tr:hover {
-  background-color: #f9f9f9;
+.advance-form input {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
 }
 
-/* ₹ prefix for numeric fields */
+.advance-form button {
+  padding: 0.7rem 1.4rem;
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.advance-form button:hover {
+  background-color: #005fa3;
+}
+
+/* ₹ prefix for amount field */
 .input-rupee {
   position: relative;
 }
@@ -645,3 +660,29 @@ span[style*="orange"] {
   font-size: 1rem;
 }
 
+/* Advance Cash Table */
+.advance-cash-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.advance-cash-table th,
+.advance-cash-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.advance-cash-table th.amount-cell,
+.advance-cash-table td.amount-cell {
+  text-align: right;
+  font-weight: bold;
+  color: #333;
+}
+
+.advance-cash-table tr:hover {
+  background-color: #f9f9f9;
+}
