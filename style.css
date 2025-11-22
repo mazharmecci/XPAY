@@ -190,37 +190,29 @@ button:hover {
 
 /* Footer styling */
 .site-footer {
-  background-color: #C79F70; /* biscuit tone */
-  position: fixed;
-  padding: 30px 20px;
-  text-align: left;
-  font-size: 14px;
-  color: #333;
-  border-top: 1px solid #ccc;
+  background-color: #fff;
+  color: #000;
+  padding: 2rem 1rem;
+  border-top: 1px solid #ddd;
 }
 
-.footer-content {
+.site-footer .footer-content {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2rem;
 }
 
-.footer-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.site-footer .footer-brand,
+.site-footer .footer-legal {
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
-.footer-logo {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 10px;
-}
-
-.footer-text p {
-  margin: 4px 0;
-  line-height: 1.4;
+.site-footer .footer-logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.5rem;
 }
 
 /* Animation for smooth fade in */
@@ -407,6 +399,30 @@ input[type="checkbox"] {
   box-shadow: 0 4px 12px rgba(166,120,69,0.12);
   font-size: 1.05rem;
   z-index: 999;
+}
+
+/* Footer remains matching theme */
+.site-footer {
+  background: var(--text-dark);
+  color: #fff;
+  padding: 1.7rem;
+  margin-top: 3rem;
+  border-top: 6px solid var(--biscuit-mid);
+}
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.footer-logo {
+  height: 40px;
+  margin-bottom: 0.7rem;
+}
+.footer-legal {
+  font-size: 0.87rem;
+  color: #ddb783;
+  margin-top: 0.5rem;
 }
 
 /* Responsive tweaks for mobile */
