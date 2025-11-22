@@ -328,7 +328,15 @@ async function renderTable() {
 }
 
 // 📋 Summary renderer
-function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApproved, totalRejected, totalPending, totalAdvance, totalSubmitted }) {
+function renderAccountantSummary({
+  selectedMonth,
+  selectedEmployee,
+  totalApproved,
+  totalRejected,
+  totalPending,
+  totalAdvance,
+  totalSubmitted
+}) {
   const summaryContainer = document.getElementById("accountantSummary");
   if (!summaryContainer) return;
 
@@ -338,6 +346,9 @@ function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApprove
   });
 
   const netPayable = totalApproved - totalAdvance;
+  const netLabel = netPayable < 0
+    ? "💰 Advance exceeds approved"
+    : "💰 Net payable to employee";
 
   summaryContainer.innerHTML = `
     <div class="summary-block">
@@ -348,8 +359,12 @@ function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApprove
         <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
         <tr><td>⏳ Pending Expenses:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
         <tr><td>💸 Advance Cash Received:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-        <tr class="net-row"><td>💰 Net payable to employee:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
+        <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
+      ${netPayable < 0 ? `
+        <div style="margin-top:0.5em; font-size:0.9em; color:#888;">
+          Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
+        </div>` : ""}
     </div>
   `;
 }
