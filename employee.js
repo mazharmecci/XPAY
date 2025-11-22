@@ -176,10 +176,11 @@ async function renderExpenses(currentUserId) {
     const tripInfoTable = document.querySelector("#tripInfoTable tbody");
     const travelCostTable = document.querySelector("#travelCostTable tbody");
     const monthlyClaimsTable = document.querySelector("#monthlyClaimsTable tbody");
+    const adhocClaimsTable = document.querySelector("#adhocClaimsTable tbody");
     const monthPicker = document.getElementById("monthPicker");
     const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
 
-    if (!tripInfoTable || !travelCostTable || !monthlyClaimsTable) {
+    if (!tripInfoTable || !travelCostTable || !monthlyClaimsTable || !adhocClaimsTable) {
       showToast("Required expense tables missing in DOM.", "error");
       return;
     }
@@ -187,6 +188,7 @@ async function renderExpenses(currentUserId) {
     tripInfoTable.innerHTML = "";
     travelCostTable.innerHTML = "";
     monthlyClaimsTable.innerHTML = "";
+    adhocClaimsTable.innerHTML = "";
 
     const snapshot = await getDocs(collection(db, "expenses"));
     const records = [];
@@ -255,10 +257,10 @@ async function renderExpenses(currentUserId) {
       const userDoc = await getDoc(doc(db, "users", currentUserId));
       employeeName = userDoc.exists() ? (userDoc.data().name || "") : "";
     }
-    
+
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     const advanceRecords = [];
-    
+
     advanceSnapshot.forEach(docSnap => {
       const data = docSnap.data();
       const dateStr = typeof data.date === 'string' ? data.date : '';
@@ -266,9 +268,9 @@ async function renderExpenses(currentUserId) {
       const sameEmp = (data.employeeName || "").toLowerCase() === (employeeName || "").toLowerCase();
       if (sameEmp && sameMonth) advanceRecords.push(data);
     });
-    
+
     advanceRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    
+
     advanceRecords.forEach((record, index) => {
       monthlyClaimsTable.innerHTML += `
         <tr style="background:#fffbe6;">
@@ -280,70 +282,36 @@ async function renderExpenses(currentUserId) {
       `;
       totalAdvanceReceived += Number(record.advanceCash) || 0;
     });
-    
+
     // 🔄 Fetch manager-approved Adhoc Pre-Approval records
     const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
     const adhocRecords = [];
-    
+
     adhocSnapshot.forEach(docSnap => {
       const data = docSnap.data();
       const dateStr = typeof data.date === 'string' ? data.date : '';
       const sameMonth = dateStr.slice(0, 7) === selectedMonth;
       const sameEmp = (data.raisedBy || "").toLowerCase() === (auth.currentUser?.email || "").toLowerCase();
       const isApproved = (data.status || "").toLowerCase() === "approved";
-    
+
       if (sameMonth && sameEmp && isApproved) {
         adhocRecords.push(data);
       }
     });
-    
+
     adhocRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    
+
     adhocRecords.forEach((record, index) => {
-      monthlyClaimsTable.innerHTML += `
-        <tr style="background:#e6f7ff;">
+      adhocClaimsTable.innerHTML += `
+        <tr>
           <td>AD-${index + 1}</td>
           <td>${record.date || "-"}</td>
-          <td colspan="2">${INR.format(Number(record.amount) || 0)}</td>
-          <td><span style="color:blue;">🔷 Adhoc Approved by Manager</span></td>
+          <td>${record.purpose || "-"}</td>
+          <td>${INR.format(Number(record.amount) || 0)}</td>
+          <td><span style="color:blue;">🔷 Approved by Manager</span></td>
         </tr>
       `;
       totalAdvanceReceived += Number(record.amount) || 0;
-    });
-    
-    // 🍽️ Adhoc Pre-Approval Submission (independent of main form)
-    document.getElementById("submitAdhoc")?.addEventListener("click", async function (e) {
-      e.preventDefault();
-    
-      const adhocDate = getVal("adhocDate");
-      const adhocPurpose = getVal("adhocPurpose");
-      const adhocAmount = getVal("adhocAmount", true);
-      const currentUserEmail = auth.currentUser?.email || "";
-    
-      if (!adhocDate || !adhocPurpose || adhocAmount <= 0) {
-        showToast("Please fill Adhoc fields correctly.", "error");
-        return;
-      }
-    
-      try {
-        await addDoc(collection(db, "adhocRequests"), {
-          date: adhocDate,
-          purpose: adhocPurpose,
-          amount: adhocAmount,
-          raisedBy: currentUserEmail,
-          status: "Pending",
-          approvalTarget: "mazhar@istos.in",
-          approvedAt: null
-        });
-    
-        showToast("Adhoc request submitted for manager approval ✅", "success");
-        document.getElementById("adhocDate").value = "";
-        document.getElementById("adhocPurpose").value = "";
-        document.getElementById("adhocAmount").value = "0";
-      } catch (err) {
-        console.error("Error submitting Adhoc request:", err);
-        showToast("Submission failed ❌", "error");
-      }
     });
 
     // 🧾 Final Summary Block
@@ -384,6 +352,41 @@ async function renderExpenses(currentUserId) {
     showToast("Failed to load expenses.", "error");
   }
 }
+
+// 🍽️ Adhoc Pre-Approval Submission (independent of main form)
+document.getElementById("submitAdhoc")?.addEventListener("click", async function (e) {
+  e.preventDefault();
+
+  const adhocDate = getVal("adhocDate");
+  const adhocPurpose = getVal("adhocPurpose");
+  const adhocAmount = getVal("adhocAmount", true);
+  const currentUserEmail = auth.currentUser?.email || "";
+
+  if (!adhocDate || !adhocPurpose || adhocAmount <= 0) {
+    showToast("Please fill Adhoc fields correctly.", "error");
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "adhocRequests"), {
+      date: adhocDate,
+      purpose: adhocPurpose,
+      amount: adhocAmount,
+      raisedBy: currentUserEmail,
+      status: "Pending",
+      approvalTarget: "mazhar@istos.in",
+      approvedAt: null
+    });
+
+    showToast("Adhoc request submitted for manager approval ✅", "success");
+    document.getElementById("adhocDate").value = "";
+    document.getElementById("adhocPurpose").value = "";
+    document.getElementById("adhocAmount").value = "0";
+  } catch (err) {
+    console.error("Error submitting Adhoc request:", err);
+    showToast("Submission failed ❌", "error");
+  }
+});
 
 // 🚦 Init: Now, ONLY runs after auth state is ready
 document.addEventListener("DOMContentLoaded", () => {
