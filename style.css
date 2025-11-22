@@ -295,28 +295,38 @@ body.employee-page {
 }
 
 /* Table styling -- match employee dashboard report-section */
+.summary-table,
 #expenseTable {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
-  font-size: 0.97rem;
-  margin-top: 1.6rem;
-  box-shadow: 0 3px 11px rgba(221,173,117,0.13);
+  table-layout: fixed;
+  overflow-x: auto;
 }
-#expenseTable th, #expenseTable td {
-  border: 1px solid var(--biscuit-mid);
-  padding: 0.7rem 0.1rem;
-  text-align: center;
+
+#expenseTable th,
+#expenseTable td {
+  padding: 0.6em;
+  text-align: left;
+  word-wrap: break-word;
+  white-space: normal;
+  font-size: 0.95em;
 }
-#expenseTable th {
-  background: var(--biscuit-mid);
-  color: var(--text-dark);
-  font-weight: 600;
+
+.expense-table-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
 }
-#expenseTable tr:nth-child(even) td {
-  background: #f5e3c0;
-}
-#expenseTable tr:nth-child(odd) td {
-  background: #fff;
+
+@media screen and (max-width: 768px) {
+  #expenseTable th,
+  #expenseTable td {
+    font-size: 0.85em;
+  }
+
+  .summary-table td {
+    font-size: 0.9em;
+  }
 }
 
 /* Buttons (approve/reject/logout) match employee style with color accents */
