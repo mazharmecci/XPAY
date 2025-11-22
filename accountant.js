@@ -93,6 +93,28 @@ async function populateEmployeeDropdown() {
 // Call this on page load
 populateEmployeeDropdown();
 
+// 👤 Employee dropdown - For Advance table
+async function populateAdvanceEmployeeDropdown() {
+  const dropdown = document.getElementById("advanceEmployee");
+  if (!dropdown) return;
+
+  const seenNames = new Set();
+  const querySnapshot = await getDocs(collection(db, "users"));
+  querySnapshot.forEach(doc => {
+    const data = doc.data();
+    const name = data.name?.trim();
+    if (data.role?.toLowerCase() === "employee" && name && !seenNames.has(name)) {
+      seenNames.add(name);
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      dropdown.appendChild(option);
+    }
+  });
+}
+
+populateAdvanceEmployeeDropdown();
+
 // 🔎 Fetch expenses
 async function fetchExpenses(selectedMonth, selectedEmployee) {
   const snapshot = await getDocs(collection(db, "expenses"));
@@ -290,33 +312,53 @@ function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApprove
   `;
 }
 
-// ✅ Advance cash table (standalone function)
 async function renderAdvanceCashTable() {
   const tableBody = document.querySelector("#advanceCashTable tbody");
   if (!tableBody) return;
   tableBody.innerHTML = "";
 
+  // 🔍 Get selected filters
+  const selectedMonth = document.getElementById("advanceMonth")?.value || "";
+  const selectedEmployee = document.getElementById("advanceEmployee")?.value?.toLowerCase() || "";
+
+  // 🔐 Get current user role
+  const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+  const role = userDoc.exists() ? userDoc.data().role?.toLowerCase() : "";
+  const userName = userDoc.exists() ? userDoc.data().name?.toLowerCase() : "";
+
+  // 📦 Fetch all advance cash records
   const snapshot = await getDocs(collection(db, "advanceCash"));
   const records = [];
   snapshot.forEach(docSnap => records.push(docSnap.data()));
 
   // 🔍 Sort by date descending
-  records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-  // 🔐 Filter for employee role
-  const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
-  const role = userDoc.exists() ? userDoc.data().role?.toLowerCase() : "";
-  const userName = userDoc.exists() ? userDoc.data().name?.toLowerCase() : "";
+  // 🧠 Apply filters
+  const visibleRecords = records.filter(record => {
+    const recordDate = record.date || "";
+    const recordEmployee = record.employeeName?.toLowerCase() || "";
 
-  const visibleRecords = role === "employee"
-    ? records.filter(r => r.employeeName?.toLowerCase() === userName)
-    : records;
+    const matchMonth = selectedMonth ? recordDate.startsWith(selectedMonth) : true;
+    const matchEmployee = selectedEmployee ? recordEmployee === selectedEmployee : true;
 
+    if (role === "employee") {
+      return recordEmployee === userName && matchMonth;
+    }
+
+    return matchMonth && matchEmployee;
+  });
+
+  // 📭 No records found
   if (visibleRecords.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">📭 No advance cash records found.</td></tr>`;
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center;">📭 No advance cash records found.</td>
+      </tr>`;
     return;
   }
 
+  // 🖥️ Render table rows
   visibleRecords.forEach(record => {
     tableBody.innerHTML += `
       <tr>
@@ -325,10 +367,10 @@ async function renderAdvanceCashTable() {
         <td>₹${record.advanceCash || 0}</td>
         <td>${record.note || "-"}</td>
         <td>${record.status || "Recorded"}</td>
-      </tr>
-    `;
+      </tr>`;
   });
 }
+
 
 // ✅ Advance cash logic
 async function recordAdvanceCash(e) {
@@ -518,6 +560,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       workflow.style.display = "none";
     }
   });
+
+  // 💵 Advance Cash Filters
+  await populateAdvanceEmployeeDropdown();
+  document.getElementById("advanceMonth")?.addEventListener("change", renderAdvanceCashTable);
+  document.getElementById("advanceEmployee")?.addEventListener("change", renderAdvanceCashTable);
+
+  // Initial render
+  renderAdvanceCashTable();
+});
+
 
   // 🔍 Auth check and initial render
   onAuthStateChanged(auth, async (user) => {
