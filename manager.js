@@ -1,3 +1,4 @@
+// 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
 import {
   onAuthStateChanged,
@@ -24,7 +25,6 @@ const FIELD_LABELS = {
   PostCourier: "PostCourier",
   placeVisited: "Place Visited"
 };
-
 const FIELD_GROUPS = {
   "🕓 Trip Info": ["placeVisited"],
   "🗓️ Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone"],
@@ -34,10 +34,11 @@ const FIELD_GROUPS = {
 // Toast notification
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
+  if (!toast) return;
   toast.textContent = message;
   toast.className = `toast ${type}`;
   toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 3000);
+  setTimeout(() => (toast.style.display = 'none'), 3000);
 }
 
 // Populate employee filter dropdown
@@ -146,8 +147,6 @@ function buildBreakdown(exp) {
   }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
-"use strict";
-
 // Currency formatter for INR
 const INR = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -166,15 +165,14 @@ function calculateTotal(exp) {
 // Main render function with employee filter support
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
-  const summaryRow = document.querySelector("#managerSummaryRow");
+  // No summary row here (unlike previous version)
   const monthPicker = document.getElementById("monthPicker");
   const empSel = document.getElementById("employeeFilter");
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
   const selectedEmployee = empSel?.value || "";
-  if (!tableBody || !summaryRow) return;
+  if (!tableBody) return;
 
   tableBody.innerHTML = "";
-  summaryRow.innerHTML = "";
 
   const snapshot = await getDocs(collection(db, "expenses"));
   const records = [];
@@ -194,19 +192,17 @@ async function renderManagerClaims() {
   records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
   let totalApproved = 0,
-    totalRejected = 0,
-    totalPending = 0,
-    totalFinalApproved = 0;
+      totalRejected = 0,
+      totalPending = 0,
+      totalFinalApproved = 0;
 
-  // Build table rows in a buffer string for performance
   let rowBuffer = "";
   for (let i = 0; i < records.length; i++) {
     const exp = records[i];
     const total = calculateTotal(exp);
     const employeeName = await getEmployeeName(exp.userId, userCache);
 
-    let badgeClass = "",
-      badgeText = "";
+    let badgeClass = "", badgeText = "";
     if (exp.status === "Approved") {
       badgeClass = "badge approved";
       badgeText = "AC Approved";
@@ -259,31 +255,9 @@ async function renderManagerClaims() {
     });
   });
 
+  // Summary calculation
   const totalSubmittedAmount = records.reduce(
     (sum, exp) => sum + calculateTotal(exp), 0);
-
-  summaryRow.innerHTML = `
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="7" style="text-align:right;">📊 Total of all the expenses (excluding Advance Cash) ${selectedMonth}:</td>
-      <td>${INR.format(totalSubmittedAmount)}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="7" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
-      <td>${INR.format(totalApproved)}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="7" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
-      <td>${INR.format(totalRejected)}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#f9f9f9;">
-      <td colspan="7" style="text-align:right;">⏳ Actual Pending Expenses - excluding advanced cash for ${selectedMonth}:</td>
-      <td>${INR.format(totalPending)}</td>
-    </tr>
-    <tr style="font-weight:bold; background:#e8ffe8;">
-      <td colspan="7" style="text-align:right;">💰 Final Approved by Manager for ${selectedMonth}:</td>
-      <td>${INR.format(totalFinalApproved)}</td>
-    </tr>
-  `;
 
   // Fetch and process advance cash
   const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
@@ -302,7 +276,7 @@ async function renderManagerClaims() {
     }
   });
 
-  // Render the manager summary
+  // Render summary block (no summary rows in table at all)
   renderManagerSummary({
     selectedMonth,
     selectedEmployee,
@@ -358,10 +332,7 @@ function renderManagerSummary({
   `;
 }
 
-// Usage: Call renderManagerClaims() when you need to refresh/filter the table.
-
-
-// Export to CSV
+// Export to CSV for final approved
 function downloadFinalApproved() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   if (!tableBody) {
