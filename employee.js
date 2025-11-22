@@ -249,68 +249,102 @@ async function renderExpenses(currentUserId) {
       }
     });
 
-// 🔄 Fetch accountant-recorded advance cash
-let employeeName = "";
-if (currentUserId) {
-  const userDoc = await getDoc(doc(db, "users", currentUserId));
-  employeeName = userDoc.exists() ? (userDoc.data().name || "") : "";
-}
-
-const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
-const advanceRecords = [];
-
-advanceSnapshot.forEach(docSnap => {
-  const data = docSnap.data();
-  const dateStr = typeof data.date === 'string' ? data.date : '';
-  const sameMonth = dateStr.slice(0, 7) === selectedMonth;
-  const sameEmp = (data.employeeName || "").toLowerCase() === (employeeName || "").toLowerCase();
-  if (sameEmp && sameMonth) advanceRecords.push(data);
-});
-
-advanceRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
-advanceRecords.forEach((record, index) => {
-  monthlyClaimsTable.innerHTML += `
-    <tr style="background:#fffbe6;">
-      <td>AC-${index + 1}</td>
-      <td>${record.date || "-"}</td>
-      <td colspan="2">${INR.format(Number(record.advanceCash) || 0)}</td>
-      <td><span style="color:green;">✅ Cash Advance Recorded</span></td>
-    </tr>
-  `;
-  totalAdvanceReceived += Number(record.advanceCash) || 0;
-});
-
-// 🔄 Fetch manager-approved Adhoc Pre-Approval records
-const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
-const adhocRecords = [];
-
-adhocSnapshot.forEach(docSnap => {
-  const data = docSnap.data();
-  const dateStr = typeof data.date === 'string' ? data.date : '';
-  const sameMonth = dateStr.slice(0, 7) === selectedMonth;
-  const sameEmp = (data.raisedBy || "").toLowerCase() === (auth.currentUser?.email || "").toLowerCase();
-  const isApproved = (data.status || "").toLowerCase() === "approved";
-
-  if (sameMonth && sameEmp && isApproved) {
-    adhocRecords.push(data);
-  }
-});
-
-adhocRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
-adhocRecords.forEach((record, index) => {
-  monthlyClaimsTable.innerHTML += `
-    <tr style="background:#e6f7ff;">
-      <td>AD-${index + 1}</td>
-      <td>${record.date || "-"}</td>
-      <td colspan="2">${INR.format(Number(record.amount) || 0)}</td>
-      <td><span style="color:blue;">🔷 Adhoc Approved by Manager</span></td>
-    </tr>
-  `;
-  totalAdvanceReceived += Number(record.amount) || 0;
-});
-
+    // 🔄 Fetch accountant-recorded advance cash
+    let employeeName = "";
+    if (currentUserId) {
+      const userDoc = await getDoc(doc(db, "users", currentUserId));
+      employeeName = userDoc.exists() ? (userDoc.data().name || "") : "";
+    }
+    
+    const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
+    const advanceRecords = [];
+    
+    advanceSnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const dateStr = typeof data.date === 'string' ? data.date : '';
+      const sameMonth = dateStr.slice(0, 7) === selectedMonth;
+      const sameEmp = (data.employeeName || "").toLowerCase() === (employeeName || "").toLowerCase();
+      if (sameEmp && sameMonth) advanceRecords.push(data);
+    });
+    
+    advanceRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    
+    advanceRecords.forEach((record, index) => {
+      monthlyClaimsTable.innerHTML += `
+        <tr style="background:#fffbe6;">
+          <td>AC-${index + 1}</td>
+          <td>${record.date || "-"}</td>
+          <td colspan="2">${INR.format(Number(record.advanceCash) || 0)}</td>
+          <td><span style="color:green;">✅ Cash Advance Recorded</span></td>
+        </tr>
+      `;
+      totalAdvanceReceived += Number(record.advanceCash) || 0;
+    });
+    
+    // 🔄 Fetch manager-approved Adhoc Pre-Approval records
+    const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
+    const adhocRecords = [];
+    
+    adhocSnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const dateStr = typeof data.date === 'string' ? data.date : '';
+      const sameMonth = dateStr.slice(0, 7) === selectedMonth;
+      const sameEmp = (data.raisedBy || "").toLowerCase() === (auth.currentUser?.email || "").toLowerCase();
+      const isApproved = (data.status || "").toLowerCase() === "approved";
+    
+      if (sameMonth && sameEmp && isApproved) {
+        adhocRecords.push(data);
+      }
+    });
+    
+    adhocRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    
+    adhocRecords.forEach((record, index) => {
+      monthlyClaimsTable.innerHTML += `
+        <tr style="background:#e6f7ff;">
+          <td>AD-${index + 1}</td>
+          <td>${record.date || "-"}</td>
+          <td colspan="2">${INR.format(Number(record.amount) || 0)}</td>
+          <td><span style="color:blue;">🔷 Adhoc Approved by Manager</span></td>
+        </tr>
+      `;
+      totalAdvanceReceived += Number(record.amount) || 0;
+    });
+    
+    // 🍽️ Adhoc Pre-Approval Submission (independent of main form)
+    document.getElementById("submitAdhoc")?.addEventListener("click", async function (e) {
+      e.preventDefault();
+    
+      const adhocDate = getVal("adhocDate");
+      const adhocPurpose = getVal("adhocPurpose");
+      const adhocAmount = getVal("adhocAmount", true);
+      const currentUserEmail = auth.currentUser?.email || "";
+    
+      if (!adhocDate || !adhocPurpose || adhocAmount <= 0) {
+        showToast("Please fill Adhoc fields correctly.", "error");
+        return;
+      }
+    
+      try {
+        await addDoc(collection(db, "adhocRequests"), {
+          date: adhocDate,
+          purpose: adhocPurpose,
+          amount: adhocAmount,
+          raisedBy: currentUserEmail,
+          status: "Pending",
+          approvalTarget: "mazhar@istos.in",
+          approvedAt: null
+        });
+    
+        showToast("Adhoc request submitted for manager approval ✅", "success");
+        document.getElementById("adhocDate").value = "";
+        document.getElementById("adhocPurpose").value = "";
+        document.getElementById("adhocAmount").value = "0";
+      } catch (err) {
+        console.error("Error submitting Adhoc request:", err);
+        showToast("Submission failed ❌", "error");
+      }
+    });
 
     // 🧾 Final Summary Block
     const totalSubmitted = monthlyTotal + travelTotal;
