@@ -36,10 +36,8 @@ function showToast(message, type = 'success') {
 // 🚪 Logout
 function logoutUser() {
   signOut(auth)
-    .then(() => {
-      window.location.href = "login.html";
-    })
-    .catch((err) => {
+    .then(() => window.location.href = "login.html")
+    .catch(err => {
       showToast("Logout failed", "error");
       console.error(err);
     });
@@ -54,7 +52,7 @@ function getStatusBadge(status) {
   return `<span style="color:orange;">⏳ Pending</span>`;
 }
 
-// 🧾 Build Expense Data (advanceCash excluded for employees; set to 0 to avoid undefined)
+// 🧾 Build Expense Data
 function buildExpenseData(userId) {
   return {
     userId: userId || "",
@@ -63,7 +61,7 @@ function buildExpenseData(userId) {
     placeVisited: getVal("placeVisited"),
     monthlyConveyance: getVal("monthlyConveyance", true),
     monthlyPhone: getVal("monthlyPhone", true),
-    adhocrequest: getVal("adhocrequest", true),    
+    adhocRequest: getVal("adhocRequest", true),
     fuel: getVal("fuel", true),
     fare: getVal("fare", true),
     boarding: getVal("boarding", true),
@@ -71,7 +69,7 @@ function buildExpenseData(userId) {
     localConveyance: getVal("localConveyance", true),
     postCourier: getVal("postCourier", true),
     misc: getVal("misc", true),
-    advanceCash: 0, // explicit 0 for employees
+    advanceCash: 0,
     status: "Pending",
     timestamp: isoNow(),
   };
@@ -83,7 +81,7 @@ function safeAmount(val) {
   return Number.isFinite(n) ? n : 0;
 }
 
-// 📤 Submit Expense (with validation + double-submit guard)
+// 📤 Submit Expense
 let isSubmitting = false;
 function createSubmitExpense(currentUserId) {
   return async function submitExpense(e) {
@@ -100,10 +98,8 @@ function createSubmitExpense(currentUserId) {
 
       const expenseData = buildExpenseData(currentUserId);
 
-      // ✅ Validation
-      const workflowType = expenseData.workflowType;
       const validWorkflowTypes = ["sales", "service", "others"];
-      if (!workflowType || !validWorkflowTypes.includes(workflowType)) {
+      if (!expenseData.workflowType || !validWorkflowTypes.includes(expenseData.workflowType)) {
         showToast("Please choose a valid workflow type.", "error");
         isSubmitting = false;
         return;
@@ -113,7 +109,8 @@ function createSubmitExpense(currentUserId) {
         isSubmitting = false;
         return;
       }
-      ["monthlyConveyance", "monthlyPhone", "adhocrequest", "fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc"].forEach(k => {
+
+      ["monthlyConveyance", "monthlyPhone", "adhocRequest", "fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc"].forEach(k => {
         expenseData[k] = safeAmount(expenseData[k]);
         if (expenseData[k] < 0) expenseData[k] = 0;
       });
@@ -121,54 +118,25 @@ function createSubmitExpense(currentUserId) {
       await addDoc(collection(db, "expenses"), expenseData);
       showToast("Expense submitted successfully ✅", "success");
       document.getElementById("expenseForm")?.reset();
-      await renderExpenses(currentUserId); // refresh expenses after submit, with UID
+      await renderExpenses(currentUserId);
     } catch (err) {
       console.error("Error submitting expense:", err);
       showToast("Error submitting expense ❌", "error");
     } finally {
       isSubmitting = false;
     }
-  }
+  };
 }
 
 // 🧩 Render sections
 function renderTripInfoRow(sn, date, workflow, place, badge) {
-  return `
-    <tr>
-      <td>${sn}</td>
-      <td>${date}</td>
-      <td>${workflow}</td>
-      <td>${place}</td>
-      <td>${badge}</td>
-    </tr>
-  `;
+  return `<tr><td>${sn}</td><td>${date}</td><td>${workflow}</td><td>${place}</td><td>${badge}</td></tr>`;
 }
 function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge) {
-  return `
-    <tr>
-      <td>${sn}</td>
-      <td>${date}</td>
-      <td>${fuel}</td>
-      <td>${fare}</td>
-      <td>${boarding}</td>
-      <td>${food}</td>
-      <td>${local}</td>
-      <td>${postCourier}</td>
-      <td>${misc}</td>
-      <td>${badge}</td>
-    </tr>
-  `;
+  return `<tr><td>${sn}</td><td>${date}</td><td>${fuel}</td><td>${fare}</td><td>${boarding}</td><td>${food}</td><td>${local}</td><td>${postCourier}</td><td>${misc}</td><td>${badge}</td></tr>`;
 }
-function renderMonthlyClaimsRow(sn, date, convey, phone, badge) {
-  return `
-    <tr>
-      <td>${sn}</td>
-      <td>${date}</td>
-      <td>${INR.format(convey)}</td>
-      <td>${INR.format(phone)}</td>
-      <td>${badge}</td>
-    </tr>
-  `;
+function renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge) {
+  return `<tr><td>${sn}</td><td>${date}</td><td>${INR.format(convey)}</td><td>${INR.format(phone)}</td><td>${INR.format(adhoc)}</td><td>${badge}</td></tr>`;
 }
 
 // 📊 Render Employee Expenses
@@ -214,10 +182,8 @@ async function renderExpenses(currentUserId) {
       const sn = index + 1;
       const date = exp.date || "-";
 
-      // Trip Info
       tripInfoTable.innerHTML += renderTripInfoRow(sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge);
 
-      // Travel Costs
       const fuel = safeAmount(exp.fuel);
       const fare = safeAmount(exp.fare);
       const boarding = safeAmount(exp.boarding);
@@ -230,14 +196,13 @@ async function renderExpenses(currentUserId) {
 
       travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge);
 
-      // Monthly Claims
       const convey = safeAmount(exp.monthlyConveyance);
       const phone = safeAmount(exp.monthlyPhone);
       const adhoc = safeAmount(exp.adhocRequest);
-      const monthlySum = convey + phone;
+      const monthlySum = convey + phone + adhoc;
       monthlyTotal += monthlySum;
 
-      monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, badge);
+      monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge);
 
       const totalForRecord = travelSum + monthlySum;
       const normalized = normalizeStatus(exp.status);
@@ -276,7 +241,7 @@ async function renderExpenses(currentUserId) {
         <tr style="background:#fffbe6;">
           <td>AC-${index + 1}</td>
           <td>${record.date || "-"}</td>
-          <td colspan="2">${INR.format(Number(record.advanceCash) || 0)}</td>
+          <td colspan="3">${INR.format(Number(record.advanceCash) || 0)}</td>
           <td><span style="color:green;">✅ Cash Advance Recorded</span></td>
         </tr>
       `;
@@ -290,28 +255,28 @@ async function renderExpenses(currentUserId) {
 
     monthlyClaimsTable.innerHTML += `
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="4" style="text-align:right;">📝 Total expenses submitted (for approval):</td>
+        <td colspan="5" style="text-align:right;">📝 Total expenses submitted (for approval):</td>
         <td>${INR.format(totalSubmitted)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
-        <td colspan="4" style="text-align:right;">🪙 Advance Cash Received (${selectedMonth}):</td>
+        <td colspan="5" style="text-align:right;">💸 Advance Cash Received (${selectedMonth}):</td>
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="4" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
+        <td colspan="5" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
         <td>${INR.format(totalApproved)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="4" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
+        <td colspan="5" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
         <td>${INR.format(totalRejected)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
-        <td colspan="4" style="text-align:right;">${netLabel} (${selectedMonth}):</td>
+        <td colspan="5" style="text-align:right;">${netLabel} (${selectedMonth}):</td>
         <td>${INR.format(netReimbursementDue)}</td>
       </tr>
       ${netReimbursementDue < 0 ? `
         <tr>
-          <td colspan="5" style="font-size:0.9em; color:#888;">
+          <td colspan="6" style="font-size:0.9em; color:#888;">
             Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
           </td>
         </tr>` : ""}
@@ -322,7 +287,7 @@ async function renderExpenses(currentUserId) {
   }
 }
 
-// 🚦 Init: Now, ONLY runs after auth state is ready
+// 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
@@ -346,16 +311,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Form event listener, using the current UID
       const form = document.getElementById("expenseForm");
       if (form) {
         form.onsubmit = createSubmitExpense(currentUserId);
       }
 
-      // Month picker (etc)’s change handler – ensures always uses valid UID
       document.getElementById("monthPicker")?.addEventListener("change", () => renderExpenses(currentUserId));
 
-      // Initial load!
       await renderExpenses(currentUserId);
     } catch (err) {
       console.error("❌ Error loading user/role:", err);
