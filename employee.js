@@ -170,86 +170,96 @@ function renderMonthlyClaimsRow(sn, date, convey, phone, badge) {
   `;
 }
 
-// 📊 Render Employee Expenses
-async function renderExpenses(currentUserId) {
-  try {
-    const tripInfoTable = document.querySelector("#tripInfoTable tbody");
-    const travelCostTable = document.querySelector("#travelCostTable tbody");
-    const monthlyClaimsTable = document.querySelector("#monthlyClaimsTable tbody");
-    const adhocClaimsTable = document.querySelector("#adhocClaimsTable tbody");
-    const monthPicker = document.getElementById("monthPicker");
-    const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
-
-    if (!tripInfoTable || !travelCostTable || !monthlyClaimsTable || !adhocClaimsTable) {
-      showToast("Required expense tables missing in DOM.", "error");
-      return;
-    }
-
-    tripInfoTable.innerHTML = "";
-    travelCostTable.innerHTML = "";
-    monthlyClaimsTable.innerHTML = "";
-    adhocClaimsTable.innerHTML = "";
-
-    const snapshot = await getDocs(collection(db, "expenses"));
-    const records = [];
-
-    snapshot.forEach(docSnap => {
-      const exp = docSnap.data();
-      const dateStr = typeof exp.date === 'string' ? exp.date : '';
-      if (exp.userId === currentUserId && dateStr.slice(0, 7) === selectedMonth) {
-        records.push(exp);
+    // 📊 Render Employee Expenses
+    async function renderExpenses(currentUserId) {
+      try {
+        const tripInfoTable = document.querySelector("#tripInfoTable tbody");
+        const travelCostTable = document.querySelector("#travelCostTable tbody");
+        const monthlyClaimsTable = document.querySelector("#monthlyClaimsTable tbody");
+        const adhocClaimsTable = document.querySelector("#adhocClaimsTable tbody");
+        const monthPicker = document.getElementById("monthPicker");
+        const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+    
+        if (!tripInfoTable || !travelCostTable || !monthlyClaimsTable || !adhocClaimsTable) {
+          showToast("Required expense tables missing in DOM.", "error");
+          return;
+        }
+    
+        tripInfoTable.innerHTML = "";
+        travelCostTable.innerHTML = "";
+        monthlyClaimsTable.innerHTML = "";
+        adhocClaimsTable.innerHTML = "";
+    
+        const snapshot = await getDocs(collection(db, "expenses"));
+        const records = [];
+    
+        snapshot.forEach(docSnap => {
+          const exp = docSnap.data();
+          const dateStr = typeof exp.date === 'string' ? exp.date : '';
+          if (exp.userId === currentUserId && dateStr.slice(0, 7) === selectedMonth) {
+            records.push(exp);
+          }
+        });
+    
+        records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    
+        let monthlyTotal = 0;
+        let travelTotal = 0;
+        let totalApproved = 0;
+        let totalRejected = 0;
+        let totalPending = 0;
+        let totalAdvanceReceived = 0;
+    
+        records.forEach((exp, index) => {
+          const badge = getStatusBadge(exp.status);
+          const sn = index + 1;
+          const date = exp.date || "-";
+    
+          // Trip Info
+          tripInfoTable.innerHTML += renderTripInfoRow(sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge);
+    
+          // Travel Costs
+          const fuel = safeAmount(exp.fuel);
+          const fare = safeAmount(exp.fare);
+          const boarding = safeAmount(exp.boarding);
+          const food = safeAmount(exp.food);
+          const local = safeAmount(exp.localConveyance);
+          const misc = safeAmount(exp.misc);
+          const postCourier = safeAmount(exp.postCourier);
+          const travelSum = fuel + fare + boarding + food + local + postCourier;
+          travelTotal += travelSum;
+    
+          travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, misc, postCourier, badge);
+    
+          // Monthly Claims
+          const convey = safeAmount(exp.monthlyConveyance);
+          const phone = safeAmount(exp.monthlyPhone);
+          const monthlySum = convey + phone;
+          monthlyTotal += monthlySum;
+    
+          monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, badge);
+    
+          const totalForRecord = travelSum + monthlySum;
+          const normalized = normalizeStatus(exp.status);
+    
+          if (normalized === "Approved" || normalized === "FinalApproved") {
+            totalApproved += totalForRecord;
+          } else if (normalized === "Rejected") {
+            totalRejected += totalForRecord;
+          } else {
+            totalPending += totalForRecord;
+          }
+        });
+    
+        // Continue your additional code and summary block...
+    
+        // (add your advance cash, adhoc, and summary sections here...)
+    
+      } catch (err) {
+        console.error("❌ Error rendering expenses:", err);
+        showToast("Failed to load expenses.", "error");
       }
-    });
-
-    records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
-    let monthlyTotal = 0;
-    let travelTotal = 0;
-    let totalApproved = 0;
-    let totalRejected = 0;
-    let totalPending = 0;
-    let totalAdvanceReceived = 0;
-
-    records.forEach((exp, index) => {
-      const badge = getStatusBadge(exp.status);
-      const sn = index + 1;
-      const date = exp.date || "-";
-
-      // Trip Info
-      tripInfoTable.innerHTML += renderTripInfoRow(sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge);
-
-      // Travel Costs
-      const fuel = safeAmount(exp.fuel);
-      const fare = safeAmount(exp.fare);
-      const boarding = safeAmount(exp.boarding);
-      const food = safeAmount(exp.food);
-      const local = safeAmount(exp.localConveyance);
-      const misc = safeAmount(exp.misc);
-      const postCourier = safeAmount(exp.postCourier);
-      const travelSum = fuel + fare + boarding + food + local + postCourier;
-      travelTotal += travelSum;
-
-      travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, misc, postCourier, badge);
-
-      // Monthly Claims
-      const convey = safeAmount(exp.monthlyConveyance);
-      const phone = safeAmount(exp.monthlyPhone);
-      const monthlySum = convey + phone;
-      monthlyTotal += monthlySum;
-
-      monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, badge);
-
-      const totalForRecord = travelSum + monthlySum;
-      const normalized = normalizeStatus(exp.status);
-
-      if (normalized === "Approved" || normalized === "FinalApproved") {
-        totalApproved += totalForRecord;
-      } else if (normalized === "Rejected") {
-        totalRejected += totalForRecord;
-      } else {
-        totalPending += totalForRecord;
-      }
-    });
+    } // <-- This closes your async renderExpenses function!
 
     // 🔄 Fetch accountant-recorded advance cash
     let employeeName = "";
