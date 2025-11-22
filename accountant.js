@@ -215,7 +215,7 @@ async function renderTable() {
     let totalApproved = 0;
     let totalRejected = 0;
     let totalPending = 0;
-    let totalAdvanceReceived = 0;
+    // We will calculate totalAdvance below, not here!
 
     for (const exp of filteredExpenses) {
       let employeeName = exp.userId || "-";
@@ -263,8 +263,23 @@ async function renderTable() {
       } else {
         totalPending += amount;
       }
-      totalAdvanceReceived += Number(exp.advanceCash) || 0;
+      // <--- REMOVE totalAdvanceReceived logic here!
     }
+
+    // 🔄 Sum accountant-recorded advances from advanceCash collection for summary
+    let totalAdvance = 0;
+    const advanceQuerySnap = await getDocs(collection(db, "advanceCash"));
+    advanceQuerySnap.forEach(docSnap => {
+      const adv = docSnap.data();
+      const advMonth = typeof adv.date === "string" ? adv.date.slice(0, 7) : "";
+      const isMonthMatch = advMonth === selectedMonth;
+      const isEmpMatch = !selectedEmployee || selectedEmployee === "" || selectedEmployee === "All Employees"
+        ? true
+        : ((adv.employeeId || "").toLowerCase() === selectedEmployee.toLowerCase() || (adv.employeeName || "").toLowerCase() === selectedEmployee.toLowerCase());
+      if (isMonthMatch && isEmpMatch) {
+        totalAdvance += Number(adv.advanceCash) || 0;
+      }
+    });
 
     // ✅ Render summary block
     renderAccountantSummary({
@@ -273,8 +288,37 @@ async function renderTable() {
       totalApproved,
       totalRejected,
       totalPending,
-      totalAdvance: totalAdvanceReceived
+      totalAdvance, // <-- use calculated advance from advanceCash collection
     });
+
+    // 🔽 Breakdown toggle handlers (if needed)
+    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const breakdown = document.getElementById(`breakdown-${id}`);
+        if (!breakdown) return;
+        const isVisible = breakdown.style.display === 'block';
+        breakdown.style.display = isVisible ? 'none' : 'block';
+        btn.textContent = isVisible ? '▶' : '▼';
+      });
+    });
+
+  } catch (err) {
+    console.error("renderTable Fatal Error:", err);
+    const tbody = document.querySelector('#expenseTable tbody');
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color:red; padding:1em;">
+            ❌ Error loading expenses. Check console for details.
+          </td>
+        </tr>`;
+    }
+    const summaryEl = document.getElementById("accountantSummary");
+    if (summaryEl) summaryEl.innerHTML = "";
+  }
+}
+
 
     // 🔽 Breakdown toggle
     document.querySelectorAll('.toggle-breakdown').forEach(btn => {
