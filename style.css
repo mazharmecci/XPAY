@@ -161,15 +161,6 @@ button:hover {
   background: #fff;
 }
 
-/* Claims and travel costs boxes */
-.monthly-claims, .travel-costs, .trip-info {
-  background: var(--biscuit-light);
-  border-radius: 10px;
-  box-shadow: 0 1px 6px rgba(221,173,117,0.125);
-  border: 1px solid var(--biscuit-mid);
-  padding: 1.1rem 1.2rem;
-}
-
 /* Responsive tweaks */
 @media (max-width: 600px) {
   .form-wrapper {
@@ -600,13 +591,23 @@ span[style*="orange"] {
 
 /* ✅ Advance cash & Monthly claims rupee form and Advance cash input field hidden from the employee workflow */
 
+.claims-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-top: 1.5rem;
+}
+
 .claims-section {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  border: 1px solid #ddd;
+  flex: 1 1 300px;
+  background: var(--biscuit-light);
   border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 6px rgba(221, 173, 117, 0.125);
+  border: 1px solid var(--biscuit-mid);
+  padding: 1.1rem 1.2rem;
+  box-sizing: border-box;
+  margin-top: 1.5rem;
 }
 
 .claims-section legend {
