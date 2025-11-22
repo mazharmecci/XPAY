@@ -176,7 +176,7 @@ async function renderTable() {
     const monthPicker = document.getElementById('monthPicker');
     const empSel = document.getElementById('employeeFilter');
     const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
-    const selectedEmployee = empSel?.value || "All Employees";
+    const selectedEmployee = empSel?.value || "";
 
     const expenses = await fetchExpenses(selectedMonth, selectedEmployee);
 
@@ -215,7 +215,7 @@ async function renderTable() {
     let totalApproved = 0;
     let totalRejected = 0;
     let totalPending = 0;
-    // We will calculate totalAdvance below, not here!
+    let totalSubmitted = 0;
 
     for (const exp of filteredExpenses) {
       let employeeName = exp.userId || "-";
@@ -232,6 +232,17 @@ async function renderTable() {
       let amount = 0;
       ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier", "monthlyConveyance", "monthlyPhone"]
         .forEach(key => { if (exp[key]) amount += Number(exp[key]); });
+
+      totalSubmitted += amount;
+
+      const normalized = normalizeStatus(exp.status);
+      if (normalized === "Approved" || normalized === "FinalApproved") {
+        totalApproved += amount;
+      } else if (normalized === "Rejected") {
+        totalRejected += amount;
+      } else {
+        totalPending += amount;
+      }
 
       const breakdownHTML = buildBreakdown(exp);
       const statusBadge = getStatusBadge(exp.status);
@@ -253,31 +264,27 @@ async function renderTable() {
           <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
           <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>
         </tr>`;
-
-      // 🔄 Summary calculations
-      const normalized = normalizeStatus(exp.status);
-      if (normalized === "Approved" || normalized === "FinalApproved") {
-        totalApproved += amount;
-      } else if (normalized === "Rejected") {
-        totalRejected += amount;
-      } else {
-        totalPending += amount;
-      }
-      // <--- REMOVE totalAdvanceReceived logic here!
     }
 
     // 🔄 Sum accountant-recorded advances from advanceCash collection for summary
-    let totalAdvance = 0;
-    const advanceQuerySnap = await getDocs(collection(db, "advanceCash"));
-    advanceQuerySnap.forEach(docSnap => {
+    let totalAdvanceReceived = 0;
+    const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
+    advanceSnapshot.forEach(docSnap => {
       const adv = docSnap.data();
-      const advMonth = typeof adv.date === "string" ? adv.date.slice(0, 7) : "";
+      const advDate = typeof adv.date === "string" ? adv.date : "";
+      const advMonth = advDate.slice(0, 7);
+
       const isMonthMatch = advMonth === selectedMonth;
-      const isEmpMatch = !selectedEmployee || selectedEmployee === "" || selectedEmployee === "All Employees"
-        ? true
-        : ((adv.employeeId || "").toLowerCase() === selectedEmployee.toLowerCase() || (adv.employeeName || "").toLowerCase() === selectedEmployee.toLowerCase());
+      const empFilter = selectedEmployee?.toLowerCase() || "";
+      const empId = (adv.employeeId || "").toLowerCase();
+      const empName = (adv.employeeName || "").toLowerCase();
+
+      const isEmpMatch =
+        !empFilter || empFilter === "all employees" ||
+        empId === empFilter || empName === empFilter;
+
       if (isMonthMatch && isEmpMatch) {
-        totalAdvance += Number(adv.advanceCash) || 0;
+        totalAdvanceReceived += Number(adv.advanceCash) || 0;
       }
     });
 
@@ -288,11 +295,11 @@ async function renderTable() {
       totalApproved,
       totalRejected,
       totalPending,
-      totalAdvance, // <-- use calculated advance from advanceCash collection
       totalAdvance: totalAdvanceReceived,
+      totalSubmitted
     });
 
-    // 🔽 Breakdown toggle handlers (if needed)
+    // 🔽 Breakdown toggle handlers
     document.querySelectorAll('.toggle-breakdown').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -321,7 +328,7 @@ async function renderTable() {
 }
 
 // 📋 Summary renderer
-function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApproved, totalRejected, totalPending, totalAdvance }) {
+function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApproved, totalRejected, totalPending, totalAdvance, totalSubmitted }) {
   const summaryContainer = document.getElementById("accountantSummary");
   if (!summaryContainer) return;
 
