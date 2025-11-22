@@ -324,34 +324,37 @@ async function renderExpenses(currentUserId) {
     });
 
     // 🧾 Final Summary Block (shown after all sections)
-    monthlyClaimsTable.innerHTML += `
+    const summaryRows = `
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="4" style="text-align:right;">📝 Total expenses submitted (for approval):</td>
+        <td colspan="4" style="text-align:right;">📝 Total Expenses Submitted (Monthly + Travel):</td>
         <td>${INR.format(monthlyTotal + travelTotal)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
-        <td colspan="4" style="text-align:right;">🪙 Advance Cash Received (${selectedMonth}):</td>
+        <td colspan="4" style="text-align:right;">🪙 Total Advance Received (${selectedMonth}):</td>
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
-      <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="4" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
+      <tr style="font-weight:bold; background:#f0fff0;">
+        <td colspan="4" style="text-align:right;">✅ Total Approved by Accountant:</td>
         <td>${INR.format(totalApproved)}</td>
       </tr>
-      <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="4" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
+      <tr style="font-weight:bold; background:#fff0f0;">
+        <td colspan="4" style="text-align:right;">❌ Total Rejected by Accountant:</td>
         <td>${INR.format(totalRejected)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
-        <td colspan="4" style="text-align:right;">💰 Net payable to the emp (${selectedMonth}):</td>
+        <td colspan="4" style="text-align:right;">💰 Net Payable to Employee (${selectedMonth}):</td>
         <td>${INR.format(totalApproved - totalAdvanceReceived)}</td>
       </tr>
       ${(totalApproved - totalAdvanceReceived) < 0 ? `
         <tr>
-          <td colspan="5" style="font-size:0.9em; color:#888;">
-            Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
+          <td colspan="5" style="font-size:0.9em; color:#888; background:#fff;">
+            ⚠️ Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
           </td>
         </tr>` : ""}
     `;
+
+document.querySelector("#summaryTable tbody").innerHTML = summaryRows;
+
   } catch (err) {
     console.error("❌ Error rendering expenses:", err);
     showToast("Failed to load expenses.", "error");
