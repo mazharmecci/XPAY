@@ -283,35 +283,43 @@ async function renderExpenses(currentUserId) {
       totalAdvanceReceived += Number(record.advanceCash) || 0;
     });
 
-    // 🔄 Fetch manager-approved Adhoc Pre-Approval records
+    // 🔄 Fetch manager-approved and pending Adhoc Pre-Approval records
     const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
     const adhocRecords = [];
-
+    
     adhocSnapshot.forEach(docSnap => {
       const data = docSnap.data();
       const dateStr = typeof data.date === 'string' ? data.date : '';
       const sameMonth = dateStr.slice(0, 7) === selectedMonth;
-      const sameEmp = (data.raisedBy || "").toLowerCase() === (auth.currentUser?.email || "").toLowerCase();
-      const isApproved = (data.status || "").toLowerCase() === "approved";
-
-      if (sameMonth && sameEmp && isApproved) {
+      const statusLower = (data.status || "").toLowerCase();
+    
+      // Show if 'Pending' OR 'Approved', regardless of who raised it
+      if (sameMonth && (statusLower === "pending" || statusLower === "approved")) {
         adhocRecords.push(data);
       }
     });
-
+    
     adhocRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
+    
     adhocRecords.forEach((record, index) => {
+      let statusHtml = "";
+      if (record.status?.toLowerCase() === "approved") {
+        statusHtml = `<span style="color:blue;">🔷 Approved by Manager</span>`;
+      } else if (record.status?.toLowerCase() === "pending") {
+        statusHtml = `<span style="color:orange;">⏳ Pending</span>`;
+      } else {
+        statusHtml = `<span style="color:red;">❌ Rejected</span>`;
+      }
+    
       adhocClaimsTable.innerHTML += `
         <tr>
           <td>AD-${index + 1}</td>
           <td>${record.date || "-"}</td>
           <td>${record.purpose || "-"}</td>
           <td>${INR.format(Number(record.amount) || 0)}</td>
-          <td><span style="color:blue;">🔷 Approved by Manager</span></td>
+          <td>${statusHtml}</td>
         </tr>
       `;
-      totalAdvanceReceived += Number(record.amount) || 0;
     });
 
     // 🧾 Final Summary Block
