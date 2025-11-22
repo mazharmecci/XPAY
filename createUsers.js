@@ -16,6 +16,12 @@ const users = [
   { firstName: "Sridhar", mobile: "8708502540", role: "employee" },
   { firstName: "Prajwal", mobile: "9347271346", role: "employee" },
   { firstName: "Praveen", mobile: "8754754465", role: "employee" },
+  { firstName: "Prathamesh", mobile: "", role: "employee" },
+  { firstName: "Prashant", mobile: "", role: "employee" },
+  { firstName: "Akram", mobile: "9980950984", role: "employee" },
+  { firstName: "Azlan", mobile: "9741042430", role: "employee" },
+  { firstName: "Pooja", mobile: "9886583411", role: "employee" },
+  { firstName: "Chaitra", mobile: "9035479724", role: "employee" },  
   { firstName: "Accounts", mobile: "8708502540", role: "accountant" },
 ];
 
