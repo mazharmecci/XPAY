@@ -286,31 +286,32 @@ async function renderExpenses(currentUserId) {
     // 🔄 Fetch manager-approved and pending Adhoc Pre-Approval records
     const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
     const adhocRecords = [];
-    
+
     adhocSnapshot.forEach(docSnap => {
       const data = docSnap.data();
       const dateStr = typeof data.date === 'string' ? data.date : '';
       const sameMonth = dateStr.slice(0, 7) === selectedMonth;
       const statusLower = (data.status || "").toLowerCase();
-    
-      // Show if 'Pending' OR 'Approved', regardless of who raised it
-      if (sameMonth && (statusLower === "pending" || statusLower === "approved")) {
+      const sameEmp = (data.raisedBy || "").toLowerCase() === (auth.currentUser?.email || "").toLowerCase();
+
+      if (sameMonth && sameEmp && (statusLower === "pending" || statusLower === "approved")) {
         adhocRecords.push(data);
       }
     });
-    
+
     adhocRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    
+
     adhocRecords.forEach((record, index) => {
       let statusHtml = "";
       if (record.status?.toLowerCase() === "approved") {
         statusHtml = `<span style="color:blue;">🔷 Approved by Manager</span>`;
+        totalAdvanceReceived += Number(record.amount) || 0;
       } else if (record.status?.toLowerCase() === "pending") {
         statusHtml = `<span style="color:orange;">⏳ Pending</span>`;
       } else {
         statusHtml = `<span style="color:red;">❌ Rejected</span>`;
       }
-    
+
       adhocClaimsTable.innerHTML += `
         <tr>
           <td>AD-${index + 1}</td>
@@ -322,15 +323,11 @@ async function renderExpenses(currentUserId) {
       `;
     });
 
-    // 🧾 Final Summary Block
-    const totalSubmitted = monthlyTotal + travelTotal;
-    const netReimbursementDue = totalApproved - totalAdvanceReceived;
-    const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "💰 Net payable to the emp";
-
+    // 🧾 Final Summary Block (shown after all sections)
     monthlyClaimsTable.innerHTML += `
       <tr style="font-weight:bold; background:#fff;">
         <td colspan="4" style="text-align:right;">📝 Total expenses submitted (for approval):</td>
-        <td>${INR.format(totalSubmitted)}</td>
+        <td>${INR.format(monthlyTotal + travelTotal)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
         <td colspan="4" style="text-align:right;">🪙 Advance Cash Received (${selectedMonth}):</td>
@@ -345,10 +342,10 @@ async function renderExpenses(currentUserId) {
         <td>${INR.format(totalRejected)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
-        <td colspan="4" style="text-align:right;">${netLabel} (${selectedMonth}):</td>
-        <td>${INR.format(netReimbursementDue)}</td>
+        <td colspan="4" style="text-align:right;">💰 Net payable to the emp (${selectedMonth}):</td>
+        <td>${INR.format(totalApproved - totalAdvanceReceived)}</td>
       </tr>
-      ${netReimbursementDue < 0 ? `
+      ${(totalApproved - totalAdvanceReceived) < 0 ? `
         <tr>
           <td colspan="5" style="font-size:0.9em; color:#888;">
             Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
