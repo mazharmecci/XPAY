@@ -69,6 +69,30 @@ async function populateEmployeeFilter() {
   }
 }
 
+// 👤 Employee dropdown
+async function populateEmployeeDropdown() {
+  const dropdown = document.getElementById("employeeName");
+  if (!dropdown) return;
+
+  try {
+    const querySnapshot = await getDocs(collection(db, "users"));
+    querySnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.role?.toLowerCase() === "employee") {
+        const option = document.createElement("option");
+        option.value = data.name;
+        option.textContent = data.name;
+        dropdown.appendChild(option);
+      }
+    });
+  } catch (err) {
+    console.error("Error loading employee names:", err);
+  }
+}
+
+// Call this on page load
+populateEmployeeDropdown();
+
 // 🔎 Fetch expenses
 async function fetchExpenses(selectedMonth, selectedEmployee) {
   const snapshot = await getDocs(collection(db, "expenses"));
