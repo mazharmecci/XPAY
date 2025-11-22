@@ -1,265 +1,360 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>XPAY - Employee Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="XPAY Employee Dashboard - Submit and view expense reports easily." />
-  <link rel="icon" href="images/favicon.ico" />
-  <link rel="stylesheet" href="style.css" />
-</head>
+// 🔥 Firebase Imports
+import { auth, db } from './firebase.js';
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import { addDoc, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-<body class="employee-page">
-  <main>
-    <div class="form-wrapper">
-      <div class="form-header centered-logo">
-        <img src="images/xpay.png" alt="XPAY Logo" class="form-logo" />
-        <p class="tagline">Expenses Workflow Redefined - ISTOS Medical</p>
-      </div>
+// 🛡️ Safe value getter
+function getVal(id, numeric = false) {
+  const el = document.getElementById(id);
+  if (!el) return numeric ? 0 : "";
+  const val = el.value;
+  return numeric ? (Number(val) || 0) : val.trim();
+}
 
-<!-- 🎉 Welcome Banner -->
-<div id="welcomeBanner" class="welcome-banner">Welcome back!</div>
+// 💠 Helpers
+const INR = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
+const isoNow = () => new Date().toISOString();
 
-<!-- 🧾 Expense Submission Form -->
-<form id="expenseForm" class="employee-form">
+function normalizeStatus(status) {
+  const s = (status || "").toLowerCase();
+  if (s === "approved") return "Approved";
+  if (s === "finalapproved" || s === "final approved") return "FinalApproved";
+  if (s === "rejected") return "Rejected";
+  return "Pending";
+}
 
-   <!-- 🧱 Claims Layout Wrapper -->
-  <div class="claims-wrapper">
-    
-  <!-- Workflow Type -->
-    <label for="workflowType">Select purpose from dropdown below:</label>
-    <select id="workflowType" name="Sales | Service | Others" required>
-      <option value="" disabled selected>-- Choose purpose --</option>
-      <option value="sales">Sales</option>
-      <option value="service">Service</option>
-      <option value="others">Others</option>
-    </select>
-  </div>
+// 🍞 Toast Notification
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.className = `toast ${type}`;
+  toast.style.display = 'block';
+  setTimeout(() => (toast.style.display = 'none'), 3000);
+}
 
-   <!-- 🗺️ Trip Info -->
-    <fieldset class="claims-section">
-      <legend>Trip Info</legend>
-      <div class="form-row">
-        <label for="date">📅 Expense Date (last 2 days only)</label>
-        <input type="date" id="date" name="date" required />
-      </div>
-      <div class="form-row">
-        <label for="placeVisited">Place Visited 🏙️</label>
-        <input type="text" id="placeVisited" name="placeVisited" placeholder="Place" required />
-      </div>
-    </fieldset>
+// 🚪 Logout
+function logoutUser() {
+  signOut(auth)
+    .then(() => {
+      window.location.href = "login.html";
+    })
+    .catch((err) => {
+      showToast("Logout failed", "error");
+      console.error(err);
+    });
+}
 
-    <!-- 🧾 Monthly Claims -->
-    <fieldset class="claims-section">
-      <legend>Monthly Claims</legend>
-      <div class="form-row" style="display:none;">
-        <label for="advanceCash">Advance Cash 💵</label>
-        <input type="number" id="advanceCash" name="advanceCash" placeholder="Advance Cash 💵" />
-      </div>
-      <div class="form-row input-rupee">
-        <label for="monthlyConveyance">Monthly Conveyance 🚌</label>
-        <input type="number" id="monthlyConveyance" name="monthlyConveyance" placeholder="0" />
-      </div>
-      <div class="form-row input-rupee">
-        <label for="monthlyPhone">Monthly Phone 📱</label>
-        <input type="number" id="monthlyPhone" name="monthlyPhone" placeholder="0" />
-      </div>
-    </fieldset>
+// 🏷️ Status badge
+function getStatusBadge(status) {
+  const s = normalizeStatus(status);
+  if (s === 'Approved') return `<span style="color:green;">✅ Approved by accountant</span>`;
+  if (s === 'FinalApproved') return `<span style="color:blue;">🔷 Approved by Manager</span>`;
+  if (s === 'Rejected') return `<span style="color:red;">❌ Rejected</span>`;
+  return `<span style="color:orange;">⏳ Pending</span>`;
+}
 
-    <!-- 🚗 Travel Costs -->
-    <fieldset class="claims-section">
-      <legend>Travel Costs</legend>
-      <div class="form-row input-rupee">
-        <label for="fuel">Fuel ⛽</label>
-        <input type="number" id="fuel" name="fuel" placeholder="0" />
-      </div>
-      <div class="form-row input-rupee">
-        <label for="fare">Fare 💰</label>
-        <input type="number" id="fare" name="fare" placeholder="0" />
-      </div>
-      <div class="form-row input-rupee">
-        <label for="boarding">Boarding 🛏️</label>
-        <input type="number" id="boarding" name="boarding" placeholder="0" />
-      </div>
-      <div class="form-row input-rupee">
-        <label for="food">Food 🍽️</label>
-        <input type="number" id="food" name="food" placeholder="0" />
-      </div>
-      <div class="form-row input-rupee">
-        <label for="localConveyance">Local Conveyance 🚖</label>
-        <input type="number" id="localConveyance" name="localConveyance" placeholder="0" />
-      </div>
-      <div class="form-row input-rupee">
-        <label for="misc">misc 🪙</label>
-        <input type="number" id="misc" name="misc" placeholder="0" />
-      </div>
-      <div class="form-row input-rupee">
-        <label for="postCourier">post Courier 📦</label>
-        <input type="number" id="postCourier" name="postCourier" placeholder="0" />
-      </div>
-      <div class="form-row">
-        <button type="submit">Submit ✅</button>
-      </div>
-    </fieldset>
+// 🧾 Build Expense Data (advanceCash excluded for employees; set to 0 to avoid undefined)
+function buildExpenseData(userId) {
+  return {
+    userId: userId || "",
+    workflowType: getVal("workflowType"),
+    date: getVal("date"),
+    placeVisited: getVal("placeVisited"),
+    monthlyConveyance: getVal("monthlyConveyance", true),
+    monthlyPhone: getVal("monthlyPhone", true),
+    fuel: getVal("fuel", true),
+    fare: getVal("fare", true),
+    boarding: getVal("boarding", true),
+    food: getVal("food", true),
+    localConveyance: getVal("localConveyance", true),
+    postCourier: getVal("postCourier", true),
+    advanceCash: 0, // explicit 0 for employees
+    status: "Pending",
+    timestamp: isoNow(),
+  };
+}
 
-  <!-- 🍽️ Adhoc Pre-Approval -->
-    
-    <fieldset class="claims-section" style="background-color: #e6f2ff; border: 1px solid #b3d1ff; margin-bottom: 20px;">
-      <legend>Adhoc Pre-Approval</legend>
-    
-      <div class="form-row">
-        <label for="adhocDate">📅 Expense Date</label>
-        <input type="date" id="adhocDate" name="adhocDate" required />
-      </div>
-    
-      <div class="form-row">
-        <label for="adhocPurpose">📝 Purpose</label>
-        <select id="adhocPurpose" name="adhocPurpose" required>
-          <option value="" disabled selected>-- Choose purpose --</option>
-          <option value="clientVisit">Client Visit</option>
-          <option value="officeCelebration">Office Celebration</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-    
-      <div class="form-row input-rupee">
-        <label for="adhocAmount">💰 Amount Requested</label>
-        <input type="number" id="adhocAmount" name="adhocAmount" placeholder="0" required />
-      </div>
+// 🧮 Safe amount parser
+function safeAmount(val) {
+  const n = Number(val);
+  return Number.isFinite(n) ? n : 0;
+}
 
-      <div style="font-size: 12px; color: #555; margin-top: 6px; margin-bottom: 10px;">
-    📍 Special request raised for manager approval
-      </div> 
+// 📤 Submit Expense (with validation + double-submit guard)
+let isSubmitting = false;
+function createSubmitExpense(currentUserId) {
+  return async function submitExpense(e) {
+    e.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
 
-    <div class="form-row">
-      <button type="submit" id="submitAdhoc" style="background-color: #343a40; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
-        Submit for Manager Approval ✅
-      </button>
-    </div>
-    </fieldset>  
-  </div> <!-- end .claims-wrapper -->
-</form>  
-    
-<!-- 📊 Expense Report -->
-<section id="expenseReport" class="report-section">
-<h2>View Your Expenses</h2>
+    try {
+      if (!currentUserId) {
+        showToast("You must be logged in.", "error");
+        isSubmitting = false;
+        return;
+      }
 
-<label for="monthPicker">Select Month:</label>
-<select id="monthPicker">
-  <option value="2025-11">November 2025</option>
-  <option value="2025-12">December 2025</option>
-</select>
+      const expenseData = buildExpenseData(currentUserId);
 
-<!-- Trip Info Claims -->
-<div class="expense-group">
-  <div class="expense-group-header">Trip Info Claims</div>
-  <table id="tripInfoTable">
-    <thead>
-      <tr>
-        <th>S.No</th>
-        <th>Date</th>
-        <th>Workflow</th>
-        <th>Place Visited</th>
-        <th>Status</th>
+      // ✅ Validation
+      const workflowType = expenseData.workflowType;
+      const validWorkflowTypes = ["sales", "service", "others"];
+      if (!workflowType || !validWorkflowTypes.includes(workflowType)) {
+        showToast("Please choose a valid workflow type.", "error");
+        isSubmitting = false;
+        return;
+      }
+      if (!expenseData.date || !expenseData.placeVisited) {
+        showToast("Please fill Date and Place Visited.", "error");
+        isSubmitting = false;
+        return;
+      }
+      ["monthlyConveyance", "monthlyPhone", "fuel", "fare", "boarding", "food", "localConveyance", "postCourier"].forEach(k => {
+        expenseData[k] = safeAmount(expenseData[k]);
+        if (expenseData[k] < 0) expenseData[k] = 0;
+      });
+
+      await addDoc(collection(db, "expenses"), expenseData);
+      showToast("Expense submitted successfully ✅", "success");
+      document.getElementById("expenseForm")?.reset();
+      await renderExpenses(currentUserId); // refresh expenses after submit, with UID
+    } catch (err) {
+      console.error("Error submitting expense:", err);
+      showToast("Error submitting expense ❌", "error");
+    } finally {
+      isSubmitting = false;
+    }
+  }
+}
+
+// 🧩 Render sections
+function renderTripInfoRow(sn, date, workflow, place, badge) {
+  return `
+    <tr>
+      <td>${sn}</td>
+      <td>${date}</td>
+      <td>${workflow}</td>
+      <td>${place}</td>
+      <td>${badge}</td>
+    </tr>
+  `;
+}
+function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, badge) {
+  return `
+    <tr>
+      <td>${sn}</td>
+      <td>${date}</td>
+      <td>${fuel}</td>
+      <td>${fare}</td>
+      <td>${boarding}</td>
+      <td>${food}</td>
+      <td>${local}</td>
+      <td>${postCourier}</td>
+      <td>${badge}</td>
+    </tr>
+  `;
+}
+function renderMonthlyClaimsRow(sn, date, convey, phone, badge) {
+  return `
+    <tr>
+      <td>${sn}</td>
+      <td>${date}</td>
+      <td>${INR.format(convey)}</td>
+      <td>${INR.format(phone)}</td>
+      <td>${badge}</td>
+    </tr>
+  `;
+}
+
+// 📊 Render Employee Expenses
+async function renderExpenses(currentUserId) {
+  try {
+    const tripInfoTable = document.querySelector("#tripInfoTable tbody");
+    const travelCostTable = document.querySelector("#travelCostTable tbody");
+    const monthlyClaimsTable = document.querySelector("#monthlyClaimsTable tbody");
+    const monthPicker = document.getElementById("monthPicker");
+    const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+
+    if (!tripInfoTable || !travelCostTable || !monthlyClaimsTable) {
+      showToast("Required expense tables missing in DOM.", "error");
+      return;
+    }
+
+    tripInfoTable.innerHTML = "";
+    travelCostTable.innerHTML = "";
+    monthlyClaimsTable.innerHTML = "";
+
+    const snapshot = await getDocs(collection(db, "expenses"));
+    const records = [];
+
+    snapshot.forEach(docSnap => {
+      const exp = docSnap.data();
+      const dateStr = typeof exp.date === 'string' ? exp.date : '';
+      if (exp.userId === currentUserId && dateStr.slice(0, 7) === selectedMonth) {
+        records.push(exp);
+      }
+    });
+
+    records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    let monthlyTotal = 0;
+    let travelTotal = 0;
+    let totalApproved = 0;
+    let totalRejected = 0;
+    let totalPending = 0;
+    let totalAdvanceReceived = 0;
+
+    records.forEach((exp, index) => {
+      const badge = getStatusBadge(exp.status);
+      const sn = index + 1;
+      const date = exp.date || "-";
+
+      // Trip Info
+      tripInfoTable.innerHTML += renderTripInfoRow(sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge);
+
+      // Travel Costs
+      const fuel = safeAmount(exp.fuel);
+      const fare = safeAmount(exp.fare);
+      const boarding = safeAmount(exp.boarding);
+      const food = safeAmount(exp.food);
+      const local = safeAmount(exp.localConveyance);
+      const postCourier = safeAmount(exp.postCourier);
+      const travelSum = fuel + fare + boarding + food + local + postCourier;
+      travelTotal += travelSum;
+
+      travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, badge);
+
+      // Monthly Claims
+      const convey = safeAmount(exp.monthlyConveyance);
+      const phone = safeAmount(exp.monthlyPhone);
+      const monthlySum = convey + phone;
+      monthlyTotal += monthlySum;
+
+      monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, badge);
+
+      const totalForRecord = travelSum + monthlySum;
+      const normalized = normalizeStatus(exp.status);
+
+      if (normalized === "Approved" || normalized === "FinalApproved") {
+        totalApproved += totalForRecord;
+      } else if (normalized === "Rejected") {
+        totalRejected += totalForRecord;
+      } else {
+        totalPending += totalForRecord;
+      }
+    });
+
+    // 🔄 Fetch accountant-recorded advance cash
+    let employeeName = "";
+    if (currentUserId) {
+      const userDoc = await getDoc(doc(db, "users", currentUserId));
+      employeeName = userDoc.exists() ? (userDoc.data().name || "") : "";
+    }
+
+    const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
+    const advanceRecords = [];
+
+    advanceSnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const dateStr = typeof data.date === 'string' ? data.date : '';
+      const sameMonth = dateStr.slice(0, 7) === selectedMonth;
+      const sameEmp = (data.employeeName || "").toLowerCase() === (employeeName || "").toLowerCase();
+      if (sameEmp && sameMonth) advanceRecords.push(data);
+    });
+
+    advanceRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    advanceRecords.forEach((record, index) => {
+      monthlyClaimsTable.innerHTML += `
+        <tr style="background:#fffbe6;">
+          <td>AC-${index + 1}</td>
+          <td>${record.date || "-"}</td>
+          <td colspan="2">${INR.format(Number(record.advanceCash) || 0)}</td>
+          <td><span style="color:green;">✅ Cash Advance Recorded</span></td>
+        </tr>
+      `;
+      totalAdvanceReceived += Number(record.advanceCash) || 0;
+    });
+
+    // 🧾 Final Summary Block
+    const totalSubmitted = monthlyTotal + travelTotal;
+    const netReimbursementDue = totalApproved - totalAdvanceReceived;
+    const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "💰 Net payable to the emp";
+
+    monthlyClaimsTable.innerHTML += `
+      <tr style="font-weight:bold; background:#fff;">
+        <td colspan="4" style="text-align:right;">📝 Total expenses submitted (for approval):</td>
+        <td>${INR.format(totalSubmitted)}</td>
       </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-
-<!-- Travel Costs Claims -->
-<div class="expense-group">
-  <div class="expense-group-header">Travel Costs Claims</div>
-  <table id="travelCostTable">
-    <thead>
-      <tr>
-        <th>S.No</th>
-        <th>Date</th>
-        <th>Fuel</th>
-        <th>Fare</th>
-        <th>Boarding</th>
-        <th>Food</th>
-        <th>Local Conveyance</th>
-        <th>Misc</th>
-        <th>post Courier</th>
-        <th>Status</th>
+      <tr style="font-weight:bold; background:#e6f7ff;">
+        <td colspan="4" style="text-align:right;">🪙 Advance Cash Received (${selectedMonth}):</td>
+        <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-
-<!-- Monthly Claims -->
-<div class="expense-group">
-  <div class="expense-group-header">Monthly Claims</div>
-  <table id="monthlyClaimsTable">
-    <thead>
-      <tr>
-        <th>S.No</th>
-        <th>Date</th>
-        <th>Monthly Conveyance</th>
-        <th>Monthly Phone</th>
-        <th>Status</th>
+      <tr style="font-weight:bold; background:#f9f9f9;">
+        <td colspan="4" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
+        <td>${INR.format(totalApproved)}</td>
       </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-  
-<!-- 🔷 Adhoc Approved Claims -->
-<div class="expense-group">
-  <div class="expense-group-header">Adhoc Approved Claims</div>
-  <table id="adhocClaimsTable">
-    <thead>
-      <tr>
-        <th>S.No</th>
-        <th>Date</th>
-        <th>Purpose</th>
-        <th>Amount</th>
-        <th>Status</th>
+      <tr style="font-weight:bold; background:#f9f9f9;">
+        <td colspan="4" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
+        <td>${INR.format(totalRejected)}</td>
       </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-</section>
+      <tr style="font-weight:bold; background:#e8ffe8;">
+        <td colspan="4" style="text-align:right;">${netLabel} (${selectedMonth}):</td>
+        <td>${INR.format(netReimbursementDue)}</td>
+      </tr>
+      ${netReimbursementDue < 0 ? `
+        <tr>
+          <td colspan="5" style="font-size:0.9em; color:#888;">
+            Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
+          </td>
+        </tr>` : ""}
+    `;
+  } catch (err) {
+    console.error("❌ Error rendering expenses:", err);
+    showToast("Failed to load expenses.", "error");
+  }
+}
 
-<!-- 🚪 Logout Button -->
-<div class="logout-container">
-  <button class="logout-btn inside-form">🚪 Logout</button>
-</div>
+// 🚦 Init: Now, ONLY runs after auth state is ready
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutBtn = document.querySelector(".logout-btn");
+  if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
 
-<!-- 📦 Scripts -->
-<script>
-  const dateInput = document.getElementById("date");
-  const today = new Date();
-  const formatDate = d => d.toISOString().split('T')[0];
-  const maxDate = formatDate(today);
-  const twoDaysBack = new Date();
-  twoDaysBack.setDate(today.getDate() - 2);
-  const minDate = formatDate(twoDaysBack);
-  dateInput.min = minDate;
-  dateInput.max = maxDate;
-</script>
-<script type="module" src="firebase.js"></script>
-<script type="module" src="employee.js"></script>
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      showToast("You must be logged in.", "error");
+      setTimeout(() => window.location.href = "login.html", 1500);
+      return;
+    }
 
-    <!-- 🧾 Footer -->
-    <footer class="site-footer">
-      <div class="footer-content">
-        <div class="footer-brand">
-          <img src="images/favicon-96x96.png" alt="ISTOS Logo" class="footer-logo" />
-          <p>XPAY by ISTOS Medical Private Limited</p>
-          <p>51/5, Ground Floor, BSTN Heights, 2nd Cr<br>
-            J.C Industrial Area, Bakasipura Mn Rd,<br>
-            Yelachenhalli, Bangalore - 560062</p>
-        </div>
-        <div class="footer-legal">
-          <p>© 2015-2025 ISTOS Medical Private Limited.</p>
-        </div>
-      </div>
-    </footer>   
+    let currentUserId = user.uid;
 
-  </main>
-</body>
-</html>
+    try {
+      const userDoc = await getDoc(doc(db, "users", currentUserId));
+      const role = (userDoc.exists() ? userDoc.data().role : "").toLowerCase();
+
+      if (role !== "employee") {
+        alert("Access denied. Employee role required.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      // Form event listener, using the current UID
+      const form = document.getElementById("expenseForm");
+      if (form) {
+        form.onsubmit = createSubmitExpense(currentUserId);
+      }
+
+      // Month picker (etc)’s change handler – ensures always uses valid UID
+      document.getElementById("monthPicker")?.addEventListener("change", () => renderExpenses(currentUserId));
+
+      // Initial load!
+      await renderExpenses(currentUserId);
+    } catch (err) {
+      console.error("❌ Error loading user/role:", err);
+      showToast("Failed to load user profile.", "error");
+    }
+  });
+});
