@@ -220,7 +220,7 @@ async function renderExpenses(currentUserId) {
       const boarding = safeAmount(exp.boarding);
       const food = safeAmount(exp.food);
       const local = safeAmount(exp.localConveyance);
-      const postCourier = safeAmount(exp.postCourier); // add if needed
+      const postCourier = safeAmount(exp.postCourier);
       const travelSum = fuel + fare + boarding + food + local + postCourier;
       travelTotal += travelSum;
 
@@ -244,7 +244,6 @@ async function renderExpenses(currentUserId) {
       } else {
         totalPending += totalForRecord;
       }
-      // No direct employee cash advance in expense table; see below.
     });
 
     // 🔄 Fetch accountant-recorded advance cash
@@ -253,8 +252,10 @@ async function renderExpenses(currentUserId) {
       const userDoc = await getDoc(doc(db, "users", currentUserId));
       employeeName = userDoc.exists() ? (userDoc.data().name || "") : "";
     }
+
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     const advanceRecords = [];
+
     advanceSnapshot.forEach(docSnap => {
       const data = docSnap.data();
       const dateStr = typeof data.date === 'string' ? data.date : '';
@@ -262,7 +263,9 @@ async function renderExpenses(currentUserId) {
       const sameEmp = (data.employeeName || "").toLowerCase() === (employeeName || "").toLowerCase();
       if (sameEmp && sameMonth) advanceRecords.push(data);
     });
+
     advanceRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
     advanceRecords.forEach((record, index) => {
       monthlyClaimsTable.innerHTML += `
         <tr style="background:#fffbe6;">
@@ -278,6 +281,7 @@ async function renderExpenses(currentUserId) {
     // 🧾 Final Summary Block
     const totalSubmitted = monthlyTotal + travelTotal;
     const netReimbursementDue = totalApproved - totalAdvanceReceived;
+    const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "💰 Net payable to the emp";
 
     monthlyClaimsTable.innerHTML += `
       <tr style="font-weight:bold; background:#fff;">
@@ -297,9 +301,15 @@ async function renderExpenses(currentUserId) {
         <td>${INR.format(totalRejected)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
-        <td colspan="4" style="text-align:right;">💰 Net payable to the emp (${selectedMonth}):</td>
+        <td colspan="4" style="text-align:right;">${netLabel} (${selectedMonth}):</td>
         <td>${INR.format(netReimbursementDue)}</td>
       </tr>
+      ${netReimbursementDue < 0 ? `
+        <tr>
+          <td colspan="5" style="font-size:0.9em; color:#888;">
+            Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
+          </td>
+        </tr>` : ""}
     `;
   } catch (err) {
     console.error("❌ Error rendering expenses:", err);
