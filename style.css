@@ -189,7 +189,7 @@ button:hover {
 }
 
 /* Footer styling */
-.site-footer {
+.site-footer .footer-legal {
   background-color: #fff; /* White background */
   color: #f5c995; /* Biscuit color text */
   padding: 2rem 1rem;
@@ -399,30 +399,6 @@ input[type="checkbox"] {
   box-shadow: 0 4px 12px rgba(166,120,69,0.12);
   font-size: 1.05rem;
   z-index: 999;
-}
-
-/* Footer remains matching theme */
-.site-footer {
-  background: var(--text-dark);
-  color: #fff;
-  padding: 1.7rem;
-  margin-top: 3rem;
-  border-top: 6px solid var(--biscuit-mid);
-}
-.footer-content {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.footer-logo {
-  height: 40px;
-  margin-bottom: 0.7rem;
-}
-.footer-legal {
-  font-size: 0.87rem;
-  color: #ddb783;
-  margin-top: 0.5rem;
 }
 
 /* Responsive tweaks for mobile */
