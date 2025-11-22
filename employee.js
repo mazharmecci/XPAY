@@ -376,8 +376,9 @@ try {
 } catch (err) {
   console.error("❌ Error rendering expenses:", err);
   showToast("Failed to load expenses.", "error");
-}
-
+  }
+ }
+  
 // 🍽️ Adhoc Pre-Approval Submission (independent of main form)
 document.getElementById("submitAdhoc")?.addEventListener("click", async function (e) {
   e.preventDefault();
