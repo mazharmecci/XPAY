@@ -36,32 +36,6 @@
     </select>
   </div>
 
-      <!-- 🍽️ Adhoc Pre-Approval -->
-    <fieldset class="claims-section" style="background-color: #e6f2ff; border: 1px solid #b3d1ff; margin-bottom: 20px;">
-      <legend>Adhoc Pre-Approval</legend>
-    
-      <div class="form-row">
-        <label for="adhocDate">📅 Expense Date</label>
-        <input type="date" id="adhocDate" name="adhocDate" required />
-      </div>
-    
-      <div class="form-row">
-        <label for="adhocPurpose">📝 Purpose</label>
-        <select id="adhocPurpose" name="adhocPurpose" required>
-          <option value="" disabled selected>-- Choose purpose --</option>
-          <option value="clientVisit">Client Visit</option>
-          <option value="officeCelebration">Office Celebration</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-    
-      <div class="form-row input-rupee">
-        <label for="adhocAmount">💰 Amount Requested</label>
-        <input type="number" id="adhocAmount" name="adhocAmount" placeholder="0" required />
-      </div>
-    
-    </fieldset>
-
    <!-- 🗺️ Trip Info -->
     <fieldset class="claims-section">
       <legend>Trip Info</legend>
@@ -130,7 +104,33 @@
 
   </div> <!-- end .claims-wrapper -->
 </form>
-
+          
+<!-- 🍽️ Adhoc Pre-Approval -->
+    
+    <fieldset class="claims-section" style="background-color: #e6f2ff; border: 1px solid #b3d1ff; margin-bottom: 20px;">
+      <legend>Adhoc Pre-Approval</legend>
+    
+      <div class="form-row">
+        <label for="adhocDate">📅 Expense Date</label>
+        <input type="date" id="adhocDate" name="adhocDate" required />
+      </div>
+    
+      <div class="form-row">
+        <label for="adhocPurpose">📝 Purpose</label>
+        <select id="adhocPurpose" name="adhocPurpose" required>
+          <option value="" disabled selected>-- Choose purpose --</option>
+          <option value="clientVisit">Client Visit</option>
+          <option value="officeCelebration">Office Celebration</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    
+      <div class="form-row input-rupee">
+        <label for="adhocAmount">💰 Amount Requested</label>
+        <input type="number" id="adhocAmount" name="adhocAmount" placeholder="0" required />
+      </div>    
+    </fieldset>
+    
 <!-- 📊 Expense Report -->
 <section id="expenseReport" class="report-section">
 <h2>View Your Expenses</h2>
