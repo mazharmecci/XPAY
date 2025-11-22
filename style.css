@@ -190,7 +190,10 @@ button:hover {
 
 /* Footer styling */
 .site-footer {
-  background-color: #fff !important;
+  background-color: #fff; /* White background */
+  color: #f5c995; /* Biscuit color text */
+  padding: 2rem 1rem;
+  border-top: 1px solid #ddd;
 }
 
 .site-footer .footer-content {
