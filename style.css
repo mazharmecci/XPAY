@@ -199,26 +199,29 @@ button:hover {
 
 /* Footer styling */
 .site-footer {
-  background: var(--text-dark);
-  color: #fff;
-  padding: 1.7rem;
-  margin-top: 3rem;
-  border-top: 6px solid var(--biscuit-mid);
+  background-color: #fff;
+  color: #000;
+  padding: 2rem 1rem;
+  border-top: 1px solid #ddd;
 }
-.footer-content {
+
+.site-footer .footer-content {
   display: flex;
-  justify-content: space-between;
   flex-wrap: wrap;
-  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
 }
-.footer-logo {
-  height: 40px;
-  margin-bottom: 0.7rem;
+
+.site-footer .footer-brand,
+.site-footer .footer-legal {
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
-.footer-legal {
-  font-size: 0.87rem;
-  color: #ddb783;
-  margin-top: 0.5rem;
+
+.site-footer .footer-logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.5rem;
 }
 
 /* Animation for smooth fade in */
