@@ -1,7 +1,7 @@
 // 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
 import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 import { Toaster } from "react-hot-toast";
 
 // 🍪 Toast Setup
@@ -78,4 +78,40 @@ window.logoutUser = async function () {
 // 🚀 Init
 document.addEventListener("DOMContentLoaded", () => {
   initLoginForm();
+});
+
+// 🧑‍💼 submit Handler - Adhoc requests
+async function submitAdhocRequest() {
+  const adhocDate = getEl("adhocDate").value;
+  const adhocPurpose = getEl("adhocPurpose").value;
+  const adhocAmount = parseFloat(getEl("adhocAmount").value);
+  const currentUserEmail = auth.currentUser?.email || "unknown@istos.in";
+
+  if (!adhocDate || !adhocPurpose || isNaN(adhocAmount)) {
+    toast.error("Please fill all fields correctly.");
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "adhocRequests"), {
+      date: adhocDate,
+      purpose: adhocPurpose,
+      amount: adhocAmount,
+      raisedBy: currentUserEmail,
+      status: "Pending",
+      approvalTarget: "mazhar@istos.in",
+      approvedAt: null
+    });
+
+    toast.success("Adhoc request submitted for manager approval.");
+  } catch (error) {
+    console.error("Error submitting adhoc request:", error);
+    toast.error("Submission failed. Please try again.");
+  }
+}
+
+// 🚦 Init adhoc Form
+getEl("submitAdhoc").addEventListener("click", function (e) {
+  e.preventDefault();
+  submitAdhocRequest();
 });
