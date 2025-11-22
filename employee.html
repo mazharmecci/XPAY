@@ -23,8 +23,11 @@
 
 <!-- 🧾 Expense Submission Form -->
 <form id="expenseForm" class="employee-form">
+
+   <!-- 🧱 Claims Layout Wrapper -->
+  <div class="claims-wrapper">
+    
   <!-- Workflow Type -->
-  <div class="form-row">
     <label for="workflowType">Workflow Type</label>
     <select id="workflowType" name="workflowType" required>
       <option value="" disabled selected>-- Choose Workflow Type --</option>
@@ -34,67 +37,69 @@
     </select>
   </div>
 
-  <!-- Trip Info -->
-  <fieldset>
-    <legend>Trip Info</legend>
-    <div class="form-row">
-      <label for="date">📅 Expense Date (last 2 days only)</label>
-      <input type="date" id="date" name="date" required />
-    </div>
-    <div class="form-row">
-      <label for="placeVisited">Place Visited 🏙️</label>
-      <input type="text" id="placeVisited" name="placeVisited" placeholder="Place" required />
-    </div>
-  </fieldset>
+   <!-- 🗺️ Trip Info -->
+    <fieldset class="claims-section">
+      <legend>Trip Info</legend>
+      <div class="form-row">
+        <label for="date">📅 Expense Date (last 2 days only)</label>
+        <input type="date" id="date" name="date" required />
+      </div>
+      <div class="form-row">
+        <label for="placeVisited">Place Visited 🏙️</label>
+        <input type="text" id="placeVisited" name="placeVisited" placeholder="Place" required />
+      </div>
+    </fieldset>
 
-  <!-- Monthly Claims -->
-  <fieldset class="claims-section">
-    <legend>Monthly Claims</legend>
-    <div class="form-row" style="display:none;">
-      <label for="advanceCash">Advance Cash 💵</label>
-      <input type="number" id="advanceCash" name="advanceCash" placeholder="Advance Cash 💵" />
-    </div>
-    <div class="form-row input-rupee">
-      <label for="monthlyConveyance">Monthly Conveyance 🚌</label>
-      <input type="number" id="monthlyConveyance" name="monthlyConveyance" placeholder="0" />
-    </div>
-    <div class="form-row input-rupee">
-      <label for="monthlyPhone">Monthly Phone 📱</label>
-      <input type="number" id="monthlyPhone" name="monthlyPhone" placeholder="0" />
-    </div>
-  </fieldset>
+    <!-- 🧾 Monthly Claims -->
+    <fieldset class="claims-section">
+      <legend>Monthly Claims</legend>
+      <div class="form-row" style="display:none;">
+        <label for="advanceCash">Advance Cash 💵</label>
+        <input type="number" id="advanceCash" name="advanceCash" placeholder="Advance Cash 💵" />
+      </div>
+      <div class="form-row input-rupee">
+        <label for="monthlyConveyance">Monthly Conveyance 🚌</label>
+        <input type="number" id="monthlyConveyance" name="monthlyConveyance" placeholder="0" />
+      </div>
+      <div class="form-row input-rupee">
+        <label for="monthlyPhone">Monthly Phone 📱</label>
+        <input type="number" id="monthlyPhone" name="monthlyPhone" placeholder="0" />
+      </div>
+    </fieldset>
 
-  <!-- Travel Costs -->
-  <fieldset class="claims-section">
-    <legend>Travel Costs</legend>
-    <div class="form-row input-rupee">
-      <label for="fuel">Fuel ⛽</label>
-      <input type="number" id="fuel" name="fuel" placeholder="0" />
-    </div>
-    <div class="form-row input-rupee">
-      <label for="fare">Fare 💰</label>
-      <input type="number" id="fare" name="fare" placeholder="0" />
-    </div>
-    <div class="form-row input-rupee">
-      <label for="boarding">Boarding 🛏️</label>
-      <input type="number" id="boarding" name="boarding" placeholder="0" />
-    </div>
-    <div class="form-row input-rupee">
-      <label for="food">Food 🍽️</label>
-      <input type="number" id="food" name="food" placeholder="0" />
-    </div>
-    <div class="form-row input-rupee">
-      <label for="localConveyance">Local Conveyance 🚖</label>
-      <input type="number" id="localConveyance" name="localConveyance" placeholder="0" />
-    </div>
-    <div class="form-row input-rupee">
-      <label for="misc">Misc 📦</label>
-      <input type="number" id="misc" name="misc" placeholder="0" />
-    </div>
-    <div class="form-row">
-      <button type="submit">Submit ✅</button>
-    </div>
-  </fieldset>
+    <!-- 🚗 Travel Costs -->
+    <fieldset class="claims-section">
+      <legend>Travel Costs</legend>
+      <div class="form-row input-rupee">
+        <label for="fuel">Fuel ⛽</label>
+        <input type="number" id="fuel" name="fuel" placeholder="0" />
+      </div>
+      <div class="form-row input-rupee">
+        <label for="fare">Fare 💰</label>
+        <input type="number" id="fare" name="fare" placeholder="0" />
+      </div>
+      <div class="form-row input-rupee">
+        <label for="boarding">Boarding 🛏️</label>
+        <input type="number" id="boarding" name="boarding" placeholder="0" />
+      </div>
+      <div class="form-row input-rupee">
+        <label for="food">Food 🍽️</label>
+        <input type="number" id="food" name="food" placeholder="0" />
+      </div>
+      <div class="form-row input-rupee">
+        <label for="localConveyance">Local Conveyance 🚖</label>
+        <input type="number" id="localConveyance" name="localConveyance" placeholder="0" />
+      </div>
+      <div class="form-row input-rupee">
+        <label for="misc">Misc 📦</label>
+        <input type="number" id="misc" name="misc" placeholder="0" />
+      </div>
+      <div class="form-row">
+        <button type="submit">Submit ✅</button>
+      </div>
+    </fieldset>
+
+  </div> <!-- end .claims-wrapper -->
 </form>
 
 <!-- 📊 Expense Report -->
