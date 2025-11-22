@@ -370,6 +370,16 @@ function renderAccountantSummary({
 }
 
 // 🧾 Advance cash table
+
+function formatDateDDMMYYYY(dateStr) {
+  const date = new Date(dateStr);
+  if (isNaN(date)) return dateStr || "-";
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
 async function renderAdvanceCashTable() {
   const tableBody = document.querySelector("#advanceCashTable tbody");
   if (!tableBody) return;
