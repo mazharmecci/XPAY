@@ -617,6 +617,15 @@ span[style*="orange"] {
   color: #333;
 }
 
+.monthly-claims legend,
+.travel-costs legend,
+.trip-info legend {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 0.8rem;
+  color: #333;
+}
+
 /* Advance Cash Form */
 .advance-form {
   max-width: 600px;
