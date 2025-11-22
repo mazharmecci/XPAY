@@ -319,35 +319,6 @@ async function renderTable() {
   }
 }
 
-
-    // 🔽 Breakdown toggle
-    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        const breakdown = document.getElementById(`breakdown-${id}`);
-        if (!breakdown) return;
-        const isVisible = breakdown.style.display === 'block';
-        breakdown.style.display = isVisible ? 'none' : 'block';
-        btn.textContent = isVisible ? '▶' : '▼';
-      });
-    });
-
-  } catch (err) {
-    console.error("renderTable Fatal Error:", err);
-    const tbody = document.querySelector('#expenseTable tbody');
-    if (tbody) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="8" style="text-align:center; color:red; padding:1em;">
-            ❌ Error loading expenses. Check console for details.
-          </td>
-        </tr>`;
-    }
-    const summaryEl = document.getElementById("accountantSummary");
-    if (summaryEl) summaryEl.innerHTML = "";
-  }
-}
-
 // 📋 Summary renderer
 function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApproved, totalRejected, totalPending, totalAdvance }) {
   const summaryContainer = document.getElementById("accountantSummary");
