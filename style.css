@@ -753,3 +753,22 @@ span[style*="orange"] {
   background: #e8ffe8;
   font-weight: bold;
 }
+
+.filter-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-row label {
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.filter-row select {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
