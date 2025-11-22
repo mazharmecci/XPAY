@@ -284,100 +284,96 @@ async function renderExpenses(currentUserId) {
     });
 
     // 🔄 Fetch manager-approved and pending Adhoc Pre-Approval records
-    const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
-    const adhocRecords = [];
+const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
+const adhocRecords = [];
 
-    adhocSnapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const dateStr = typeof data.date === 'string' ? data.date : '';
-      const sameMonth = dateStr.slice(0, 7) === selectedMonth;
-      const statusLower = (data.status || "").toLowerCase();
-      const sameEmp = (data.raisedBy || "").toLowerCase() === (auth.currentUser?.email || "").toLowerCase();
+adhocSnapshot.forEach(docSnap => {
+  const data = docSnap.data();
+  const dateStr = typeof data.date === 'string' ? data.date : '';
+  const sameMonth = dateStr.slice(0, 7) === selectedMonth;
+  const statusLower = (data.status || "").toLowerCase();
+  const sameEmp = (data.raisedBy || "").toLowerCase() === (auth.currentUser?.email || "").toLowerCase();
 
-      if (sameMonth && sameEmp && (statusLower === "pending" || statusLower === "approved")) {
-        adhocRecords.push(data);
-      }
-    });
-
-    adhocRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
-    adhocRecords.forEach((record, index) => {
-      const status = (record.status || "").toLowerCase();
-      let statusHtml = "";
-    
-      if (status === "approved") {
-        statusHtml = `<span style="color:blue;">🔷 Approved by Manager</span>`;
-        totalAdvanceReceived += Number(record.amount) || 0; // include in totals
-      } else if (status === "pending") {
-        statusHtml = `<span style="color:orange;">⏳ Pending</span>`;
-      } else {
-        statusHtml = `<span style="color:red;">❌ Rejected</span>`;
-      }
-    
-      adhocClaimsTable.innerHTML += `
-        <tr>
-          <td>AD-${index + 1}</td>
-          <td>${record.date || "-"}</td>
-          <td>${record.purpose || "-"}</td>
-          <td>${INR.format(Number(record.amount) || 0)}</td>
-          <td>${statusHtml}</td>
-        </tr>
-      `;
-    });
-
-try {
-  // 🧾 Final Summary Block (shown after all sections, in its own table)
-  const summaryBody = document.querySelector("#summaryTable tbody");
-  if (summaryBody) {
-    const totalSubmitted = monthlyTotal + travelTotal;
-    const netReimbursementDue = totalApproved - totalAdvanceReceived;
-
-    // Build summaryRows string
-    const summaryRows = `
-      <tr style="font-weight:bold; background:#fff;">
-        <td>SUM-1</td>
-        <td>📝 Total Expenses Submitted (Monthly + Travel)</td>
-        <td>${selectedMonth}</td>
-        <td>${INR.format(totalSubmitted)}</td>
-        <td></td>
-      </tr>
-      <tr style="font-weight:bold; background:#e6f7ff;">
-        <td>SUM-2</td>
-        <td>🪙 Total Advance Received</td>
-        <td>${selectedMonth}</td>
-        <td>${INR.format(totalAdvanceReceived)}</td>
-        <td></td>
-      </tr>
-      <tr style="font-weight:bold; background:#f0fff0;">
-        <td>SUM-3</td>
-        <td>✅ Total Approved by Accountant</td>
-        <td>${selectedMonth}</td>
-        <td>${INR.format(totalApproved)}</td>
-        <td></td>
-      </tr>
-      <tr style="font-weight:bold; background:#fff0f0;">
-        <td>SUM-4</td>
-        <td>❌ Total Rejected by Accountant</td>
-        <td>${selectedMonth}</td>
-        <td>${INR.format(totalRejected)}</td>
-        <td></td>
-      </tr>
-      <tr style="font-weight:bold; background:#e8ffe8;">
-        <td>SUM-5</td>
-        <td>💰 Net Payable to Employee</td>
-        <td>${selectedMonth}</td>
-        <td>${INR.format(netReimbursementDue)}</td>
-        <td>${netReimbursementDue < 0 ? "⚠️ Advance exceeds approved; payout holds" : ""}</td>
-      </tr>
-    `;
-
-    summaryBody.innerHTML = summaryRows; // Only set this once, after building all rows
+  if (sameMonth && sameEmp && (statusLower === "pending" || statusLower === "approved")) {
+    adhocRecords.push(data);
   }
-} catch (err) {
-  console.error("❌ Error rendering expenses:", err);
-  showToast("Failed to load expenses.", "error");
+});
+
+adhocRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+adhocRecords.forEach((record, index) => {
+  const status = (record.status || "").toLowerCase();
+  let statusHtml = "";
+
+  if (status === "approved") {
+    statusHtml = `<span style="color:blue;">🔷 Approved by Manager</span>`;
+    totalAdvanceReceived += Number(record.amount) || 0; // include in totals
+  } else if (status === "pending") {
+    statusHtml = `<span style="color:orange;">⏳ Pending</span>`;
+  } else {
+    statusHtml = `<span style="color:red;">❌ Rejected</span>`;
   }
- }
+
+  adhocClaimsTable.innerHTML += `
+    <tr>
+      <td>AD-${index + 1}</td>
+      <td>${record.date || "-"}</td>
+      <td>${record.purpose || "-"}</td>
+      <td>${INR.format(Number(record.amount) || 0)}</td>
+      <td>${statusHtml}</td>
+    </tr>
+  `;
+});
+
+
+// 🧾 Final Summary Block (shown after all sections, in its own table)
+const summaryBody = document.querySelector("#summaryTable tbody");
+if (summaryBody) {
+  const totalSubmitted = monthlyTotal + travelTotal;
+  const netReimbursementDue = totalApproved - totalAdvanceReceived;
+
+  // Build summaryRows string
+  const summaryRows = `
+    <tr style="font-weight:bold; background:#fff;">
+      <td>SUM-1</td>
+      <td>📝 Total Expenses Submitted (Monthly + Travel)</td>
+      <td>${selectedMonth}</td>
+      <td>${INR.format(totalSubmitted)}</td>
+      <td></td>
+    </tr>
+    <tr style="font-weight:bold; background:#e6f7ff;">
+      <td>SUM-2</td>
+      <td>🪙 Total Advance Received</td>
+      <td>${selectedMonth}</td>
+      <td>${INR.format(totalAdvanceReceived)}</td>
+      <td></td>
+    </tr>
+    <tr style="font-weight:bold; background:#f0fff0;">
+      <td>SUM-3</td>
+      <td>✅ Total Approved by Accountant</td>
+      <td>${selectedMonth}</td>
+      <td>${INR.format(totalApproved)}</td>
+      <td></td>
+    </tr>
+    <tr style="font-weight:bold; background:#fff0f0;">
+      <td>SUM-4</td>
+      <td>❌ Total Rejected by Accountant</td>
+      <td>${selectedMonth}</td>
+      <td>${INR.format(totalRejected)}</td>
+      <td></td>
+    </tr>
+    <tr style="font-weight:bold; background:#e8ffe8;">
+      <td>SUM-5</td>
+      <td>💰 Net Payable to Employee</td>
+      <td>${selectedMonth}</td>
+      <td>${INR.format(netReimbursementDue)}</td>
+      <td>${netReimbursementDue < 0 ? "⚠️ Advance exceeds approved; payout holds" : ""}</td>
+    </tr>
+  `;
+
+  summaryBody.innerHTML = summaryRows; // Only set this once, after building all rows
+}
+
   
 // 🍽️ Adhoc Pre-Approval Submission (independent of main form)
 document.getElementById("submitAdhoc")?.addEventListener("click", async function (e) {
