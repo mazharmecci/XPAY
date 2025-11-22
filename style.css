@@ -189,9 +189,9 @@ button:hover {
 }
 
 /* Footer styling */
-.site-footer .footer-legal {
-  background-color: #fff; /* White background */
-  color: #f5c995; /* Biscuit color text */
+.site-footer {
+  background-color: #fff;           /* White background for entire footer */
+  color: #f5c995;                   /* Biscuit color text for all footer text */
   padding: 2rem 1rem;
   border-top: 1px solid #ddd;
 }
