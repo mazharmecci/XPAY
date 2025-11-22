@@ -3,6 +3,22 @@ import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import { getDoc, getDocs, addDoc, collection, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
+// 💰 Currency formatter (ADDED – required by renderAccountantSummary)
+const INR = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+});
+
+// 🔄 Status normalizer (ADDED – used in renderTable)
+function normalizeStatus(status) {
+  const s = (status || "").toLowerCase();
+  if (s === "approved") return "Approved";
+  if (s === "finalapproved") return "FinalApproved";
+  if (s === "rejected" || s === "rejectedbymanager") return "Rejected";
+  if (s === "pending") return "Pending";
+  return "Unknown";
+}
+
 // 🧩 Field Labels and Grouping
 const FIELD_GROUPS = {
   "🧭 Trip Info": ["placeVisited"],
@@ -76,8 +92,8 @@ async function populateEmployeeDropdown() {
 
   try {
     const querySnapshot = await getDocs(collection(db, "users"));
-    querySnapshot.forEach(doc => {
-      const data = doc.data();
+    querySnapshot.forEach(docSnap => {
+      const data = docSnap.data();
       if (data.role?.toLowerCase() === "employee") {
         const option = document.createElement("option");
         option.value = data.name;
@@ -90,9 +106,6 @@ async function populateEmployeeDropdown() {
   }
 }
 
-// Call this on page load
-populateEmployeeDropdown();
-
 // 👤 Employee dropdown - For Advance table
 async function populateAdvanceEmployeeDropdown() {
   const dropdown = document.getElementById("advanceEmployee");
@@ -100,8 +113,8 @@ async function populateAdvanceEmployeeDropdown() {
 
   const seenNames = new Set();
   const querySnapshot = await getDocs(collection(db, "users"));
-  querySnapshot.forEach(doc => {
-    const data = doc.data();
+  querySnapshot.forEach(docSnap => {
+    const data = docSnap.data();
     const name = data.name?.trim();
     if (data.role?.toLowerCase() === "employee" && name && !seenNames.has(name)) {
       seenNames.add(name);
@@ -113,8 +126,6 @@ async function populateAdvanceEmployeeDropdown() {
   });
 }
 
-populateAdvanceEmployeeDropdown();
-
 // 🔎 Fetch expenses
 async function fetchExpenses(selectedMonth, selectedEmployee) {
   const snapshot = await getDocs(collection(db, "expenses"));
@@ -122,8 +133,13 @@ async function fetchExpenses(selectedMonth, selectedEmployee) {
   snapshot.forEach(docSnap => {
     const data = docSnap.data();
     const dateStr = typeof data.date === 'string' ? data.date : '';
-    if (dateStr.slice(0, 7) === selectedMonth &&
-        (!selectedEmployee || data.userId === selectedEmployee)) {
+    const matchesMonth = dateStr.slice(0, 7) === selectedMonth;
+    const matchesEmployee =
+      !selectedEmployee ||
+      selectedEmployee === "" ||
+      selectedEmployee === "All Employees" ||
+      data.userId === selectedEmployee;
+    if (matchesMonth && matchesEmployee) {
       records.push({ ...data, id: docSnap.id });
     }
   });
@@ -190,7 +206,8 @@ async function renderTable() {
             📭 No expenses found for selection.
           </td>
         </tr>`;
-      document.getElementById("accountantSummary").innerHTML = "";
+      const summaryEl = document.getElementById("accountantSummary");
+      if (summaryEl) summaryEl.innerHTML = "";
       return;
     }
 
@@ -208,12 +225,12 @@ async function renderTable() {
           employeeName = userDoc.data().name || employeeName;
           userCache[exp.userId] = employeeName;
         }
-      } else if (userCache[exp.userId]) {
+      } else if (exp.userId && userCache[exp.userId]) {
         employeeName = userCache[exp.userId];
       }
 
       let amount = 0;
-      ["fuel","fare","boarding","food","localConveyance","PostCourier","monthlyConveyance","monthlyPhone"]
+      ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier", "monthlyConveyance", "monthlyPhone"]
         .forEach(key => { if (exp[key]) amount += Number(exp[key]); });
 
       const breakdownHTML = buildBreakdown(exp);
@@ -282,7 +299,8 @@ async function renderTable() {
           </td>
         </tr>`;
     }
-    document.getElementById("accountantSummary").innerHTML = "";
+    const summaryEl = document.getElementById("accountantSummary");
+    if (summaryEl) summaryEl.innerHTML = "";
   }
 }
 
@@ -312,29 +330,25 @@ function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApprove
   `;
 }
 
+// 🧾 Advance cash table
 async function renderAdvanceCashTable() {
   const tableBody = document.querySelector("#advanceCashTable tbody");
   if (!tableBody) return;
   tableBody.innerHTML = "";
 
-  // 🔍 Get selected filters
   const selectedMonth = document.getElementById("advanceMonth")?.value || "";
   const selectedEmployee = document.getElementById("advanceEmployee")?.value?.toLowerCase() || "";
 
-  // 🔐 Get current user role
   const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
   const role = userDoc.exists() ? userDoc.data().role?.toLowerCase() : "";
   const userName = userDoc.exists() ? userDoc.data().name?.toLowerCase() : "";
 
-  // 📦 Fetch all advance cash records
   const snapshot = await getDocs(collection(db, "advanceCash"));
   const records = [];
   snapshot.forEach(docSnap => records.push(docSnap.data()));
 
-  // 🔍 Sort by date descending
   records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-  // 🧠 Apply filters
   const visibleRecords = records.filter(record => {
     const recordDate = record.date || "";
     const recordEmployee = record.employeeName?.toLowerCase() || "";
@@ -349,7 +363,6 @@ async function renderAdvanceCashTable() {
     return matchMonth && matchEmployee;
   });
 
-  // 📭 No records found
   if (visibleRecords.length === 0) {
     tableBody.innerHTML = `
       <tr>
@@ -358,7 +371,6 @@ async function renderAdvanceCashTable() {
     return;
   }
 
-  // 🖥️ Render table rows
   visibleRecords.forEach(record => {
     tableBody.innerHTML += `
       <tr>
@@ -371,12 +383,10 @@ async function renderAdvanceCashTable() {
   });
 }
 
-
 // ✅ Advance cash logic
 async function recordAdvanceCash(e) {
   e.preventDefault();
 
-  // Get and validate form values
   const employeeNameInput = document.getElementById("employeeName");
   const advanceDateInput = document.getElementById("advanceDate");
   const advanceAmountInput = document.getElementById("advanceAmount");
@@ -393,10 +403,9 @@ async function recordAdvanceCash(e) {
   }
 
   try {
-    // Lookup employee UID from name (case-insensitive, assumes user.name is stored lowercase)
     const usersSnapshot = await getDocs(collection(db, "users"));
-    const matchedUser = usersSnapshot.docs.find(doc =>
-      (doc.data().name||"").toLowerCase() === employeeName
+    const matchedUser = usersSnapshot.docs.find(d =>
+      (d.data().name || "").toLowerCase() === employeeName
     );
 
     if (!matchedUser) {
@@ -406,9 +415,8 @@ async function recordAdvanceCash(e) {
 
     const employeeId = matchedUser.id;
 
-    // Build and save advance cash record
     const advanceData = {
-      employeeName, // Always lowercase for reliable querying
+      employeeName,
       employeeId,
       date: advanceDate,
       advanceCash: advanceAmount,
@@ -487,12 +495,12 @@ function downloadApprovedCSV() {
     if (statusText !== "accountant approved" && statusText !== "approved") return;
     approvedExpenses.push([
       i + 1,
-      sanitize(cells[1].textContent), // Date
-      sanitize(cells[2].textContent), // Type
-      sanitize(cells[3].textContent), // Place/Details
-      sanitize(cells[4].textContent), // Amount
-      sanitize(statusSpan ? statusSpan.textContent : cells[5].textContent), // Status
-      sanitize(cells[7].querySelector("input") ? cells[7].querySelector("input").value : "") // Comment
+      sanitize(cells[1].textContent),
+      sanitize(cells[2].textContent),
+      sanitize(cells[3].textContent),
+      sanitize(cells[4].textContent),
+      sanitize(statusSpan ? statusSpan.textContent : cells[5].textContent),
+      sanitize(cells[7].querySelector("input") ? cells[7].querySelector("input").value : "")
     ]);
   });
 
@@ -505,7 +513,7 @@ function downloadApprovedCSV() {
     ["S.No", "Date", "Type", "Place/Details", "Total Amount", "Status", "Comment"],
     ...approvedExpenses
   ];
-  const BOM = "\uFEFF"; // UTF-8 BOM for Excel
+  const BOM = "\uFEFF";
   const csvContent = csvRows.map(row => row.map(escapeCSV).join(",")).join("\n");
   const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
@@ -526,34 +534,37 @@ function escapeCSV(val) {
   }
   return clean;
 }
+
 function sanitize(val) {
   const str = String(val ?? "");
-  return str.replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '')
-            .replace(/\s+/g, ' ')
-            .trim();
+  return str
+    .replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // 🚦 Init
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
 
-  // 🔄 Accountant dashboard controls
-  await populateEmployeeFilter();
+  populateEmployeeDropdown();
+  populateAdvanceEmployeeDropdown();
+  populateEmployeeFilter();
+
   document.getElementById('approveBtn')?.addEventListener('click', approveSelected);
   document.getElementById('rejectBtn')?.addEventListener('click', rejectSelected);
   document.getElementById('monthPicker')?.addEventListener('change', renderTable);
   document.getElementById('employeeFilter')?.addEventListener('change', renderTable);
   document.getElementById("downloadApprovedBtn")?.addEventListener("click", downloadApprovedCSV);
 
-  // 💵 Advance Cash Form
   const advanceForm = document.getElementById("advanceCashForm");
   if (advanceForm) advanceForm.addEventListener("submit", recordAdvanceCash);
 
-  // 💵 Toggle Advance Cash Workflow button
   document.getElementById("goToAdvanceCashBtn")?.addEventListener("click", () => {
     const workflow = document.getElementById("advanceCashWorkflow");
-    if (workflow.style.display === "none") {
+    if (!workflow) return;
+    if (workflow.style.display === "none" || workflow.style.display === "") {
       workflow.style.display = "block";
       workflow.scrollIntoView({ behavior: "smooth" });
     } else {
@@ -561,17 +572,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // 💵 Advance Cash Filters
-  await populateAdvanceEmployeeDropdown();
   document.getElementById("advanceMonth")?.addEventListener("change", renderAdvanceCashTable);
   document.getElementById("advanceEmployee")?.addEventListener("change", renderAdvanceCashTable);
 
-  // Initial render
-  renderAdvanceCashTable();
-});
-
-
-  // 🔍 Auth check and initial render
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
@@ -588,9 +591,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (logoutBtn) logoutBtn.textContent = `🚪 Logout (${role})`;
+    const lb = document.querySelector('.logout-btn');
+    if (lb) lb.textContent = `🚪 Logout (${role})`;
 
-    // ✅ Initial dashboard render
     await renderTable();
     await renderAdvanceCashTable();
   });
