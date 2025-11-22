@@ -289,6 +289,7 @@ async function renderTable() {
       totalRejected,
       totalPending,
       totalAdvance, // <-- use calculated advance from advanceCash collection
+      totalAdvance: totalAdvanceReceived,
     });
 
     // 🔽 Breakdown toggle handlers (if needed)
@@ -335,10 +336,11 @@ function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApprove
     <div class="summary-block">
       <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
       <table class="summary-table">
+        <tr><td>🧾 Total expenses submitted:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
         <tr><td>✅ Approved by Accountant:</td><td class="amount-cell">${INR.format(totalApproved)}</td></tr>
         <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
         <tr><td>⏳ Pending Expenses:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
-        <tr><td>🪙 Advance Cash Received:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr><td>💸 Advance Cash Received:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
         <tr class="net-row"><td>💰 Net payable to employee:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
     </div>
