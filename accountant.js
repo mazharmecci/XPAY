@@ -114,7 +114,7 @@ async function renderTable() {
     const monthPicker = document.getElementById('monthPicker');
     const empSel = document.getElementById('employeeFilter');
     const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
-    const selectedEmployee = empSel?.value || "";
+    const selectedEmployee = empSel?.value || "All Employees";
 
     const expenses = await fetchExpenses(selectedMonth, selectedEmployee);
 
@@ -144,10 +144,16 @@ async function renderTable() {
             📭 No expenses found for selection.
           </td>
         </tr>`;
+      document.getElementById("accountantSummary").innerHTML = "";
       return;
     }
 
     const userCache = {};
+    let totalApproved = 0;
+    let totalRejected = 0;
+    let totalPending = 0;
+    let totalAdvanceReceived = 0;
+
     for (const exp of filteredExpenses) {
       let employeeName = exp.userId || "-";
       if (exp.userId && !userCache[exp.userId]) {
@@ -184,8 +190,30 @@ async function renderTable() {
           <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
           <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>
         </tr>`;
+
+      // 🔄 Summary calculations
+      const normalized = normalizeStatus(exp.status);
+      if (normalized === "Approved" || normalized === "FinalApproved") {
+        totalApproved += amount;
+      } else if (normalized === "Rejected") {
+        totalRejected += amount;
+      } else {
+        totalPending += amount;
+      }
+      totalAdvanceReceived += Number(exp.advanceCash) || 0;
     }
 
+    // ✅ Render summary block
+    renderAccountantSummary({
+      selectedMonth,
+      selectedEmployee,
+      totalApproved,
+      totalRejected,
+      totalPending,
+      totalAdvance: totalAdvanceReceived
+    });
+
+    // 🔽 Breakdown toggle
     document.querySelectorAll('.toggle-breakdown').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -204,11 +232,38 @@ async function renderTable() {
       tbody.innerHTML = `
         <tr>
           <td colspan="8" style="text-align:center; color:red; padding:1em;">
-                        ❌ Error loading expenses. Check console for details.
+            ❌ Error loading expenses. Check console for details.
           </td>
         </tr>`;
     }
+    document.getElementById("accountantSummary").innerHTML = "";
   }
+}
+
+// 📋 Summary renderer
+function renderAccountantSummary({ selectedMonth, selectedEmployee, totalApproved, totalRejected, totalPending, totalAdvance }) {
+  const summaryContainer = document.getElementById("accountantSummary");
+  if (!summaryContainer) return;
+
+  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
+    month: "long",
+    year: "numeric"
+  });
+
+  const netPayable = totalApproved - totalAdvance;
+
+  summaryContainer.innerHTML = `
+    <div class="summary-block">
+      <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
+      <table class="summary-table">
+        <tr><td>✅ Approved by Accountant:</td><td class="amount-cell">${INR.format(totalApproved)}</td></tr>
+        <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>⏳ Pending Expenses:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
+        <tr><td>🪙 Advance Cash Received:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr class="net-row"><td>💰 Net payable to employee:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
+      </table>
+    </div>
+  `;
 }
 
 // ✅ Advance cash table (standalone function)
