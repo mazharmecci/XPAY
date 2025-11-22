@@ -146,6 +146,23 @@ function buildBreakdown(exp) {
   }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
+"use strict";
+
+// Currency formatter for INR
+const INR = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR"
+});
+
+// Utility to sum expense fields
+function calculateTotal(exp) {
+  const totalKeys = [
+    "monthlyConveyance", "monthlyPhone", "fuel", "fare",
+    "boarding", "food", "localConveyance", "PostCourier"
+  ];
+  return totalKeys.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
+}
+
 // Main render function with employee filter support
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
@@ -173,33 +190,42 @@ async function renderManagerClaims() {
       records.push({ id: docSnap.id, ...exp });
     }
   });
+
   records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-  let totalApproved = 0, totalRejected = 0, totalPending = 0, totalFinalApproved = 0;
+  let totalApproved = 0,
+    totalRejected = 0,
+    totalPending = 0,
+    totalFinalApproved = 0;
 
+  // Build table rows in a buffer string for performance
+  let rowBuffer = "";
   for (let i = 0; i < records.length; i++) {
     const exp = records[i];
-    // No S.No!
-    const totalKeys = [
-      "monthlyConveyance", "monthlyPhone", "fuel", "fare",
-      "boarding", "food", "localConveyance", "PostCourier"
-    ];
-    const total = totalKeys.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
-
+    const total = calculateTotal(exp);
     const employeeName = await getEmployeeName(exp.userId, userCache);
 
-    let badgeClass = "", badgeText = "";
+    let badgeClass = "",
+      badgeText = "";
     if (exp.status === "Approved") {
-      badgeClass = "badge approved"; badgeText = "AC Approved"; totalApproved += total;
+      badgeClass = "badge approved";
+      badgeText = "AC Approved";
+      totalApproved += total;
     } else if (exp.status === "Rejected") {
-      badgeClass = "badge rejected"; badgeText = "Rejected"; totalRejected += total;
+      badgeClass = "badge rejected";
+      badgeText = "Rejected";
+      totalRejected += total;
     } else if (exp.status === "FinalApproved") {
-      badgeClass = "badge final-approved"; badgeText = "Final Approved"; totalFinalApproved += total;
+      badgeClass = "badge final-approved";
+      badgeText = "Final Approved";
+      totalFinalApproved += total;
     } else {
-      badgeClass = "badge pending"; badgeText = "Pending"; totalPending += total;
+      badgeClass = "badge pending";
+      badgeText = "Pending";
+      totalPending += total;
     }
 
-    tableBody.innerHTML += `
+    rowBuffer += `
       <tr>
         <td>${employeeName}</td>
         <td>${exp.date || "-"}</td>
@@ -211,7 +237,7 @@ async function renderManagerClaims() {
             ${buildBreakdown(exp)}
           </div>
         </td>
-        <td>₹${total}</td>
+        <td>${INR.format(total)}</td>
         <td><span class="${badgeClass}">${badgeText}</span></td>
         <td><input type="checkbox" class="select-claim" data-id="${exp.id}"></td>
         <td><input type="text" class="manager-comment" placeholder="Comment (optional)"></td>
@@ -219,6 +245,9 @@ async function renderManagerClaims() {
     `;
   }
 
+  tableBody.innerHTML = rowBuffer;
+
+  // Attach breakdown toggler
   document.querySelectorAll('.toggle-breakdown').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
@@ -231,36 +260,106 @@ async function renderManagerClaims() {
   });
 
   const totalSubmittedAmount = records.reduce(
-    (sum, exp) => sum + (
-      (Number(exp.monthlyConveyance) || 0) + (Number(exp.monthlyPhone) || 0) +
-      (Number(exp.fuel) || 0) + (Number(exp.fare) || 0) +
-      (Number(exp.boarding) || 0) + (Number(exp.food) || 0) +
-      (Number(exp.localConveyance) || 0) + (Number(exp.PostCourier) || 0)
-    ), 0);
+    (sum, exp) => sum + calculateTotal(exp), 0);
 
   summaryRow.innerHTML = `
     <tr style="font-weight:bold; background:#f9f9f9;">
       <td colspan="7" style="text-align:right;">📊 Total of all the expenses (excluding Advance Cash) ${selectedMonth}:</td>
-      <td>₹${totalSubmittedAmount}</td>
+      <td>${INR.format(totalSubmittedAmount)}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
       <td colspan="7" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
-      <td>₹${totalApproved}</td>
+      <td>${INR.format(totalApproved)}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
       <td colspan="7" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
-      <td>₹${totalRejected}</td>
+      <td>${INR.format(totalRejected)}</td>
     </tr>
     <tr style="font-weight:bold; background:#f9f9f9;">
       <td colspan="7" style="text-align:right;">⏳ Actual Pending Expenses - excluding advanced cash for ${selectedMonth}:</td>
-      <td>₹${totalPending}</td>
+      <td>${INR.format(totalPending)}</td>
     </tr>
     <tr style="font-weight:bold; background:#e8ffe8;">
       <td colspan="7" style="text-align:right;">💰 Final Approved by Manager for ${selectedMonth}:</td>
-      <td>₹${totalFinalApproved}</td>
+      <td>${INR.format(totalFinalApproved)}</td>
     </tr>
   `;
+
+  // Fetch and process advance cash
+  const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
+  let totalAdvanceReceived = 0;
+  advanceSnapshot.forEach(docSnap => {
+    const adv = docSnap.data();
+    const advDate = typeof adv.date === "string" ? adv.date : "";
+    const advMonth = advDate.slice(0, 7);
+    const empFilter = selectedEmployee.trim().toLowerCase();
+    const empId = (adv.employeeId || "").toLowerCase();
+    const empName = (adv.employeeName || "").toLowerCase();
+    const isMonthMatch = advMonth === selectedMonth;
+    const isEmpMatch = !empFilter || empId === empFilter || empName === empFilter;
+    if (isMonthMatch && isEmpMatch) {
+      totalAdvanceReceived += Number(adv.advanceCash) || 0;
+    }
+  });
+
+  // Render the manager summary
+  renderManagerSummary({
+    selectedMonth,
+    selectedEmployee,
+    totalApproved,
+    totalRejected,
+    totalPending,
+    totalFinalApproved,
+    totalAdvance: totalAdvanceReceived,
+    totalSubmitted: totalSubmittedAmount
+  });
 }
+
+// Summary block renderer
+function renderManagerSummary({
+  selectedMonth,
+  selectedEmployee,
+  totalApproved,
+  totalRejected,
+  totalPending,
+  totalFinalApproved,
+  totalAdvance,
+  totalSubmitted
+}) {
+  const summaryContainer = document.getElementById("managerSummaryBlock");
+  if (!summaryContainer) return;
+
+  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
+    month: "long",
+    year: "numeric"
+  });
+
+  const netPayable = totalFinalApproved - totalAdvance;
+  const netLabel = netPayable < 0
+    ? "💰 Advance exceeds approved"
+    : "🔥 Net payable to employee";
+
+  summaryContainer.innerHTML = `
+    <div class="summary-block">
+      <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
+      <table class="summary-table">
+        <tr><td>🧾 Total expenses submitted:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
+        <tr><td>✅ Approved by Accountant:</td><td class="amount-cell">${INR.format(totalApproved)}</td></tr>
+        <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>⏳ Pending Expenses:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
+        <tr><td>💸 Advance Cash Received:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
+      </table>
+      ${netPayable < 0 ? `
+        <div style="margin-top:0.5em; font-size:0.9em; color:#888;">
+          Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
+        </div>` : ""}
+    </div>
+  `;
+}
+
+// Usage: Call renderManagerClaims() when you need to refresh/filter the table.
+
 
 // Export to CSV
 function downloadFinalApproved() {
