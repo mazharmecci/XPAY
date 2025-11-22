@@ -63,12 +63,14 @@ function buildExpenseData(userId) {
     placeVisited: getVal("placeVisited"),
     monthlyConveyance: getVal("monthlyConveyance", true),
     monthlyPhone: getVal("monthlyPhone", true),
+    adhocrequest: getVal("adhocrequest", true),    
     fuel: getVal("fuel", true),
     fare: getVal("fare", true),
     boarding: getVal("boarding", true),
     food: getVal("food", true),
     localConveyance: getVal("localConveyance", true),
     postCourier: getVal("postCourier", true),
+    misc: getVal("misc", true),
     advanceCash: 0, // explicit 0 for employees
     status: "Pending",
     timestamp: isoNow(),
@@ -111,7 +113,7 @@ function createSubmitExpense(currentUserId) {
         isSubmitting = false;
         return;
       }
-      ["monthlyConveyance", "monthlyPhone", "fuel", "fare", "boarding", "food", "localConveyance", "postCourier"].forEach(k => {
+      ["monthlyConveyance", "monthlyPhone", "adhocrequest", "fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc"].forEach(k => {
         expenseData[k] = safeAmount(expenseData[k]);
         if (expenseData[k] < 0) expenseData[k] = 0;
       });
@@ -141,7 +143,7 @@ function renderTripInfoRow(sn, date, workflow, place, badge) {
     </tr>
   `;
 }
-function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, badge) {
+function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge) {
   return `
     <tr>
       <td>${sn}</td>
@@ -152,6 +154,7 @@ function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCo
       <td>${food}</td>
       <td>${local}</td>
       <td>${postCourier}</td>
+      <td>${misc}</td>
       <td>${badge}</td>
     </tr>
   `;
@@ -221,14 +224,16 @@ async function renderExpenses(currentUserId) {
       const food = safeAmount(exp.food);
       const local = safeAmount(exp.localConveyance);
       const postCourier = safeAmount(exp.postCourier);
-      const travelSum = fuel + fare + boarding + food + local + postCourier;
+      const misc = safeAmount(exp.misc);
+      const travelSum = fuel + fare + boarding + food + local + postCourier + misc;
       travelTotal += travelSum;
 
-      travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, badge);
+      travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge);
 
       // Monthly Claims
       const convey = safeAmount(exp.monthlyConveyance);
       const phone = safeAmount(exp.monthlyPhone);
+      const adhoc = safeAmount(exp.adhocRequest);
       const monthlySum = convey + phone;
       monthlyTotal += monthlySum;
 
