@@ -411,10 +411,11 @@ async function renderAdvanceCashTable() {
   }
 
   visibleRecords.forEach(record => {
+    const formattedDate = formatDateDDMMYYYY(record.date);
     tableBody.innerHTML += `
       <tr>
         <td>${record.employeeName || "-"}</td>
-        <td>${record.date || "-"}</td>
+        <td>${formattedDate}</td>
         <td>₹${record.advanceCash || 0}</td>
         <td>${record.note || "-"}</td>
         <td>${record.status || "Recorded"}</td>
