@@ -68,6 +68,7 @@ function buildExpenseData(userId) {
     boarding: getVal("boarding", true),
     food: getVal("food", true),
     localConveyance: getVal("localConveyance", true),
+    misc: getVal("misc", true),
     postCourier: getVal("postCourier", true),
     advanceCash: 0, // explicit 0 for employees
     status: "Pending",
@@ -111,7 +112,7 @@ function createSubmitExpense(currentUserId) {
         isSubmitting = false;
         return;
       }
-      ["monthlyConveyance", "monthlyPhone", "fuel", "fare", "boarding", "food", "localConveyance", "postCourier"].forEach(k => {
+      ["monthlyConveyance", "monthlyPhone", "fuel", "fare", "boarding", "food", "localConveyance", "misc", "postCourier"].forEach(k => {
         expenseData[k] = safeAmount(expenseData[k]);
         if (expenseData[k] < 0) expenseData[k] = 0;
       });
@@ -141,7 +142,7 @@ function renderTripInfoRow(sn, date, workflow, place, badge) {
     </tr>
   `;
 }
-function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, badge) {
+function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, misc, postCourier, badge) {
   return `
     <tr>
       <td>${sn}</td>
@@ -151,6 +152,7 @@ function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCo
       <td>${boarding}</td>
       <td>${food}</td>
       <td>${local}</td>
+      <td>${misc}</td>
       <td>${postCourier}</td>
       <td>${badge}</td>
     </tr>
@@ -220,11 +222,12 @@ async function renderExpenses(currentUserId) {
       const boarding = safeAmount(exp.boarding);
       const food = safeAmount(exp.food);
       const local = safeAmount(exp.localConveyance);
+      const misc = safeAmount(exp.misc);
       const postCourier = safeAmount(exp.postCourier);
       const travelSum = fuel + fare + boarding + food + local + postCourier;
       travelTotal += travelSum;
 
-      travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, badge);
+      travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, misc, postCourier, badge);
 
       // Monthly Claims
       const convey = safeAmount(exp.monthlyConveyance);
