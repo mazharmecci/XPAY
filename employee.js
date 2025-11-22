@@ -425,6 +425,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
 
+  let currentUserId; // <--- declare at the top scope
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
@@ -432,7 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    let currentUserId = user.uid;
+    currentUserId = user.uid; // <--- assign here after auth
 
     try {
       const userDoc = await getDoc(doc(db, "users", currentUserId));
@@ -450,7 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
         form.onsubmit = createSubmitExpense(currentUserId);
       }
 
-      // Month picker (etc)’s change handler – ensures always uses valid UID
+      // Month picker change handler – ensures always uses valid UID
       document.getElementById("monthPicker")?.addEventListener("change", () => renderExpenses(currentUserId));
 
       // Initial load!
