@@ -318,6 +318,14 @@ body.employee-page {
   max-width: 100%;
 }
 
+/* Highlight Adhoc Request column in Monthly Claims table */
+#monthlyClaimsTable th:nth-child(5),
+#monthlyClaimsTable td:nth-child(5) {
+  background-color: #e3f2fd;   /* Light blue background */
+  color: #1976d2;              /* Blue text */
+  font-weight: bold;           /* Emphasize values */
+}
+
 @media screen and (max-width: 768px) {
   #expenseTable th,
   #expenseTable td {
