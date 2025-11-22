@@ -36,6 +36,47 @@
     </select>
   </div>
 
+    <!-- 🍽️ Adhoc Pre-Approval -->
+  <fieldset class="claims-section">
+    <legend>Adhoc Pre-Approval</legend>
+  
+    <div class="form-row">
+      <label for="adhocDate">📅 Expense Date (last 2 days only)</label>
+      <input type="date" id="adhocDate" name="adhocDate" required />
+    </div>
+  
+    <div class="form-row">
+      <label for="adhocTitle">🏷️ Title of Expense</label>
+      <input type="text" id="adhocTitle" name="adhocTitle" placeholder="e.g. Client Lunch" required />
+    </div>
+  
+    <div class="form-row">
+      <label for="adhocPurpose">📝 Purpose</label>
+      <select id="adhocPurpose" name="adhocPurpose" required>
+        <option value="" disabled selected>-- Choose purpose --</option>
+        <option value="clientVisit">Client Visit</option>
+        <option value="officeCelebration">Office Celebration</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+  
+    <div class="form-row input-rupee">
+      <label for="adhocAmount">💰 Amount Requested</label>
+      <input type="number" id="adhocAmount" name="adhocAmount" placeholder="0" required />
+    </div>
+  
+    <div class="form-row">
+      <label for="adhocRaisedBy">👤 Raised By</label>
+      <input type="text" id="adhocRaisedBy" name="adhocRaisedBy" value="supervisor@istos.in" readonly />
+    </div>
+  
+    <div class="form-row">
+      <label for="adhocStatus">🚦 Status</label>
+      <input type="text" id="adhocStatus" name="adhocStatus" value="Pending" readonly />
+    </div>
+  
+  </fieldset>
+
    <!-- 🗺️ Trip Info -->
     <fieldset class="claims-section">
       <legend>Trip Info</legend>
