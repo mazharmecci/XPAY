@@ -772,3 +772,15 @@ span[style*="orange"] {
   border-radius: 6px;
   border: 1px solid #ccc;
 }
+
+/* Defensive rule: Always show expense tables */
+#tripInfoTable,
+#travelCostTable,
+#monthlyClaimsTable,
+#expenseTable,
+.advance-cash-table,
+.summary-table {
+  display: table !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
