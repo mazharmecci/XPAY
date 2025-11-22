@@ -323,42 +323,57 @@ async function renderExpenses(currentUserId) {
       `;
     });
 
-    // 🧾 Final Summary Block (shown after all sections)
+try {
+  // 🧾 Final Summary Block (shown after all sections, in its own table)
+  const summaryBody = document.querySelector("#summaryTable tbody");
+  if (summaryBody) {
+    const totalSubmitted = monthlyTotal + travelTotal;
+    const netReimbursementDue = totalApproved - totalAdvanceReceived;
+
+    // Build summaryRows string
     const summaryRows = `
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="4" style="text-align:right;">📝 Total Expenses Submitted (Monthly + Travel):</td>
-        <td>${INR.format(monthlyTotal + travelTotal)}</td>
+        <td>SUM-1</td>
+        <td>📝 Total Expenses Submitted (Monthly + Travel)</td>
+        <td>${selectedMonth}</td>
+        <td>${INR.format(totalSubmitted)}</td>
+        <td></td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
-        <td colspan="4" style="text-align:right;">🪙 Total Advance Received (${selectedMonth}):</td>
+        <td>SUM-2</td>
+        <td>🪙 Total Advance Received</td>
+        <td>${selectedMonth}</td>
         <td>${INR.format(totalAdvanceReceived)}</td>
+        <td></td>
       </tr>
       <tr style="font-weight:bold; background:#f0fff0;">
-        <td colspan="4" style="text-align:right;">✅ Total Approved by Accountant:</td>
+        <td>SUM-3</td>
+        <td>✅ Total Approved by Accountant</td>
+        <td>${selectedMonth}</td>
         <td>${INR.format(totalApproved)}</td>
+        <td></td>
       </tr>
       <tr style="font-weight:bold; background:#fff0f0;">
-        <td colspan="4" style="text-align:right;">❌ Total Rejected by Accountant:</td>
+        <td>SUM-4</td>
+        <td>❌ Total Rejected by Accountant</td>
+        <td>${selectedMonth}</td>
         <td>${INR.format(totalRejected)}</td>
+        <td></td>
       </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
-        <td colspan="4" style="text-align:right;">💰 Net Payable to Employee (${selectedMonth}):</td>
-        <td>${INR.format(totalApproved - totalAdvanceReceived)}</td>
+        <td>SUM-5</td>
+        <td>💰 Net Payable to Employee</td>
+        <td>${selectedMonth}</td>
+        <td>${INR.format(netReimbursementDue)}</td>
+        <td>${netReimbursementDue < 0 ? "⚠️ Advance exceeds approved; payout holds" : ""}</td>
       </tr>
-      ${(totalApproved - totalAdvanceReceived) < 0 ? `
-        <tr>
-          <td colspan="5" style="font-size:0.9em; color:#888; background:#fff;">
-            ⚠️ Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
-          </td>
-        </tr>` : ""}
     `;
 
-document.querySelector("#summaryTable tbody").innerHTML = summaryRows;
-
-  } catch (err) {
-    console.error("❌ Error rendering expenses:", err);
-    showToast("Failed to load expenses.", "error");
+    summaryBody.innerHTML = summaryRows; // Only set this once, after building all rows
   }
+} catch (err) {
+  console.error("❌ Error rendering expenses:", err);
+  showToast("Failed to load expenses.", "error");
 }
 
 // 🍽️ Adhoc Pre-Approval Submission (independent of main form)
