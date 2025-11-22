@@ -302,16 +302,18 @@ async function renderExpenses(currentUserId) {
     adhocRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
     adhocRecords.forEach((record, index) => {
+      const status = (record.status || "").toLowerCase();
       let statusHtml = "";
-      if (record.status?.toLowerCase() === "approved") {
+    
+      if (status === "approved") {
         statusHtml = `<span style="color:blue;">🔷 Approved by Manager</span>`;
-        totalAdvanceReceived += Number(record.amount) || 0;
-      } else if (record.status?.toLowerCase() === "pending") {
+        totalAdvanceReceived += Number(record.amount) || 0; // include in totals
+      } else if (status === "pending") {
         statusHtml = `<span style="color:orange;">⏳ Pending</span>`;
       } else {
         statusHtml = `<span style="color:red;">❌ Rejected</span>`;
       }
-
+    
       adhocClaimsTable.innerHTML += `
         <tr>
           <td>AD-${index + 1}</td>
