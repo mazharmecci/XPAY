@@ -630,8 +630,8 @@ span[style*="orange"] {
 }
 
 .badge.final-approved {
-  background-color: #2e7d32; /* dark green */
-  color: white;
+  background-color: #FFA500; /* orange */
+  color: #fff;
   padding: 4px 8px;
   border-radius: 4px;
 }
