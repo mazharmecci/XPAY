@@ -11,6 +11,18 @@
   margin-top: 2em;
 }
 
+.legend {
+  margin-bottom: 0.5em;
+  font-size: 0.85em;
+  color: #555;
+}
+.legend span {
+  background-color: #f9f9ff;
+  padding: 0.2em 0.5em;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
 /* Biscuit background for full page */
 body.employee-page {
   background-color: var(--biscuit-light);
