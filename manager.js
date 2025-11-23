@@ -1,34 +1,27 @@
 // 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
-import {
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import {
-  doc,
-  getDoc,
-  collection,
-  getDocs,
-  updateDoc
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import { doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 // Field labels and grouping
 const FIELD_LABELS = {
   advanceCash: "Advance Cash",
   monthlyConveyance: "Monthly Conveyance",
   monthlyPhone: "Monthly Phone",
+  adhocRequest: "Adhoc Request",
   fuel: "Fuel",
   fare: "Fare",
   boarding: "Boarding",
   food: "Food",
   localConveyance: "Local Conveyance",
   PostCourier: "PostCourier",
+  misc: "Misc",
   placeVisited: "Place Visited"
 };
 const FIELD_GROUPS = {
   "🕓 Trip Info": ["placeVisited"],
-  "🗓️ Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone"],
-  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier"]
+  "🗓️ Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone", "adhocRequest"],
+  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier", "misc"]
 };
 
 // Toast notification
@@ -134,30 +127,24 @@ async function getEmployeeName(userId, cache) {
 // Utility: build breakdown display
 function buildBreakdown(exp) {
   return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
-    const items = keys
-      .map(key => {
-        const value = Number(exp[key]) || 0;
-        if (key === "placeVisited" && exp[key]) return `${FIELD_LABELS[key]}: ${exp[key]}`;
-        return value > 0 ? `${FIELD_LABELS[key]}: ₹${value}` : '';
-      })
-      .filter(Boolean);
-    return items.length
-      ? `<strong>${groupName}</strong><br>${items.join(', ')}`
-      : '';
+    const items = keys.map(key => {
+      const value = Number(exp[key]) || 0;
+      if (key === "placeVisited" && exp[key]) return `${FIELD_LABELS[key]}: ${exp[key]}`;
+      if (key === "adhocRequest" && value > 0) return `<span style="color:#007bff;"><strong>${FIELD_LABELS[key]}: ₹${value}</strong></span>`;
+      return value > 0 ? `${FIELD_LABELS[key]}: ₹${value}` : '';
+    }).filter(Boolean);
+    return items.length ? `<strong>${groupName}</strong><br>${items.join(', ')}` : '';
   }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
 // Currency formatter for INR
-const INR = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR"
-});
+const INR = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
 
 // Utility to sum expense fields
 function calculateTotal(exp) {
   const totalKeys = [
-    "monthlyConveyance", "monthlyPhone", "fuel", "fare",
-    "boarding", "food", "localConveyance", "PostCourier"
+    "monthlyConveyance", "monthlyPhone", "adhocRequest",
+    "fuel", "fare", "boarding", "food", "localConveyance", "PostCourier", "misc"
   ];
   return totalKeys.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
 }
@@ -165,7 +152,6 @@ function calculateTotal(exp) {
 // Main render function with employee filter support
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
-  // No summary row here (unlike previous version)
   const monthPicker = document.getElementById("monthPicker");
   const empSel = document.getElementById("employeeFilter");
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
@@ -181,26 +167,24 @@ async function renderManagerClaims() {
   snapshot.forEach(docSnap => {
     const exp = docSnap.data();
     const dateStr = typeof exp.date === "string" ? exp.date : "";
-    if (
-      dateStr.slice(0, 7) === selectedMonth &&
-      (!selectedEmployee || exp.userId === selectedEmployee)
-    ) {
+    if (dateStr.slice(0, 7) === selectedMonth && (!selectedEmployee || exp.userId === selectedEmployee)) {
       records.push({ id: docSnap.id, ...exp });
     }
   });
 
   records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-  let totalApproved = 0,
-      totalRejected = 0,
-      totalPending = 0,
-      totalFinalApproved = 0;
+  let totalApproved = 0, totalRejected = 0, totalPending = 0, totalFinalApproved = 0;
+  let totalAdhoc = 0, totalMisc = 0;
 
   let rowBuffer = "";
   for (let i = 0; i < records.length; i++) {
     const exp = records[i];
     const total = calculateTotal(exp);
     const employeeName = await getEmployeeName(exp.userId, userCache);
+
+    totalAdhoc += Number(exp.adhocRequest) || 0;
+    totalMisc += Number(exp.misc) || 0;
 
     let badgeClass = "", badgeText = "";
     if (exp.status === "Approved") {
@@ -228,7 +212,7 @@ async function renderManagerClaims() {
         <td>${exp.workflowType || "-"}</td>
         <td>
           <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
-          <span style="margin-left:0.5em;">Click to view breakdown</span>
+                    <span style="margin-left:0.5em;">Click to view breakdown</span>
           <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
             ${buildBreakdown(exp)}
           </div>
@@ -256,8 +240,7 @@ async function renderManagerClaims() {
   });
 
   // Summary calculation
-  const totalSubmittedAmount = records.reduce(
-    (sum, exp) => sum + calculateTotal(exp), 0);
+  const totalSubmittedAmount = records.reduce((sum, exp) => sum + calculateTotal(exp), 0);
 
   // Fetch and process advance cash
   const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
@@ -276,7 +259,7 @@ async function renderManagerClaims() {
     }
   });
 
-  // Render summary block (no summary rows in table at all)
+  // Render summary block
   renderManagerSummary({
     selectedMonth,
     selectedEmployee,
@@ -285,7 +268,9 @@ async function renderManagerClaims() {
     totalPending,
     totalFinalApproved,
     totalAdvance: totalAdvanceReceived,
-    totalSubmitted: totalSubmittedAmount
+    totalSubmitted: totalSubmittedAmount,
+    totalAdhoc,
+    totalMisc
   });
 }
 
@@ -298,7 +283,9 @@ function renderManagerSummary({
   totalPending,
   totalFinalApproved,
   totalAdvance,
-  totalSubmitted
+  totalSubmitted,
+  totalAdhoc,
+  totalMisc
 }) {
   const summaryContainer = document.getElementById("managerSummaryBlock");
   if (!summaryContainer) return;
@@ -309,9 +296,7 @@ function renderManagerSummary({
   });
 
   const netPayable = totalFinalApproved - totalAdvance;
-  const netLabel = netPayable < 0
-    ? "💰 Advance exceeds approved"
-    : "🔥 Net payable to employee";
+  const netLabel = netPayable < 0 ? "💰 Advance exceeds approved" : "🔥 Net payable to employee";
 
   summaryContainer.innerHTML = `
     <div class="summary-block">
@@ -322,6 +307,7 @@ function renderManagerSummary({
         <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
         <tr><td>⏳ Pending Expenses:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
         <tr><td>💸 Advance Cash Received:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr><td>📌 Adhoc Requests:</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>        
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
       ${netPayable < 0 ? `
@@ -368,9 +354,7 @@ function downloadFinalApproved() {
     ...approvedExpenses
   ];
   const BOM = "\uFEFF"; // UTF-8 BOM for Excel
-  const csvContent = csvRows
-    .map(row => row.map(escapeCSV).join(","))
-    .join("\n");
+  const csvContent = csvRows.map(row => row.map(escapeCSV).join(",")).join("\n");
   const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -391,10 +375,7 @@ function escapeCSV(val) {
 }
 function sanitize(val) {
   const str = String(val ?? "");
-  return str
-    .replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '') // remove emojis
-    .replace(/\s+/g, ' ')
-    .trim();
+  return str.replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '').replace(/\s+/g, ' ').trim();
 }
 
 // 🚦 Init
