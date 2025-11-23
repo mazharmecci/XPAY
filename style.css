@@ -7,6 +7,10 @@
   --accent-red: #ef4444;
 }
 
+.section-gap {
+  margin-top: 2em;
+}
+
 /* Biscuit background for full page */
 body.employee-page {
   background-color: var(--biscuit-light);
