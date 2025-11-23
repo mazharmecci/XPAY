@@ -62,15 +62,17 @@
               <input type="number" id="monthlyPhone" name="monthlyPhone" placeholder="0" />
             </div>
 
-            <!-- 🔵 Adhoc Request with blue input and pre-approval note -->
+            <!-- 🔵 Adhoc Request with ₹ prefix and toggle guidance -->
             <div class="form-row input-rupee" style="background-color:#e3f2fd; border-left:4px solid #2196F3; padding:0.5em; border-radius:4px;">
               <label for="adhocRequest">Adhoc Request 🧾</label>
-              <input type="number" id="adhocRequest" name="adhocRequest" placeholder="0" style="background-color:#e3f2fd;" />
+              <input type="number" id="adhocRequest" name="adhocRequest" placeholder="0" style="background-color:#e3f2fd; width:100%;" />
+            
               <div style="margin-top:0.3em; font-size:0.85em; color:#555;">
                 📍 <em>Pre-Approval needed</em>
               </div>
+            
               <!-- 🔽 Toggle guidance -->
-              <button id="toggleAdhocInfo" type="button" style="border:none; background:none; cursor:pointer; font-size:0.85em; color:#007bff; margin-top:0.3em;">
+              <button id="toggleAdhocInfo" style="border:none; background:none; cursor:pointer; font-size:0.85em; color:#007bff; margin-top:0.3em;">
                 ▶ Show examples
               </button>
               <div id="adhocInfoBlock" style="display:none; margin-top:0.5em; font-size:0.85em; color:#444; background:#f0f8ff; padding:0.5em; border-left:3px solid #2196F3; border-radius:4px;">
@@ -81,7 +83,7 @@
                 </ul>
               </div>
             </div>
-          </fieldset>
+
           <!-- End Monthly Claims Fieldset -->
 
           <!-- 🚗 Travel Costs -->
