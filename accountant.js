@@ -277,7 +277,7 @@ async function renderTable() {
           <td style="font-weight:bold; color:${amount > 0 ? '#4CAF50' : '#999'};">₹${amount}</td>
           <td>${statusBadge}</td>
           ${isAdhocOnly ? `
-            <td colspan="2" style="text-align:center; color:#007bff;">Audit Only</td>` : `
+            <td colspan="2" style="text-align:center; color:#007bff;">Adhoc request - Tracked for audit purpose</td>` : `
             <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
             <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>`}
         </tr>`;
@@ -352,7 +352,7 @@ function renderAccountantSummary({
   totalPending,
   totalAdvance,
   totalSubmitted,
-  totalFinalApproved // ✅ pass this in
+  totalFinalApproved
 }) {
   const summaryContainer = document.getElementById("accountantSummary");
   if (!summaryContainer) return;
@@ -362,8 +362,21 @@ function renderAccountantSummary({
     year: "numeric"
   });
 
+  // 🔍 Calculate Adhoc total from filtered expenses
+  let totalAdhoc = 0;
+  const rows = document.querySelectorAll("#expenseTable tbody tr");
+  rows.forEach(row => {
+    const breakdown = row.querySelector("div[id^='breakdown-']");
+    if (breakdown && breakdown.innerHTML.includes("Adhoc Request")) {
+      const match = breakdown.innerHTML.match(/Adhoc Request: ₹(\d+(?:\.\d+)?)/);
+      if (match) totalAdhoc += parseFloat(match[1]);
+    }
+  });
+
   const netPayable = totalFinalApproved - totalAdvance;
-  const netLabel = netPayable < 0 ? "💰 Advance exceeds approved" : "💰 Net payable to employee";
+  const netLabel = netPayable < 0
+    ? "💰 Advance exceeds approved"
+    : "🔶 Net payable to employee";
 
   summaryContainer.innerHTML = `
     <div class="summary-block">
@@ -374,6 +387,7 @@ function renderAccountantSummary({
         <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
         <tr><td>⏳ Pending Expenses:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
         <tr><td>💸 Advance Cash Received:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr><td>📌 Adhoc Requests:</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
       ${netPayable < 0 ? `
