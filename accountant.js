@@ -265,11 +265,18 @@ async function renderTable() {
 
       const breakdownHTML = buildBreakdown(exp);
       const statusBadge = getStatusBadge(exp.status);
-
+      
       const hasAdhoc = adhocAmount > 0;
-
+      const isAdhocOnly = regularAmount === 0 && adhocAmount > 0;
+      const isMixed = regularAmount > 0 && adhocAmount > 0;
+      
+      // 🎨 Apply subtle tint for mixed rows
+      const rowStyle = isMixed
+        ? 'style="background-color:#f9f9ff;"'   // light bluish tint
+        : '';
+      
       tbody.innerHTML += `
-        <tr>
+        <tr ${rowStyle}>
           <td>${employeeName}</td>
           <td>${exp.date || "-"}</td>
           <td>${exp.workflowType || "-"}</td>
@@ -286,13 +293,19 @@ async function renderTable() {
           </td>
           <td>${statusBadge}</td>
           ${
-            hasAdhoc
-              ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request - Tracked for audit purpose</td>`
-              : `<td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
-                 <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>`
+            isAdhocOnly
+              ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Tracked for audit purpose</td>`
+              : `<td>
+                   <input type="checkbox" class="action-checkbox" data-id="${exp.id}" 
+                     title="Only regular expenses will be approved. Adhoc portion is routed to manager." />
+                 </td>
+                 <td>
+                   <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" 
+                     title="Add comment for regular expenses. Adhoc is manager-only." />
+                 </td>`
           }
         </tr>`;
-    }
+          }
 
     // 🔄 Sum accountant-recorded advances
     let totalAdvanceReceived = 0;
