@@ -217,13 +217,13 @@ async function renderExpenses(currentUserId) {
 
     snapshot.forEach(docSnap => {
       const exp = docSnap.data();
-      const dateStr = typeof exp.date === 'string' ? exp.date : '';
+      const dateStr = typeof exp.date === "string" ? exp.date : "";
       if (exp.userId === currentUserId && dateStr.slice(0, 7) === selectedMonth) {
         records.push(exp);
       }
     });
 
-    records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
     let monthlyTotal = 0;
     let travelTotal = 0;
@@ -231,7 +231,8 @@ async function renderExpenses(currentUserId) {
     let totalRejected = 0;
     let totalPending = 0;
     let totalAdvanceReceived = 0;
-    let totalAdhoc = 0; // ✅ track adhoc separately
+    let totalAdhoc = 0;          // all adhoc submitted
+    let totalAdhocApproved = 0;  // adhoc approved by manager
 
     records.forEach((exp, index) => {
       const badge = getStatusBadge(exp.status);
@@ -258,26 +259,23 @@ async function renderExpenses(currentUserId) {
       const monthlySum = convey + phone + adhoc;
       monthlyTotal += monthlySum;
 
-      // ✅ accumulate adhoc separately
       totalAdhoc += adhoc;
 
       monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge);
 
-      // ✅ split regular vs adhoc
       const regularAmount = travelSum + convey + phone;
       const adhocAmount = adhoc;
-      const totalForRecord = regularAmount + adhocAmount;
-
       const normalized = normalizeStatus(exp.status);
 
       if (normalized === "Approved") {
-        totalApproved += regularAmount; // ✅ only regular counted
+        totalApproved += regularAmount;
       } else if (normalized === "FinalApproved") {
-        totalApproved += regularAmount; // ✅ manager final approval still counts regular
+        totalApproved += regularAmount;
+        totalAdhocApproved += adhocAmount; // ✅ manager-approved adhoc
       } else if (normalized === "Rejected") {
-        totalRejected += regularAmount; // ✅ only regular counted
+        totalRejected += regularAmount;
       } else {
-        totalPending += regularAmount; // ✅ only regular counted
+        totalPending += regularAmount;
       }
     });
 
@@ -293,13 +291,13 @@ async function renderExpenses(currentUserId) {
 
     advanceSnapshot.forEach(docSnap => {
       const data = docSnap.data();
-      const dateStr = typeof data.date === 'string' ? data.date : '';
+      const dateStr = typeof data.date === "string" ? data.date : "";
       const sameMonth = dateStr.slice(0, 7) === selectedMonth;
       const sameEmp = (data.employeeName || "").toLowerCase() === (employeeName || "").toLowerCase();
       if (sameEmp && sameMonth) advanceRecords.push(data);
     });
 
-    advanceRecords.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    advanceRecords.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
     advanceRecords.forEach((record, index) => {
       monthlyClaimsTable.innerHTML += `
@@ -315,12 +313,12 @@ async function renderExpenses(currentUserId) {
 
     // 🧾 Final Summary Block
     const totalSubmitted = monthlyTotal + travelTotal;
-    const netReimbursementDue = totalApproved - totalAdvanceReceived;
+    const netReimbursementDue = (totalApproved + totalAdhocApproved) - totalAdvanceReceived;
     const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "🔶 Net payable to employee";
 
     monthlyClaimsTable.innerHTML += `
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">🧾 Total expenses submitted by emp:</td>
+        <td colspan="5" style="text-align:right;">🧾 Total expenses submitted:</td>
         <td>${INR.format(totalSubmitted)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
@@ -328,19 +326,23 @@ async function renderExpenses(currentUserId) {
         <td>${INR.format(totalApproved)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
+        <td colspan="5" style="text-align:right;">📌 Adhoc Requests approved by Manager:</td>
+        <td><span style="color:#007bff;">${INR.format(totalAdhocApproved)}</span></td>
+      </tr>
+      <tr style="font-weight:bold; background:#f9f9f9;">
         <td colspan="5" style="text-align:right;">❌ Rejected by Accountant:</td>
         <td>${INR.format(totalRejected)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="5" style="text-align:right;">⏳ Pending Expense to be reviewed by Accountant:</td>
+        <td colspan="5" style="text-align:right;">⏳ Pending Expenses yet to get approved:</td>
         <td>${INR.format(totalPending)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
-        <td colspan="5" style="text-align:right;">💸 Advance Cash Received by emp (${selectedMonth}):</td>
+        <td colspan="5" style="text-align:right;">💸 Advance Cash Received (${selectedMonth}):</td>
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">📌 Adhoc Requests (✅ Approved by Manager):</td>
+        <td colspan="5" style="text-align:right;">📌 Total Adhoc Requests submitted:</td>
         <td><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td>
       </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
