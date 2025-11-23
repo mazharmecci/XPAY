@@ -329,3 +329,42 @@ async function renderExpenses(currentUserId) {
     showToast("Failed to load expenses.", "error");
   }
 }
+
+// 🚦 Init
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutBtn = document.querySelector(".logout-btn");
+  if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      showToast("You must be logged in.", "error");
+      setTimeout(() => window.location.href = "login.html", 1500);
+      return;
+    }
+
+    let currentUserId = user.uid;
+
+    try {
+      const userDoc = await getDoc(doc(db, "users", currentUserId));
+      const role = (userDoc.exists() ? userDoc.data().role : "").toLowerCase();
+
+      if (role !== "employee") {
+        alert("Access denied. Employee role required.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const form = document.getElementById("expenseForm");
+      if (form) {
+        form.onsubmit = createSubmitExpense(currentUserId);
+      }
+
+      document.getElementById("monthPicker")?.addEventListener("change", () => renderExpenses(currentUserId));
+
+      await renderExpenses(currentUserId);
+    } catch (err) {
+      console.error("❌ Error loading user/role:", err);
+      showToast("Failed to load user profile.", "error");
+    }
+  });
+});
