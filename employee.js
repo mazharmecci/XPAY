@@ -320,7 +320,7 @@ async function renderExpenses(currentUserId) {
 
     monthlyClaimsTable.innerHTML += `
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">🧾 Total expenses submitted:</td>
+        <td colspan="5" style="text-align:right;">🧾 Total expenses submitted by emp:</td>
         <td>${INR.format(totalSubmitted)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
@@ -332,15 +332,15 @@ async function renderExpenses(currentUserId) {
         <td>${INR.format(totalRejected)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="5" style="text-align:right;">⏳ Pending Expenses yet to get approved:</td>
+        <td colspan="5" style="text-align:right;">⏳ Pending Expense to be reviewed by Accountant:</td>
         <td>${INR.format(totalPending)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
-        <td colspan="5" style="text-align:right;">💸 Advance Cash Received (${selectedMonth}):</td>
+        <td colspan="5" style="text-align:right;">💸 Advance Cash Received by emp (${selectedMonth}):</td>
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">📌 Adhoc Requests:</td>
+        <td colspan="5" style="text-align:right;">📌 Adhoc Requests (manager approved):</td>
         <td><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td>
       </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
