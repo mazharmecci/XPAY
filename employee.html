@@ -5,7 +5,7 @@
   <title>XPAY - Employee Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="XPAY Employee Dashboard - Submit and view expense reports easily." />
-  <link rel="icon" href="images/favicon-96x96.png" />
+  <link rel="icon" href="images/favicon.ico" />
   <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -204,38 +204,6 @@
 </script>
 <script type="module" src="firebase.js"></script>
 <script type="module" src="employee.js"></script>
-    
-
-<!-- Review Modal -->
-<div id="reviewModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <h3>Review Your Expense Submission</h3>
-    <div id="reviewDetails"></div>
-    <div class="modal-actions">
-      <button id="confirmSubmit" class="btn btn-success">✅ Submit</button>
-      <button id="editSubmit" class="btn btn-edit">✏️ Edit</button>
-      <button id="cancelSubmit" class="btn btn-danger">❌ Cancel</button>
-    </div>
-  </div>
-</div>
-
-<style>
-.modal {
-  position: fixed; top:0; left:0; width:100%; height:100%;
-  background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;
-  z-index: 9999;
-}
-.modal-content {
-  background:#fff; padding:1.5em; border-radius:8px; max-width:500px; width:90%;
-  box-shadow:0 4px 12px rgba(0,0,0,0.2);
-}
-.modal-actions { margin-top:1em; text-align:right; }
-.modal-actions .btn { margin-left:0.5em; padding:0.5em 1em; }
-.btn-success { background:#4CAF50; color:#fff; border:none; border-radius:4px; }
-.btn-danger { background:#f44336; color:#fff; border:none; border-radius:4px; }
-.btn-edit { background:#FFA500; color:#fff; border:none; border-radius:4px; } /* 🟧 orange edit button */
-</style>
-
 
     <!-- 🧾 Footer -->
     <footer class="site-footer">
@@ -252,16 +220,7 @@
         </div>
       </div>
     </footer>   
+
   </main>
-<script>
-  // Debug fetch for meta.json
-  fetch("meta.json")
-    .then(res => {
-      if (!res.ok) throw new Error("meta.json missing");
-      return res.json();
-    })
-    .then(meta => console.log("App metadata:", meta))
-    .catch(err => console.warn("meta.json not found:", err));
-</script>
 </body>
 </html>
