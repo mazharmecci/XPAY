@@ -252,23 +252,16 @@
         </div>
       </div>
     </footer>   
-
-    <script>
-  // Fetch and display metadata in the footer
+  </main>
+<script>
+  // Debug fetch for meta.json
   fetch("meta.json")
-    .then(res => res.json())
-    .then(meta => {
-      // Update footer with version and last updated
-      const footerLegal = document.querySelector(".footer-legal");
-      if (footerLegal) {
-        const versionInfo = document.createElement("p");
-        versionInfo.textContent = `Version: ${meta.version} | Last Updated: ${meta.lastUpdated}`;
-        footerLegal.appendChild(versionInfo);
-      }
+    .then(res => {
+      if (!res.ok) throw new Error("meta.json missing");
+      return res.json();
     })
+    .then(meta => console.log("App metadata:", meta))
     .catch(err => console.warn("meta.json not found:", err));
 </script>
-
-  </main>
 </body>
 </html>
