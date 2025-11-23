@@ -627,10 +627,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const advanceForm = document.getElementById("advanceCashForm");
   if (advanceForm) advanceForm.addEventListener("submit", recordAdvanceCash);
 
+  // --- Correct toggle handler for Advance Cash Workflow ---
   document.getElementById("goToAdvanceCashBtn")?.addEventListener("click", () => {
     const workflow = document.getElementById("advanceCashWorkflow");
     if (!workflow) return;
-    if (workflow.style.display === "none" || workflow.style.display === "") {
+    if (workflow.style.display === "" || workflow.style.display === "none") {
       workflow.style.display = "block";
       workflow.scrollIntoView({ behavior: "smooth" });
     } else {
