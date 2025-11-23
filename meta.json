@@ -1,0 +1,13 @@
+{
+  "appName": "XPAY Employee Dashboard",
+  "version": "1.0.0",
+  "author": "ISTOS Medical Private Limited",
+  "description": "Submit and view expense reports easily.",
+  "lastUpdated": "2025-11-23",
+  "repository": "https://github.com/mazharmecci/XPAY",
+  "license": "MIT",
+  "contact": {
+    "email": "talktous@istos.in",
+    "address": "51/5, Ground Floor, BSTN Heights, J.C Industrial Area, Yelachenhalli, Bangalore - 560062"
+  }
+}
