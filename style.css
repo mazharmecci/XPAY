@@ -265,6 +265,49 @@ input[type="checkbox"] {
 
 /* Accountant main background and card styling: apply same as employee */
 
+@media screen and (max-width: 768px) {
+  .summary-table,
+  #expenseTable {
+    font-size: 0.85em;
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+  }
+
+  #expenseTable thead {
+    display: none;
+  }
+
+  #expenseTable tr {
+    display: block;
+    margin-bottom: 1em;
+    border: 1px solid #ddd;
+    padding: 0.5em;
+    border-radius: 6px;
+    background: #fff;
+  }
+
+  #expenseTable td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3em 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  #expenseTable td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: #555;
+    flex: 1;
+    padding-right: 1em;
+  }
+
+  .action-checkbox,
+  .comment-box {
+    width: 100%;
+  }
+}
+
 body.accountant-page,
 body.employee-page {
   background-color: var(--biscuit-light);
