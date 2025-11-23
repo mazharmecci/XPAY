@@ -22,7 +22,7 @@ function normalizeStatus(status) {
 // 🧩 Field Labels and Grouping
 const FIELD_GROUPS = {
   "🧭 Trip Info": ["placeVisited"],
-  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier", "misc"], // ✅ added misc
+  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc"], // ✅ added misc
   "📅 Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone", "adhocRequest"] // ✅ added adhoc
 };
 
@@ -33,7 +33,7 @@ const FIELD_LABELS = {
   boarding: "Boarding",
   food: "Food",
   localConveyance: "Local Conveyance",
-  PostCourier: "Post Courier",
+  postCourier: "Post Courier",
   misc: "Misc",              // ✅ added
   advanceCash: "Advance Cash",
   monthlyConveyance: "Monthly Conveyance",
@@ -193,7 +193,7 @@ async function renderTable() {
         (Number(exp.boarding) || 0) +
         (Number(exp.food) || 0) +
         (Number(exp.localConveyance) || 0) +
-        (Number(exp.PostCourier) || 0) +
+        (Number(exp.postCourier) || 0) +
         (Number(exp.monthlyConveyance) || 0) +
         (Number(exp.monthlyPhone) || 0) +
         (Number(exp.adhocRequest) || 0) +
@@ -238,7 +238,7 @@ async function renderTable() {
 
       // ✅ include adhoc + misc in amount
       let amount = 0;
-      ["fuel","fare","boarding","food","localConveyance","PostCourier","misc",
+      ["fuel","fare","boarding","food","localConveyance","postCourier","misc",
        "monthlyConveyance","monthlyPhone","adhocRequest"]
         .forEach(key => { if (exp[key]) amount += Number(exp[key]); });
 
