@@ -192,7 +192,7 @@ async function renderTable() {
         (Number(exp.boarding) || 0) +
         (Number(exp.food) || 0) +
         (Number(exp.localConveyance) || 0) +
-        (Number(exp.PostCourier) || 0) +
+        (Number(exp.postCourier) || 0) +
         (Number(exp.monthlyConveyance) || 0) +
         (Number(exp.monthlyPhone) || 0) +
         (Number(exp.adhocRequest) || 0) +
@@ -240,7 +240,7 @@ async function renderTable() {
       let regularAmount = 0;
       let adhocAmount = 0;
 
-      ["fuel","fare","boarding","food","localConveyance","PostCourier","misc",
+      ["fuel","fare","boarding","food","localConveyance","postCourier","misc",
        "monthlyConveyance","monthlyPhone"]
         .forEach(key => { if (exp[key]) regularAmount += Number(exp[key]); });
 
