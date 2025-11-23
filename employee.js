@@ -23,6 +23,28 @@ function normalizeStatus(status) {
   return "Pending";
 }
 
+// ✅ Canonical list of regular (accountant-eligible) fields
+const REGULAR_KEYS = [
+  "fuel",
+  "fare",
+  "boarding",
+  "food",
+  "localConveyance",
+  "postCourier",
+  "misc",
+  "monthlyConveyance",
+  "monthlyPhone"
+];
+
+// 🔢 Helpers to split amounts
+function getRegularAmount(exp) {
+  return REGULAR_KEYS.reduce((sum, key) => sum + (safeAmount(exp[key])), 0);
+}
+function getAdhocAmount(exp) {
+  return safeAmount(exp.adhocRequest);
+}
+
+
 // 🍞 Toast Notification
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
@@ -235,19 +257,27 @@ async function renderExpenses(currentUserId) {
       const adhoc = safeAmount(exp.adhocRequest);
       const monthlySum = convey + phone + adhoc;
       monthlyTotal += monthlySum;
-      totalAdhoc += adhoc; // ✅ accumulate adhoc
+
+      // ✅ accumulate adhoc separately
+      totalAdhoc += adhoc;
 
       monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge);
 
-      const totalForRecord = travelSum + monthlySum;
+      // ✅ split regular vs adhoc
+      const regularAmount = travelSum + convey + phone;
+      const adhocAmount = adhoc;
+      const totalForRecord = regularAmount + adhocAmount;
+
       const normalized = normalizeStatus(exp.status);
 
-      if (normalized === "Approved" || normalized === "FinalApproved") {
-        totalApproved += totalForRecord;
+      if (normalized === "Approved") {
+        totalApproved += regularAmount; // ✅ only regular counted
+      } else if (normalized === "FinalApproved") {
+        totalApproved += regularAmount; // ✅ manager final approval still counts regular
       } else if (normalized === "Rejected") {
-        totalRejected += totalForRecord;
+        totalRejected += regularAmount; // ✅ only regular counted
       } else {
-        totalPending += totalForRecord;
+        totalPending += regularAmount; // ✅ only regular counted
       }
     });
 
