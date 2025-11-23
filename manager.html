@@ -46,8 +46,8 @@
       <!-- 📊 Expense Review Table -->
       <section id="managerReview" class="report-section">
         <h2>All Submitted Expenses</h2>
-        <div class="table-wrapper">
-          <table id="managerClaimsTable">
+        <div class="expense-table-wrapper" style="overflow-x:auto;">
+          <table id="managerClaimsTable" class="responsive-table">
             <thead>
               <tr>
                 <th>Employee</th>
@@ -59,10 +59,12 @@
                 <th>Action</th>
                 <th>Comment</th>
               </tr>
-            </thead>             
-            <tbody></tbody>           
-             <tfoot id="managerSummaryRow"></tfoot> <!-- ✅ This was missing -->
+            </thead>
+            <tbody></tbody>
+            <tfoot id="managerSummaryRow"></tfoot>
           </table>
+        </div>
+      </section>
 
 <div id="managerSummaryBlock" class="summary-block-container"></div>
           
