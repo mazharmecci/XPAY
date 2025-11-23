@@ -295,8 +295,8 @@ function renderManagerSummary({
       <table class="summary-table">
         <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
         <tr><td>✅ Accountant-approved regulars:</td><td class="amount-cell">${INR.format(totalApproved)}</td></tr>
-        <tr><td>❌ Rejected regulars:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
-        <tr><td>⏳ Pending regulars for manager final approval:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
+        <tr><td>❌ Accountant Rejected regulars:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>⏳ Pending regulars final approval needed:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
         <tr><td>📌 Adhoc Requests (Manager approval needed):</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhoc)}</span></td></tr>
         <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
