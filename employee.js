@@ -46,8 +46,8 @@ function logoutUser() {
 // 🏷️ Status badge
 function getStatusBadge(status) {
   const s = normalizeStatus(status);
-  if (s === 'Approved') return `<span style="color:green;">✅ Approved by accountant</span>`;
-  if (s === 'FinalApproved') return `<span style="color:blue;">🔷 Approved by Manager</span>`;
+  if (s === 'Approved') return `<span style="color:green;">✅ Approved by Accountant</span>`;
+  if (s === 'FinalApproved') return `<span style="color:#FFA500;">🟧 Final Approved by Manager</span>`; // 🔶 orange
   if (s === 'Rejected') return `<span style="color:red;">❌ Rejected</span>`;
   return `<span style="color:orange;">⏳ Pending</span>`;
 }
@@ -61,14 +61,14 @@ function buildExpenseData(userId) {
     placeVisited: getVal("placeVisited"),
     monthlyConveyance: getVal("monthlyConveyance", true),
     monthlyPhone: getVal("monthlyPhone", true),
-    adhocRequest: getVal("adhocRequest", true),
+    adhocRequest: getVal("adhocRequest", true), // ✅ included
     fuel: getVal("fuel", true),
     fare: getVal("fare", true),
     boarding: getVal("boarding", true),
     food: getVal("food", true),
     localConveyance: getVal("localConveyance", true),
     postCourier: getVal("postCourier", true),
-    misc: getVal("misc", true),
+    misc: getVal("misc", true), // ✅ included
     advanceCash: 0,
     status: "Pending",
     timestamp: isoNow(),
@@ -78,7 +78,7 @@ function buildExpenseData(userId) {
 // 🧮 Safe amount parser
 function safeAmount(val) {
   const n = Number(val);
-  return Number.isFinite(n) ? n : 0;
+  return Number.isFinite(n) && n >= 0 ? n : 0; // ✅ clamp negatives to 0
 }
 
 // 📤 Submit Expense
@@ -110,9 +110,9 @@ function createSubmitExpense(currentUserId) {
         return;
       }
 
+      // ✅ normalize all numeric fields
       ["monthlyConveyance", "monthlyPhone", "adhocRequest", "fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc"].forEach(k => {
         expenseData[k] = safeAmount(expenseData[k]);
-        if (expenseData[k] < 0) expenseData[k] = 0;
       });
 
       await addDoc(collection(db, "expenses"), expenseData);
@@ -128,15 +128,48 @@ function createSubmitExpense(currentUserId) {
   };
 }
 
-// 🧩 Render sections
+// 🧩 Render sections (with mobile-friendly data-labels and currency formatting)
 function renderTripInfoRow(sn, date, workflow, place, badge) {
-  return `<tr><td>${sn}</td><td>${date}</td><td>${workflow}</td><td>${place}</td><td>${badge}</td></tr>`;
+  return `
+    <tr>
+      <td data-label="S.No">${sn}</td>
+      <td data-label="Date">${date}</td>
+      <td data-label="Workflow">${workflow}</td>
+      <td data-label="Place Visited">${place}</td>
+      <td data-label="Status">${badge}</td>
+    </tr>`;
 }
+
 function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge) {
-  return `<tr><td>${sn}</td><td>${date}</td><td>${fuel}</td><td>${fare}</td><td>${boarding}</td><td>${food}</td><td>${local}</td><td>${postCourier}</td><td>${misc}</td><td>${badge}</td></tr>`;
+  return `
+    <tr>
+      <td data-label="S.No">${sn}</td>
+      <td data-label="Date">${date}</td>
+      <td data-label="Fuel">${INR.format(fuel)}</td>
+      <td data-label="Fare">${INR.format(fare)}</td>
+      <td data-label="Boarding">${INR.format(boarding)}</td>
+      <td data-label="Food">${INR.format(food)}</td>
+      <td data-label="Local Conveyance">${INR.format(local)}</td>
+      <td data-label="Post/Courier">${INR.format(postCourier)}</td>
+      <td data-label="Misc">${INR.format(misc)}</td>
+      <td data-label="Status">${badge}</td>
+    </tr>`;
 }
+
 function renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge) {
-  return `<tr><td>${sn}</td><td>${date}</td><td>${INR.format(convey)}</td><td>${INR.format(phone)}</td><td>${INR.format(adhoc)}</td><td>${badge}</td></tr>`;
+  const adhocCell = adhoc > 0
+    ? `<span style="color:#007bff; font-weight:bold;">${INR.format(adhoc)}</span>` // ✅ highlight adhoc
+    : INR.format(adhoc);
+
+  return `
+    <tr>
+      <td data-label="S.No">${sn}</td>
+      <td data-label="Date">${date}</td>
+      <td data-label="Monthly Conveyance">${INR.format(convey)}</td>
+      <td data-label="Monthly Phone">${INR.format(phone)}</td>
+      <td data-label="Adhoc Request">${adhocCell}</td>
+      <td data-label="Status">${badge}</td>
+    </tr>`;
 }
 
 // 📊 Render Employee Expenses
@@ -176,6 +209,7 @@ async function renderExpenses(currentUserId) {
     let totalRejected = 0;
     let totalPending = 0;
     let totalAdvanceReceived = 0;
+    let totalAdhoc = 0; // ✅ track adhoc separately
 
     records.forEach((exp, index) => {
       const badge = getStatusBadge(exp.status);
@@ -201,6 +235,7 @@ async function renderExpenses(currentUserId) {
       const adhoc = safeAmount(exp.adhocRequest);
       const monthlySum = convey + phone + adhoc;
       monthlyTotal += monthlySum;
+      totalAdhoc += adhoc; // ✅ accumulate adhoc
 
       monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge);
 
@@ -251,11 +286,11 @@ async function renderExpenses(currentUserId) {
     // 🧾 Final Summary Block
     const totalSubmitted = monthlyTotal + travelTotal;
     const netReimbursementDue = totalApproved - totalAdvanceReceived;
-    const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "💰 Net payable to the emp";
+    const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "🔶 Net payable to employee";
 
     monthlyClaimsTable.innerHTML += `
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">📝 Total expenses submitted (for approval):</td>
+        <td colspan="5" style="text-align:right;">🧾 Total expenses submitted:</td>
         <td>${INR.format(totalSubmitted)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
@@ -263,15 +298,23 @@ async function renderExpenses(currentUserId) {
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="5" style="text-align:right;">✅ Approved by Accountant for ${selectedMonth}:</td>
+        <td colspan="5" style="text-align:right;">✅ Approved by Accountant:</td>
         <td>${INR.format(totalApproved)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="5" style="text-align:right;">❌ Rejected by Accountant for ${selectedMonth}:</td>
+        <td colspan="5" style="text-align:right;">❌ Rejected by Accountant:</td>
         <td>${INR.format(totalRejected)}</td>
       </tr>
+      <tr style="font-weight:bold; background:#f9f9f9;">
+        <td colspan="5" style="text-align:right;">⏳ Pending Expenses:</td>
+        <td>${INR.format(totalPending)}</td>
+      </tr>
+      <tr style="font-weight:bold; background:#fff;">
+        <td colspan="5" style="text-align:right;">📌 Adhoc Requests:</td>
+        <td><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td>
+      </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
-        <td colspan="5" style="text-align:right;">${netLabel} (${selectedMonth}):</td>
+        <td colspan="5" style="text-align:right;">${netLabel}:</td>
         <td>${INR.format(netReimbursementDue)}</td>
       </tr>
       ${netReimbursementDue < 0 ? `
@@ -286,42 +329,3 @@ async function renderExpenses(currentUserId) {
     showToast("Failed to load expenses.", "error");
   }
 }
-
-// 🚦 Init
-document.addEventListener("DOMContentLoaded", () => {
-  const logoutBtn = document.querySelector(".logout-btn");
-  if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      showToast("You must be logged in.", "error");
-      setTimeout(() => window.location.href = "login.html", 1500);
-      return;
-    }
-
-    let currentUserId = user.uid;
-
-    try {
-      const userDoc = await getDoc(doc(db, "users", currentUserId));
-      const role = (userDoc.exists() ? userDoc.data().role : "").toLowerCase();
-
-      if (role !== "employee") {
-        alert("Access denied. Employee role required.");
-        window.location.href = "login.html";
-        return;
-      }
-
-      const form = document.getElementById("expenseForm");
-      if (form) {
-        form.onsubmit = createSubmitExpense(currentUserId);
-      }
-
-      document.getElementById("monthPicker")?.addEventListener("change", () => renderExpenses(currentUserId));
-
-      await renderExpenses(currentUserId);
-    } catch (err) {
-      console.error("❌ Error loading user/role:", err);
-      showToast("Failed to load user profile.", "error");
-    }
-  });
-});
