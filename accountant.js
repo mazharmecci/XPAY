@@ -33,7 +33,7 @@ const FIELD_LABELS = {
   boarding: "Boarding",
   food: "Food",
   localConveyance: "Local Conveyance",
-  PostCourier: "PostCourier",
+  PostCourier: "Post Courier",
   misc: "Misc",              // ✅ added
   advanceCash: "Advance Cash",
   monthlyConveyance: "Monthly Conveyance",
@@ -238,8 +238,8 @@ async function renderTable() {
 
       // ✅ include adhoc + misc in amount
       let amount = 0;
-      ["fuel","fare","boarding","food","localConveyance","PostCourier",
-       "monthlyConveyance","monthlyPhone","adhocRequest","misc"]
+      ["fuel","fare","boarding","food","localConveyance","PostCourier","misc",
+       "monthlyConveyance","monthlyPhone","adhocRequest"]
         .forEach(key => { if (exp[key]) amount += Number(exp[key]); });
 
       totalSubmitted += amount;
