@@ -336,16 +336,29 @@ document.addEventListener("DOMContentLoaded", () => {
   if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
 
   // 🔽 Adhoc Request guidance toggle
-  const adhocToggleBtn = document.getElementById("toggleAdhocInfo");
-  if (adhocToggleBtn) {
-    adhocToggleBtn.addEventListener("click", () => {
-      const block = document.getElementById("adhocInfoBlock");
-      if (!block) return;
-      const isVisible = block.style.display === "block";
-      block.style.display = isVisible ? "none" : "block";
-      adhocToggleBtn.textContent = isVisible ? "▶ Show examples" : "▼ Hide examples";
-    });
-  }
+const adhocToggleBtn = document.getElementById("toggleAdhocInfo");
+if (adhocToggleBtn) {
+  adhocToggleBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const block = document.getElementById("adhocInfoBlock");
+    if (!block) return;
+
+    const isVisible = block.style.display === "block";
+    block.style.display = isVisible ? "none" : "block";
+    adhocToggleBtn.textContent = isVisible ? "▶ Show examples" : "▼ Hide examples";
+    adhocToggleBtn.setAttribute("aria-expanded", String(!isVisible));
+  });
+
+  adhocToggleBtn.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      adhocToggleBtn.click();
+    }
+  });
+}
+
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
