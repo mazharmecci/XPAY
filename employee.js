@@ -47,7 +47,7 @@ function logoutUser() {
 function getStatusBadge(status) {
   const s = normalizeStatus(status);
   if (s === 'Approved') return `<span style="color:green;">✅ Approved by Accountant</span>`;
-  if (s === 'FinalApproved') return `<span style="color:#FFA500;">🟧 Final Approved by Manager</span>`; // 🔶 orange
+  if (s === 'FinalApproved') return `<span style="color:#FFA500;">🟧 Final Approved by Manager</span>`;
   if (s === 'Rejected') return `<span style="color:red;">❌ Rejected</span>`;
   return `<span style="color:orange;">⏳ Pending</span>`;
 }
@@ -61,21 +61,28 @@ function buildExpenseData(userId) {
     placeVisited: getVal("placeVisited"),
     monthlyConveyance: getVal("monthlyConveyance", true),
     monthlyPhone: getVal("monthlyPhone", true),
-    adhocRequest: getVal("adhocRequest", true), // ✅ included
+    adhocRequest: getVal("adhocRequest", true),
     fuel: getVal("fuel", true),
     fare: getVal("fare", true),
     boarding: getVal("boarding", true),
     food: getVal("food", true),
     localConveyance: getVal("localConveyance", true),
     postCourier: getVal("postCourier", true),
-    misc: getVal("misc", true), // ✅ included
+    misc: getVal("misc", true),
     advanceCash: 0,
     status: "Pending",
     timestamp: isoNow(),
   };
 }
 
-// 🧾Review form before submission
+// 🧮 Safe amount parser
+function safeAmount(val) {
+  const n = Number(val);
+  return Number.isFinite(n) && n >= 0 ? n : 0; // clamp negatives to 0
+}
+
+// 📤 Submit Expense (review modal version)
+let isSubmitting = false;
 
 function createSubmitExpense(currentUserId) {
   return async function submitExpense(e) {
@@ -104,7 +111,7 @@ function createSubmitExpense(currentUserId) {
     ["monthlyConveyance","monthlyPhone","adhocRequest","fuel","fare","boarding","food","localConveyance","postCourier","misc"]
       .forEach(k => expenseData[k] = safeAmount(expenseData[k]));
 
-    // 🖼️ Populate modal
+    // Show modal review of details
     const reviewDetails = `
       <p><strong>Workflow:</strong> ${expenseData.workflowType}</p>
       <p><strong>Date:</strong> ${expenseData.date}</p>
@@ -125,7 +132,7 @@ function createSubmitExpense(currentUserId) {
     const modal = document.getElementById("reviewModal");
     modal.style.display = "flex";
 
-    // ✅ Confirm submit
+    // Confirm submit
     document.getElementById("confirmSubmit").onclick = async () => {
       modal.style.display = "none";
       isSubmitting = true;
@@ -142,72 +149,17 @@ function createSubmitExpense(currentUserId) {
       }
     };
 
-    // 🟧 Edit button: close modal, keep form values
+    // Edit button - close modal to allow editing
     document.getElementById("editSubmit").onclick = () => {
       modal.style.display = "none";
       showToast("You can edit your form before submitting.", "info");
-      // No reset — form stays filled so user can adjust values
     };
 
-    // ❌ Cancel button: close modal and clear form
+    // Cancel button - close modal, keep form for edit
     document.getElementById("cancelSubmit").onclick = () => {
       modal.style.display = "none";
       showToast("Submission cancelled. You can edit your form.", "info");
     };
-  };
-}
-
-
-// 🧮 Safe amount parser
-function safeAmount(val) {
-  const n = Number(val);
-  return Number.isFinite(n) && n >= 0 ? n : 0; // ✅ clamp negatives to 0
-}
-
-// 📤 Submit Expense
-let isSubmitting = false;
-function createSubmitExpense(currentUserId) {
-  return async function submitExpense(e) {
-    e.preventDefault();
-    if (isSubmitting) return;
-    isSubmitting = true;
-
-    try {
-      if (!currentUserId) {
-        showToast("You must be logged in.", "error");
-        isSubmitting = false;
-        return;
-      }
-
-      const expenseData = buildExpenseData(currentUserId);
-
-      const validWorkflowTypes = ["sales", "service", "others"];
-      if (!expenseData.workflowType || !validWorkflowTypes.includes(expenseData.workflowType)) {
-        showToast("Please choose a valid workflow type.", "error");
-        isSubmitting = false;
-        return;
-      }
-      if (!expenseData.date || !expenseData.placeVisited) {
-        showToast("Please fill Date and Place Visited.", "error");
-        isSubmitting = false;
-        return;
-      }
-
-      // ✅ normalize all numeric fields
-      ["monthlyConveyance", "monthlyPhone", "adhocRequest", "fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc"].forEach(k => {
-        expenseData[k] = safeAmount(expenseData[k]);
-      });
-
-      await addDoc(collection(db, "expenses"), expenseData);
-      showToast("Expense submitted successfully ✅", "success");
-      document.getElementById("expenseForm")?.reset();
-      await renderExpenses(currentUserId);
-    } catch (err) {
-      console.error("Error submitting expense:", err);
-      showToast("Error submitting expense ❌", "error");
-    } finally {
-      isSubmitting = false;
-    }
   };
 }
 
@@ -241,7 +193,7 @@ function renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCo
 
 function renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge) {
   const adhocCell = adhoc > 0
-    ? `<span style="color:#007bff; font-weight:bold;">${INR.format(adhoc)}</span>` // ✅ highlight adhoc
+    ? `<span style="color:#007bff; font-weight:bold;">${INR.format(adhoc)}</span>`
     : INR.format(adhoc);
 
   return `
@@ -292,7 +244,7 @@ async function renderExpenses(currentUserId) {
     let totalRejected = 0;
     let totalPending = 0;
     let totalAdvanceReceived = 0;
-    let totalAdhoc = 0; // ✅ track adhoc separately
+    let totalAdhoc = 0;
 
     records.forEach((exp, index) => {
       const badge = getStatusBadge(exp.status);
@@ -318,7 +270,7 @@ async function renderExpenses(currentUserId) {
       const adhoc = safeAmount(exp.adhocRequest);
       const monthlySum = convey + phone + adhoc;
       monthlyTotal += monthlySum;
-      totalAdhoc += adhoc; // ✅ accumulate adhoc
+      totalAdhoc += adhoc;
 
       monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge);
 
@@ -334,7 +286,7 @@ async function renderExpenses(currentUserId) {
       }
     });
 
-    // 🔄 Fetch accountant-recorded advance cash
+    // Fetch accountant-recorded advance cash
     let employeeName = "";
     if (currentUserId) {
       const userDoc = await getDoc(doc(db, "users", currentUserId));
@@ -366,7 +318,7 @@ async function renderExpenses(currentUserId) {
       totalAdvanceReceived += Number(record.advanceCash) || 0;
     });
 
-    // 🧾 Final Summary Block
+    // Final Summary Block
     const totalSubmitted = monthlyTotal + travelTotal;
     const netReimbursementDue = totalApproved - totalAdvanceReceived;
     const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "🔶 Net payable to employee";
