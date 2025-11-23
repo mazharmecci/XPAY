@@ -21,9 +21,8 @@
 
       <!-- 🧾 Expense Submission Form -->
       <form id="expenseForm" class="employee-form">
-        <!-- 🧱 Claims Layout Wrapper -->
         <div class="claims-wrapper">
-
+      
           <!-- Workflow Type -->
           <label for="workflowType">Fill up expense details</label>
           <select id="workflowType" name="workflowType" required>
@@ -32,9 +31,9 @@
             <option value="service">Service</option>
             <option value="others">Others</option>
           </select>
-
+      
           <!-- 🗺️ Trip Info -->
-          <fieldset class="claims-section">
+          <fieldset class="claims-section section-gap">
             <legend>Trip Info</legend>
             <div class="form-row">
               <label for="date">📅 Expense Date (last 2 days only)</label>
@@ -45,9 +44,9 @@
               <input type="text" id="placeVisited" name="placeVisited" placeholder="Place" required />
             </div>
           </fieldset>
-
+      
           <!-- 🧾 Monthly Claims -->
-          <fieldset class="claims-section">
+          <fieldset class="claims-section section-gap">
             <legend>Monthly Claims</legend>
             <div class="form-row" style="display:none;">
               <label for="advanceCash">Advance Cash 💵</label>
@@ -61,17 +60,14 @@
               <label for="monthlyPhone">Monthly Phone 📱</label>
               <input type="number" id="monthlyPhone" name="monthlyPhone" placeholder="0" />
             </div>
-
+      
             <!-- 🔵 Adhoc Request with ₹ prefix and toggle guidance -->
             <div class="form-row input-rupee" style="background-color:#e3f2fd; border-left:4px solid #2196F3; padding:0.5em; border-radius:4px;">
               <label for="adhocRequest">Adhoc Request 📩</label>
               <input type="number" id="adhocRequest" name="adhocRequest" placeholder="0" style="background-color:#e3f2fd; width:100%;" />
-            
               <div style="margin-top:0.3em; font-size:0.85em; color:#555;">
                 📍 <em>Pre-Approval needed</em>
               </div>
-            
-              <!-- 🔽 Toggle guidance -->
               <button id="toggleAdhocInfo" style="border:none; background:none; cursor:pointer; font-size:0.85em; color:#007bff; margin-top:0.3em;">
                 ▶ Show examples
               </button>
@@ -83,11 +79,10 @@
                 </ul>
               </div>
             </div>
-
-          <!-- End Monthly Claims Fieldset -->
-
+          </fieldset>
+      
           <!-- 🚗 Travel Costs -->
-          <fieldset class="claims-section">
+          <fieldset class="claims-section section-gap">
             <legend>Travel Costs</legend>
             <div class="form-row input-rupee">
               <label for="fuel">Fuel ⛽</label>
@@ -121,8 +116,7 @@
               <button type="submit">Submit ✅</button>
             </div>
           </fieldset>
-          <!-- End Travel Costs Fieldset -->
-
+      
         </div> <!-- end .claims-wrapper -->
       </form>
 
