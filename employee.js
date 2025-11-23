@@ -75,6 +75,89 @@ function buildExpenseData(userId) {
   };
 }
 
+// 🧾Review form before submission
+
+function createSubmitExpense(currentUserId) {
+  return async function submitExpense(e) {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!currentUserId) {
+      showToast("You must be logged in.", "error");
+      return;
+    }
+
+    const expenseData = buildExpenseData(currentUserId);
+
+    // Validate required fields
+    const validWorkflowTypes = ["sales", "service", "others"];
+    if (!expenseData.workflowType || !validWorkflowTypes.includes(expenseData.workflowType)) {
+      showToast("Please choose a valid workflow type.", "error");
+      return;
+    }
+    if (!expenseData.date || !expenseData.placeVisited) {
+      showToast("Please fill Date and Place Visited.", "error");
+      return;
+    }
+
+    // Normalize numeric fields
+    ["monthlyConveyance","monthlyPhone","adhocRequest","fuel","fare","boarding","food","localConveyance","postCourier","misc"]
+      .forEach(k => expenseData[k] = safeAmount(expenseData[k]));
+
+    // 🖼️ Populate modal
+    const reviewDetails = `
+      <p><strong>Workflow:</strong> ${expenseData.workflowType}</p>
+      <p><strong>Date:</strong> ${expenseData.date}</p>
+      <p><strong>Place:</strong> ${expenseData.placeVisited}</p>
+      <p><strong>Monthly Conveyance:</strong> ₹${expenseData.monthlyConveyance}</p>
+      <p><strong>Monthly Phone:</strong> ₹${expenseData.monthlyPhone}</p>
+      <p><strong>Adhoc Request:</strong> ₹${expenseData.adhocRequest}</p>
+      <p><strong>Fuel:</strong> ₹${expenseData.fuel}</p>
+      <p><strong>Fare:</strong> ₹${expenseData.fare}</p>
+      <p><strong>Boarding:</strong> ₹${expenseData.boarding}</p>
+      <p><strong>Food:</strong> ₹${expenseData.food}</p>
+      <p><strong>Local Conveyance:</strong> ₹${expenseData.localConveyance}</p>
+      <p><strong>Post/Courier:</strong> ₹${expenseData.postCourier}</p>
+      <p><strong>Misc:</strong> ₹${expenseData.misc}</p>
+    `;
+    document.getElementById("reviewDetails").innerHTML = reviewDetails;
+
+    const modal = document.getElementById("reviewModal");
+    modal.style.display = "flex";
+
+    // ✅ Confirm submit
+    document.getElementById("confirmSubmit").onclick = async () => {
+      modal.style.display = "none";
+      isSubmitting = true;
+      try {
+        await addDoc(collection(db, "expenses"), expenseData);
+        showToast("Expense submitted successfully ✅", "success");
+        document.getElementById("expenseForm")?.reset();
+        await renderExpenses(currentUserId);
+      } catch (err) {
+        console.error("Error submitting expense:", err);
+        showToast("Error submitting expense ❌", "error");
+      } finally {
+        isSubmitting = false;
+      }
+    };
+
+    // 🟧 Edit button: close modal, keep form values
+    document.getElementById("editSubmit").onclick = () => {
+      modal.style.display = "none";
+      showToast("You can edit your form before submitting.", "info");
+      // No reset — form stays filled so user can adjust values
+    };
+
+    // ❌ Cancel button: close modal and clear form
+    document.getElementById("cancelSubmit").onclick = () => {
+      modal.style.display = "none";
+      showToast("Submission cancelled. You can edit your form.", "info");
+    };
+  };
+}
+
+
 // 🧮 Safe amount parser
 function safeAmount(val) {
   const n = Number(val);
