@@ -637,8 +637,8 @@ span[style*="orange"] {
 }
 
 .badge.rejected {
-  background-color: #f44336; /* red */
-  color: white;
+  background-color: #C6BDE9; /* red */
+  color: Black;
   padding: 4px 8px;
   border-radius: 4px;
 }
