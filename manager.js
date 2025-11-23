@@ -3,26 +3,20 @@ import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import { doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// Field labels and grouping
-const FIELD_LABELS = {
-  advanceCash: "Advance Cash",
-  monthlyConveyance: "Monthly Conveyance",
-  monthlyPhone: "Monthly Phone",
-  adhocRequest: "Adhoc Request",
-  fuel: "Fuel",
-  fare: "Fare",
-  boarding: "Boarding",
-  food: "Food",
-  localConveyance: "Local Conveyance",
-  PostCourier: "PostCourier",
-  misc: "Misc",
-  placeVisited: "Place Visited"
-};
-const FIELD_GROUPS = {
-  "🕓 Trip Info": ["placeVisited"],
-  "🗓️ Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone", "adhocRequest"],
-  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier", "misc"]
-};
+// 💰 Currency formatter
+const INR = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
+
+// ✅ Canonical list of regular (accountant-eligible) fields
+const REGULAR_KEYS = [
+  "fuel","fare","boarding","food","localConveyance","PostCourier","misc",
+  "monthlyConveyance","monthlyPhone"
+];
+function getRegularAmount(exp) {
+  return REGULAR_KEYS.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
+}
+function getAdhocAmount(exp) {
+  return Number(exp.adhocRequest) || 0;
+}
 
 // Toast notification
 function showToast(message, type = 'success') {
@@ -60,7 +54,7 @@ async function populateEmployeeFilter() {
   }
 }
 
-// Logout button setup
+// Logout setup
 function setupLogout() {
   const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) {
@@ -93,7 +87,7 @@ function setupApprovalButtons() {
   );
 }
 
-// Handle status update for selected claims
+// Handle status update
 async function handleFinalAction(newStatus, toastMessage, toastType) {
   const selected = document.querySelectorAll(".select-claim:checked");
   for (const checkbox of selected) {
@@ -108,7 +102,7 @@ async function handleFinalAction(newStatus, toastMessage, toastType) {
   await renderManagerClaims();
 }
 
-// Utility: get employee name and cache
+// Utility: get employee name
 async function getEmployeeName(userId, cache) {
   if (!userId) return "-";
   if (cache[userId]) return cache[userId];
@@ -124,32 +118,24 @@ async function getEmployeeName(userId, cache) {
   return "-";
 }
 
-// Utility: build breakdown display
+// Breakdown builder
 function buildBreakdown(exp) {
-  return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
+  return Object.entries({
+    "🕓 Trip Info": ["placeVisited"],
+    "🗓️ Monthly Claims": ["advanceCash","monthlyConveyance","monthlyPhone","adhocRequest"],
+    "🚗 Travel Costs": ["fuel","fare","boarding","food","localConveyance","PostCourier","misc"]
+  }).map(([groupName, keys]) => {
     const items = keys.map(key => {
       const value = Number(exp[key]) || 0;
-      if (key === "placeVisited" && exp[key]) return `${FIELD_LABELS[key]}: ${exp[key]}`;
-      if (key === "adhocRequest" && value > 0) return `<span style="color:#007bff;"><strong>${FIELD_LABELS[key]}: ₹${value}</strong></span>`;
-      return value > 0 ? `${FIELD_LABELS[key]}: ₹${value}` : '';
+      if (key === "placeVisited" && exp[key]) return `${key}: ${exp[key]}`;
+      if (key === "adhocRequest" && value > 0) return `<span style="color:#007bff;"><strong>Adhoc Request: ₹${value}</strong></span>`;
+      return value > 0 ? `${key}: ₹${value}` : '';
     }).filter(Boolean);
     return items.length ? `<strong>${groupName}</strong><br>${items.join(', ')}` : '';
   }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
-// Currency formatter for INR
-const INR = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
-
-// Utility to sum expense fields
-function calculateTotal(exp) {
-  const totalKeys = [
-    "monthlyConveyance", "monthlyPhone", "adhocRequest",
-    "fuel", "fare", "boarding", "food", "localConveyance", "PostCourier", "misc"
-  ];
-  return totalKeys.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
-}
-
-// Main render function with employee filter support
+// Main render
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   const monthPicker = document.getElementById("monthPicker");
@@ -174,50 +160,55 @@ async function renderManagerClaims() {
 
   records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-  let totalApproved = 0, totalRejected = 0, totalPending = 0, totalFinalApproved = 0;
-  let totalAdhoc = 0, totalMisc = 0;
+  let totalApproved = 0, totalRejected = 0, totalPending = 0, totalFinalApproved = 0, totalAdhoc = 0;
 
   let rowBuffer = "";
-  for (let i = 0; i < records.length; i++) {
-    const exp = records[i];
-    const total = calculateTotal(exp);
+  for (const exp of records) {
+    const regularAmount = getRegularAmount(exp);
+    const adhocAmount = getAdhocAmount(exp);
+    const total = regularAmount + adhocAmount;
     const employeeName = await getEmployeeName(exp.userId, userCache);
 
-    totalAdhoc += Number(exp.adhocRequest) || 0;
-    totalMisc += Number(exp.misc) || 0;
+    totalAdhoc += adhocAmount;
 
     let badgeClass = "", badgeText = "";
     if (exp.status === "Approved") {
       badgeClass = "badge approved";
       badgeText = "Accountant Approved";
-      totalApproved += total;
+      totalApproved += regularAmount;
     } else if (exp.status === "Rejected") {
       badgeClass = "badge rejected";
       badgeText = "Rejected";
-      totalRejected += total;
+      totalRejected += regularAmount;
     } else if (exp.status === "FinalApproved") {
       badgeClass = "badge final-approved";
       badgeText = "Final Approved";
-      totalFinalApproved += total;
+      totalFinalApproved += regularAmount + adhocAmount;
     } else {
       badgeClass = "badge pending";
       badgeText = "Pending";
-      totalPending += total;
+      totalPending += regularAmount;
     }
 
+    const isMixed = regularAmount > 0 && adhocAmount > 0;
+    const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : '';
+
     rowBuffer += `
-      <tr>
+      <tr ${rowStyle}>
         <td>${employeeName}</td>
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
         <td>
           <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
-                    <span style="margin-left:0.5em;">Click to view breakdown</span>
+          <span style="margin-left:0.5em;">Click to view breakdown</span>
           <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
             ${buildBreakdown(exp)}
           </div>
         </td>
-        <td>${INR.format(total)}</td>
+        <td style="font-size:0.85em; color:#555;">
+          Regular: ₹${regularAmount} <br>
+          Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
+        </td>
         <td><span class="${badgeClass}">${badgeText}</span></td>
         <td><input type="checkbox" class="select-claim" data-id="${exp.id}"></td>
         <td><input type="text" class="manager-comment" placeholder="Comment (optional)"></td>
@@ -240,7 +231,9 @@ async function renderManagerClaims() {
   });
 
   // Summary calculation
-  const totalSubmittedAmount = records.reduce((sum, exp) => sum + calculateTotal(exp), 0);
+  const totalSubmittedAmount = records.reduce((sum, exp) => {
+    return sum + getRegularAmount(exp) + getAdhocAmount(exp);
+  }, 0);
 
   // Fetch and process advance cash
   const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
@@ -269,12 +262,11 @@ async function renderManagerClaims() {
     totalFinalApproved,
     totalAdvance: totalAdvanceReceived,
     totalSubmitted: totalSubmittedAmount,
-    totalAdhoc,
-    totalMisc
+    totalAdhoc
   });
 }
 
-// Summary block renderer
+// 📋 Summary block renderer
 function renderManagerSummary({
   selectedMonth,
   selectedEmployee,
@@ -284,8 +276,7 @@ function renderManagerSummary({
   totalFinalApproved,
   totalAdvance,
   totalSubmitted,
-  totalAdhoc,
-  totalMisc
+  totalAdhoc
 }) {
   const summaryContainer = document.getElementById("managerSummaryBlock");
   if (!summaryContainer) return;
@@ -303,11 +294,11 @@ function renderManagerSummary({
       <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
       <table class="summary-table">
         <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
-        <tr><td>✅ Approved by Accountant:</td><td class="amount-cell">${INR.format(totalApproved)}</td></tr>
-        <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
-        <tr><td>⏳ Pending Expenses to be reviewed by manager:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
+        <tr><td>✅ Accountant-approved regulars:</td><td class="amount-cell">${INR.format(totalApproved)}</td></tr>
+        <tr><td>❌ Rejected regulars:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>⏳ Pending regulars for manager final approval:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
+        <tr><td>📌 Adhoc Requests (Manager only):</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhoc)}</span></td></tr>
         <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-        <tr><td>📌 Adhoc Requests (manager approved):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>        
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
       ${netPayable < 0 ? `
