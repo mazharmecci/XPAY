@@ -335,6 +335,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
 
+  // 🔽 Adhoc Request guidance toggle
+  const adhocToggleBtn = document.getElementById("toggleAdhocInfo");
+  if (adhocToggleBtn) {
+    adhocToggleBtn.addEventListener("click", () => {
+      const block = document.getElementById("adhocInfoBlock");
+      if (!block) return;
+      const isVisible = block.style.display === "block";
+      block.style.display = isVisible ? "none" : "block";
+      adhocToggleBtn.textContent = isVisible ? "▶ Show examples" : "▼ Hide examples";
+    });
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
@@ -368,3 +380,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
