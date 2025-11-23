@@ -401,7 +401,7 @@ function renderAccountantSummary({
           <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
           <tr><td>⏳ Pending Expenses to be reviewed by Accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
           <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-          <tr><td>📌 Adhoc Requests (Manager approved):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>
+          <tr><td>📌 Adhoc Requests (Manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>
           <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
         </table>
         ${netPayable < 0 ? `
