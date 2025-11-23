@@ -22,8 +22,8 @@ function normalizeStatus(status) {
 // 🧩 Field Labels and Grouping
 const FIELD_GROUPS = {
   "🧭 Trip Info": ["placeVisited"],
-  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier"],
-  "📅 Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone"]
+  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier", "misc"], // ✅ added misc
+  "📅 Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone", "adhocRequest"] // ✅ added adhoc
 };
 
 const FIELD_LABELS = {
@@ -34,10 +34,13 @@ const FIELD_LABELS = {
   food: "Food",
   localConveyance: "Local Conveyance",
   PostCourier: "PostCourier",
+  misc: "Misc",              // ✅ added
   advanceCash: "Advance Cash",
   monthlyConveyance: "Monthly Conveyance",
-  monthlyPhone: "Monthly Phone"
+  monthlyPhone: "Monthly Phone",
+  adhocRequest: "Adhoc Request" // ✅ added
 };
+
 
 // 🍞 Toast Notification
 function showToast(message, type = 'success') {
@@ -150,13 +153,14 @@ async function fetchExpenses(selectedMonth, selectedEmployee) {
 // 🧾 Breakdown builder
 function buildBreakdown(exp) {
   return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
-    const items = keys
-      .map(key => exp[key] ? `${FIELD_LABELS[key]}: ₹${exp[key]}` : '')
-      .filter(Boolean);
-    return items.length
-      ? `<strong>${groupName}</strong><br>${items.join(', ')}`
-      : '';
-  }).filter(Boolean).join('<br><br>');
+    const items = keys.map(key => {
+      const value = Number(exp[key]) || 0;
+      if (key === "placeVisited" && exp[key]) return `${FIELD_LABELS[key]}: ${exp[key]}`;
+      if (key === "adhocRequest" && value > 0) return `<span style="color:#007bff;"><strong>${FIELD_LABELS[key]}: ₹${value}</strong></span>`;
+      return value > 0 ? `${FIELD_LABELS[key]}: ₹${value}` : '';
+    }).filter(Boolean);
+    return items.length ? `<strong>${groupName}</strong><br>${items.join(', ')}` : '';
+  }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
 // 🏷️ Status badge
@@ -191,7 +195,9 @@ async function renderTable() {
         (Number(exp.localConveyance) || 0) +
         (Number(exp.PostCourier) || 0) +
         (Number(exp.monthlyConveyance) || 0) +
-        (Number(exp.monthlyPhone) || 0);
+        (Number(exp.monthlyPhone) || 0) +
+        (Number(exp.adhocRequest) || 0) +   // ✅ include adhoc
+        (Number(exp.misc) || 0);            // ✅ include misc
       return !(advance > 0 && allOthers === 0);
     });
 
@@ -216,6 +222,7 @@ async function renderTable() {
     let totalRejected = 0;
     let totalPending = 0;
     let totalSubmitted = 0;
+    let totalFinalApproved = 0; // ✅ track manager approvals
 
     for (const exp of filteredExpenses) {
       let employeeName = exp.userId || "-";
@@ -229,15 +236,19 @@ async function renderTable() {
         employeeName = userCache[exp.userId];
       }
 
+      // ✅ include adhoc + misc in amount
       let amount = 0;
-      ["fuel", "fare", "boarding", "food", "localConveyance", "PostCourier", "monthlyConveyance", "monthlyPhone"]
+      ["fuel","fare","boarding","food","localConveyance","PostCourier",
+       "monthlyConveyance","monthlyPhone","adhocRequest","misc"]
         .forEach(key => { if (exp[key]) amount += Number(exp[key]); });
 
       totalSubmitted += amount;
 
       const normalized = normalizeStatus(exp.status);
-      if (normalized === "Approved" || normalized === "FinalApproved") {
+      if (normalized === "Approved") {
         totalApproved += amount;
+      } else if (normalized === "FinalApproved") {
+        totalFinalApproved += amount; // ✅ manager final approval
       } else if (normalized === "Rejected") {
         totalRejected += amount;
       } else {
@@ -246,6 +257,10 @@ async function renderTable() {
 
       const breakdownHTML = buildBreakdown(exp);
       const statusBadge = getStatusBadge(exp.status);
+
+      // ✅ detect adhoc-only records
+      const isAdhocOnly = (Number(exp.adhocRequest) > 0) &&
+        amount === Number(exp.adhocRequest);
 
       tbody.innerHTML += `
         <tr>
@@ -261,10 +276,71 @@ async function renderTable() {
           </td>
           <td style="font-weight:bold; color:${amount > 0 ? '#4CAF50' : '#999'};">₹${amount}</td>
           <td>${statusBadge}</td>
-          <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
-          <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>
+          ${isAdhocOnly ? `
+            <td colspan="2" style="text-align:center; color:#007bff;">Audit Only</td>` : `
+            <td><input type="checkbox" class="action-checkbox" data-id="${exp.id}"></td>
+            <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)"></td>`}
         </tr>`;
     }
+
+    // 🔄 Sum accountant-recorded advances
+    let totalAdvanceReceived = 0;
+    const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
+    advanceSnapshot.forEach(docSnap => {
+      const adv = docSnap.data();
+      const advDate = typeof adv.date === "string" ? adv.date : "";
+      const advMonth = advDate.slice(0, 7);
+      const isMonthMatch = advMonth === selectedMonth;
+      const empFilter = selectedEmployee?.toLowerCase() || "";
+      const empId = (adv.employeeId || "").toLowerCase();
+      const empName = (adv.employeeName || "").toLowerCase();
+      const isEmpMatch =
+        !empFilter || empFilter === "all employees" ||
+        empId === empFilter || empName === empFilter;
+      if (isMonthMatch && isEmpMatch) {
+        totalAdvanceReceived += Number(adv.advanceCash) || 0;
+      }
+    });
+
+    // ✅ Render summary with net payable
+    renderAccountantSummary({
+      selectedMonth,
+      selectedEmployee,
+      totalApproved,
+      totalRejected,
+      totalPending,
+      totalAdvance: totalAdvanceReceived,
+      totalSubmitted,
+      totalFinalApproved // ✅ pass manager approvals
+    });
+
+    // 🔽 Breakdown toggle handlers
+    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const breakdown = document.getElementById(`breakdown-${id}`);
+        if (!breakdown) return;
+        const isVisible = breakdown.style.display === 'block';
+        breakdown.style.display = isVisible ? 'none' : 'block';
+        btn.textContent = isVisible ? '▶' : '▼';
+      });
+    });
+
+  } catch (err) {
+    console.error("renderTable Fatal Error:", err);
+    const tbody = document.querySelector('#expenseTable tbody');
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color:red; padding:1em;">
+            ❌ Error loading expenses. Check console for details.
+          </td>
+        </tr>`;
+    }
+    const summaryEl = document.getElementById("accountantSummary");
+    if (summaryEl) summaryEl.innerHTML = "";
+  }
+}
 
     // 🔄 Sum accountant-recorded advances from advanceCash collection for summary
     let totalAdvanceReceived = 0;
@@ -335,7 +411,8 @@ function renderAccountantSummary({
   totalRejected,
   totalPending,
   totalAdvance,
-  totalSubmitted
+  totalSubmitted,
+  totalFinalApproved // ✅ pass this in
 }) {
   const summaryContainer = document.getElementById("accountantSummary");
   if (!summaryContainer) return;
@@ -345,10 +422,8 @@ function renderAccountantSummary({
     year: "numeric"
   });
 
-  const netPayable = totalApproved - totalAdvance;
-  const netLabel = netPayable < 0
-    ? "💰 Advance exceeds approved"
-    : "💰 Net payable to employee";
+  const netPayable = totalFinalApproved - totalAdvance;
+  const netLabel = netPayable < 0 ? "💰 Advance exceeds approved" : "💰 Net payable to employee";
 
   summaryContainer.innerHTML = `
     <div class="summary-block">
