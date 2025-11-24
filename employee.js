@@ -419,13 +419,10 @@ async function showEmployeeReimbursementStatus(employeeName, selectedMonth) {
 
   let statusHtml = "";
   try {
-    // 🔹 Fetch doc by employeeName (doc ID)
-   const docSnap = await getDoc(doc(db, "paymentConfirmations", employeeName.toLowerCase()));
-
+    const docSnap = await getDoc(doc(db, "paymentConfirmations", empKey));
     if (docSnap.exists()) {
       const data = docSnap.data();
-      const monthMatch = (data.month || "").slice(0, 7) === selectedMonth;
-      const isReimbursed = monthMatch && data.reimbursed === true;
+      const isReimbursed = data.month === selectedMonth && data.reimbursed === true;
 
       statusHtml = `
         <div style="margin-bottom:6px; font-weight:500;">
