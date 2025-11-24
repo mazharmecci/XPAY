@@ -229,7 +229,7 @@ async function renderManagerClaims() {
         <td>${exp.date || "-"}</td>
         <td>${exp.workflowType || "-"}</td>
         <td>
-          <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
+          <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size:1.2em;" aria-label="Toggle breakdown">▶</button>
           <span style="margin-left:0.5em;">Click to view breakdown</span>
           <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
             ${buildBreakdown(exp)}
@@ -240,19 +240,14 @@ async function renderManagerClaims() {
           Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
         </td>
         <td>${badgeHtml}</td>
-        ${
-          isAdhocOnly
-          ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc Only – Tracked for audit purpose</td>`
-          : `<td>
-               <input type="checkbox" class="select-claim" data-id="${exp.id}">
-             </td>
-             <td>
-               <input type="text" class="manager-comment" placeholder="Comment (optional)">
-             </td>`
-        }
+        <td>
+          <input type="checkbox" class="select-claim" data-id="${exp.id}" aria-label="Select for approval or rejection">
+        </td>
+        <td>
+          <input type="text" class="manager-comment" placeholder="Comment (optional)" aria-label="Add comment">
+        </td>
       </tr>
     `;
-  }
 
   tableBody.innerHTML = rowBuffer;
 
