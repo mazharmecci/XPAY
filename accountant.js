@@ -419,6 +419,124 @@ function renderAccountantSummary({
   `;
 }
 
+// 🧾 Advance cash table
+
+function formatDateDDMMYYYY(dateStr) {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr || "-";
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
+async function renderAdvanceCashTable() {
+  const tableBody = document.querySelector("#advanceCashTable tbody");
+  if (!tableBody) return;
+  tableBody.innerHTML = "";
+
+  const selectedMonth = document.getElementById("advanceMonth")?.value || "";
+  const selectedEmployee = document.getElementById("advanceEmployee")?.value?.toLowerCase() || "";
+
+  const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+  const role = userDoc.exists() ? userDoc.data().role?.toLowerCase() : "";
+  const userName = userDoc.exists() ? userDoc.data().name?.toLowerCase() : "";
+
+  const snapshot = await getDocs(collection(db, "advanceCash"));
+  const records = [];
+  snapshot.forEach(docSnap => records.push(docSnap.data()));
+
+  records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  const visibleRecords = records.filter(record => {
+    const recordDate = record.date || "";
+    const recordEmployee = record.employeeName?.toLowerCase() || "";
+
+    const matchMonth = selectedMonth ? recordDate.startsWith(selectedMonth) : true;
+    const matchEmployee = selectedEmployee ? recordEmployee === selectedEmployee : true;
+
+    if (role === "employee") {
+      return recordEmployee === userName && matchMonth;
+    }
+
+    return matchMonth && matchEmployee;
+  });
+
+  if (visibleRecords.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center;">📭 No advance cash records found.</td>
+      </tr>`;
+    return;
+  }
+
+  visibleRecords.forEach(record => {
+    const formattedDate = formatDateDDMMYYYY(record.date);
+    tableBody.innerHTML += `
+      <tr>
+        <td>${record.employeeName || "-"}</td>
+        <td>${formattedDate}</td>
+        <td>₹${record.advanceCash || 0}</td>
+        <td>${record.note || "-"}</td>
+        <td>${record.status || "Recorded"}</td>
+      </tr>`;
+  });
+}
+
+// ✅ Advance cash logic
+async function recordAdvanceCash(e) {
+  e.preventDefault();
+
+  const employeeNameInput = document.getElementById("employeeName");
+  const advanceDateInput = document.getElementById("advanceDate");
+  const advanceAmountInput = document.getElementById("advanceAmount");
+  const advanceNoteInput = document.getElementById("advanceNote");
+
+  const employeeName = employeeNameInput?.value.trim().toLowerCase() || "";
+  const advanceDate = advanceDateInput?.value || "";
+  const advanceAmount = Number(advanceAmountInput?.value) || 0;
+  const advanceNote = advanceNoteInput?.value.trim() || "";
+
+  if (!employeeName || !advanceDate || advanceAmount <= 0) {
+    showToast("Please fill all required fields correctly.", "error");
+    return;
+  }
+
+  try {
+    const usersSnapshot = await getDocs(collection(db, "users"));
+    const matchedUser = usersSnapshot.docs.find(d =>
+      (d.data().name || "").toLowerCase() === employeeName
+    );
+
+    if (!matchedUser) {
+      showToast("Employee not found. Please check the name.", "error");
+      return;
+    }
+
+    const employeeId = matchedUser.id;
+
+    const advanceData = {
+      employeeName,
+      employeeId,
+      date: advanceDate,
+      advanceCash: advanceAmount,
+      note: advanceNote,
+      status: "Recorded",
+      createdBy: auth.currentUser?.uid || ""
+    };
+
+    await addDoc(collection(db, "advanceCash"), advanceData);
+
+    showToast("Advance cash recorded ✅", "success");
+    document.getElementById("advanceCashForm").reset();
+    await renderAdvanceCashTable();
+  } catch (err) {
+    console.error("Error recording advance cash:", err);
+    showToast("Error recording advance ❌", "error");
+  }
+}
+
 // --- Approve selected (accountant can only approve regular)
 async function approveSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
