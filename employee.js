@@ -513,10 +513,9 @@ document.addEventListener("DOMContentLoaded", () => {
       monthPicker?.addEventListener("change", () => renderExpenses(currentUserId));
       await renderExpenses(currentUserId);
 
-      // 🔹 Show bank reimbursement status on load
+            // 🔹 Show bank reimbursement status on load
       await showEmployeeReimbursementStatus(employeeName, selectedMonth);
-
-      // 🔹 Update bank status when month changes
+            // 🔹 Update bank status when month changes
       monthPicker?.addEventListener("change", async () => {
         const updatedMonth = monthPicker.value || new Date().toISOString().slice(0, 7);
         await showEmployeeReimbursementStatus(employeeName, updatedMonth);
