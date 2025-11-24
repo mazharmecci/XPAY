@@ -413,64 +413,98 @@ function renderAccountantSummary({
   `;
 }
 
+  // 🧾 Bank reimbursement code
 
-// 🧾 Calling Bank workflow
+async function initBankWorkflow(employeeName, isAccountantView) {
+  const monthPicker = document.getElementById("monthPicker");
+  const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
 
-const monthPicker = document.getElementById("monthPicker");
-const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+  // 🧾 Helper to preload reimbursement status from Firestore
+  async function getReimbursementStatus(employeeName, selectedMonth) {
+    const empKey = (employeeName || "").toLowerCase();
+    try {
+      const docSnap = await getDoc(doc(db, "paymentConfirmations", empKey));
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const monthMatch = (data.month || "").slice(0, 7) === selectedMonth;
+        return monthMatch && data.reimbursed === true;
+      }
+    } catch (err) {
+      console.error("Error fetching reimbursement status:", err);
+    }
+    return false; // default to false if not found or error
+  }
 
-renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, true);
-setupReimbursementToggle();
+  // Preload reimbursement status
+  const isReimbursed = await getReimbursementStatus(employeeName, selectedMonth);
 
-// 🧾 Render Bank Confirmation Table
-function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
-  const html = `
-    <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
-      <thead>
-        <tr style="background:#f0f8ff;">
-          <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
-          <th style="text-align:left; padding:8px;">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style="padding:8px;">Final reimbursement credited to employee account</td>
-          <td style="padding:8px;">
-            ${
-              isAccountantView
-                ? `<label class="switch">
-                     <input type="checkbox" ${isReimbursed ? "checked" : ""} data-emp="${employeeName}" data-month="${selectedMonth}" class="toggle-reimbursement">
-                     <span class="slider round"></span>
-                   </label>`
-                : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">${isReimbursed ? "Yes" : "No"}</span>`
-            }
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `;
-  document.getElementById("reimbursementBlock").innerHTML = html;
-}
+  // Render confirmation table
+  renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView);
 
-// 🧾 Bank confirmation toggle handler
-function setupReimbursementToggle() {
-  document.querySelectorAll(".toggle-reimbursement").forEach(toggle => {
-    toggle.addEventListener("change", async () => {
-      const empName = (toggle.dataset.emp || "").toLowerCase();
-      const month = toggle.dataset.month;
-      const reimbursed = toggle.checked;
+  // Wire up toggle if accountant
+  if (isAccountantView) setupReimbursementToggle();
 
-      await setDoc(doc(db, "paymentConfirmations", empName), {
-        month,
-        reimbursed,
-        updatedBy: "accountant",
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+  // --- Render Bank Confirmation Table ---
+  function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
+    const html = `
+      <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f0f8ff;">
+            <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
+            <th style="text-align:left; padding:8px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:8px;">Final reimbursement credited to employee account</td>
+            <td style="padding:8px;">
+              ${
+                isAccountantView
+                  ? `<label class="switch">
+                       <input type="checkbox" ${isReimbursed ? "checked" : ""} data-emp="${employeeName}" data-month="${selectedMonth}" class="toggle-reimbursement">
+                       <span class="slider round"></span>
+                     </label>`
+                  : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">${isReimbursed ? "Yes" : "No"}</span>`
+              }
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    document.getElementById("reimbursementBlock").innerHTML = html;
+  }
 
-      showToast(`Reimbursement status updated to ${reimbursed ? "Yes" : "No"}`, "success");
+  // --- Bank confirmation toggle handler ---
+  function setupReimbursementToggle() {
+    document.querySelectorAll(".toggle-reimbursement").forEach(toggle => {
+      toggle.addEventListener("change", async () => {
+        const empName = (toggle.dataset.emp || "").toLowerCase();
+        const month = toggle.dataset.month;
+        const reimbursed = toggle.checked;
+
+        await setDoc(doc(db, "paymentConfirmations", empName), {
+          month,
+          reimbursed,
+          updatedBy: "accountant",
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        showToast(`Reimbursement status updated to ${reimbursed ? "Yes" : "No"}`, "success");
+      });
     });
-  });
+  }
 }
+
+// --- Example usage, after DOMContentLoaded ---
+// You must determine employeeName and isAccountantView from your app context.
+
+document.addEventListener("DOMContentLoaded", () => {
+  // These will depend on your page logic:
+  const employeeName = /* get current employee name */;
+  const isAccountantView = /* true/false depending on user role */;
+  initBankWorkflow(employeeName, isAccountantView);
+});
+
 
 
 // 🧾 Advance cash table
