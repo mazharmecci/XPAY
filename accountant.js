@@ -265,10 +265,8 @@ async function renderTable() {
       const breakdownHTML = buildBreakdown(exp);
       const statusBadge = getStatusBadge(exp.status);
 
-      const hasAdhoc = adhocAmount > 0;
       const isAdhocOnly = regularAmount === 0 && adhocAmount > 0;
       const isMixed = regularAmount > 0 && adhocAmount > 0;
-
       const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : '';
 
       tbody.innerHTML += `
@@ -322,20 +320,25 @@ async function renderTable() {
       }
     });
 
-    // 🔄 Sum manager-approved adhoc requests
+    // 🔄 Sum manager-approved and rejected adhoc requests
     let totalAdhocApproved = 0;
+    let totalAdhocRejected = 0;
     const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
     adhocSnapshot.forEach(docSnap => {
       const data = docSnap.data();
       const dateStr = typeof data.date === "string" ? data.date : "";
       const isMonthMatch = dateStr.slice(0, 7) === selectedMonth;
-      const isApproved = (data.status || "").toLowerCase() === "approved";
+      const status = (data.status || "").toLowerCase();
       const empFilter = selectedEmployee?.toLowerCase() || "";
       const raisedBy = (data.raisedBy || "").toLowerCase();
       const isEmpMatch =
         !empFilter || empFilter === "all employees" || raisedBy === empFilter;
-      if (isMonthMatch && isApproved && isEmpMatch) {
-        totalAdhocApproved += Number(data.amount) || 0;
+      if (isMonthMatch && isEmpMatch) {
+        if (status === "approved") {
+          totalAdhocApproved += Number(data.amount) || 0;
+        } else if (status === "rejected") {
+          totalAdhocRejected += Number(data.amount) || 0;
+        }
       }
     });
 
@@ -350,7 +353,8 @@ async function renderTable() {
       totalSubmitted,
       totalFinalApproved,
       totalAdhoc,
-      totalAdhocApproved // ✅ now passed correctly
+      totalAdhocApproved,
+      totalAdhocRejected
     });
 
     // 🔽 Breakdown toggle handlers
@@ -377,12 +381,14 @@ async function renderTable() {
         </tr>`;
     }
     const summaryEl = document.getElementById("accountantSummary");
-    if (summaryEl) summaryEl.innerHTML = "";
+    if (summaryEl) {
+      summaryEl.innerHTML = "";
+    }
   }
 }
 
+// --- Paste this OUTSIDE the async renderTable function ---
 
-// 📋 Summary renderer with adhoc separation
 function renderAccountantSummary({
   selectedMonth,
   selectedEmployee,
@@ -392,7 +398,9 @@ function renderAccountantSummary({
   totalAdvance,
   totalSubmitted,
   totalFinalApproved,
-  totalAdhoc
+  totalAdhoc,
+  totalAdhocApproved,
+  totalAdhocRejected
 }) {
   const summaryContainer = document.getElementById("accountantSummary");
   if (!summaryContainer) return;
@@ -402,31 +410,33 @@ function renderAccountantSummary({
     year: "numeric"
   });
 
-  const netPayable = totalFinalApproved - totalAdvance;
+  const netPayable = (totalFinalApproved + totalAdhocApproved) - totalAdvance;
   const netLabel = netPayable < 0
     ? "💰 Advance exceeds approved"
     : "🔶 Net payable to employee";
 
-    summaryContainer.innerHTML = `
-      <div class="summary-block">
-        <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
-        <table class="summary-table">
-          <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
-          <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td></tr>
-          <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
-          <tr><td>⏳ Pending Expenses to be reviewed by Accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
-          <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-          <tr><td>📌 Adhoc Requests (Manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>
-          <tr><td>🔷 Adhoc Requests approved by Manager:</td><td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td></tr>
-          <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
-        </table>
-        ${netPayable < 0 ? `
-          <div style="margin-top:0.5em; font-size:0.9em; color:#888;">
-            Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
-          </div>` : ""}
-      </div>
-    `;
+  summaryContainer.innerHTML = `
+    <div class="summary-block">
+      <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
+      <table class="summary-table">
+        <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
+        <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td></tr>
+        <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>⏳ Pending Expenses to be reviewed by Accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
+        <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr><td>📌 Adhoc Requests submitted (Manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>
+        <tr><td>🔷 Adhoc Requests approved by Manager:</td><td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td></tr>
+        <tr><td>❌ Adhoc Requests rejected by Manager:</td><td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td></tr>
+        <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
+      </table>
+      ${netPayable < 0 ? `
+        <div style="margin-top:0.5em; font-size:0.9em; color:#888;">
+          Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
+        </div>` : ""}
+    </div>
+  `;
 }
+
 
 // 🧾 Advance cash table
 
