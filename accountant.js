@@ -174,6 +174,7 @@ function getStatusBadge(status) {
   return `<span class="badge unknown">Unknown</span>`;
 }
 
+// Main renderTable for accountant
 async function renderTable() {
   try {
     const monthPicker = document.getElementById('monthPicker');
@@ -299,9 +300,9 @@ async function renderTable() {
                  </td>`
           }
         </tr>`;
-    }  // <--- THIS closes the for loop!
+    }  // <--- for-loop ends here!
 
-    // These blocks -- advances, summary, handlers -- should be OUTSIDE the for loop:
+    // Now totals for advances and summary rendering (only ONCE and outside of loop)
     let totalAdvanceReceived = 0;
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     advanceSnapshot.forEach(docSnap => {
@@ -363,7 +364,7 @@ async function renderTable() {
   }
 }
 
-// 📋 Summary renderer with adhoc separation
+// --- Only ONE summary function ---
 function renderAccountantSummary({
   selectedMonth,
   selectedEmployee,
@@ -411,143 +412,6 @@ function renderAccountantSummary({
     </div>
   `;
 }
-
-    // 🔄 Sum accountant-recorded advances
-    let totalAdvanceReceived = 0;
-    const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
-    advanceSnapshot.forEach(docSnap => {
-      const adv = docSnap.data();
-      const advDate = typeof adv.date === "string" ? adv.date : "";
-      const advMonth = advDate.slice(0, 7);
-      const isMonthMatch = advMonth === selectedMonth;
-      const empFilter = selectedEmployee?.toLowerCase() || "";
-      const empId = (adv.employeeId || "").toLowerCase();
-      const empName = (adv.employeeName || "").toLowerCase();
-      const isEmpMatch =
-        !empFilter || empFilter === "all employees" ||
-        empId === empFilter || empName === empFilter;
-      if (isMonthMatch && isEmpMatch) {
-        totalAdvanceReceived += Number(adv.advanceCash) || 0;
-      }
-    });
-
-    // 🔄 Sum manager-approved and rejected adhoc requests
-    let totalAdhocApproved = 0;
-    let totalAdhocRejected = 0;
-    const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
-    adhocSnapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const dateStr = typeof data.date === "string" ? data.date : "";
-      const isMonthMatch = dateStr.slice(0, 7) === selectedMonth;
-      const status = (data.status || "").toLowerCase();
-      const empFilter = selectedEmployee?.toLowerCase() || "";
-      const raisedBy = (data.raisedBy || "").toLowerCase();
-      const isEmpMatch =
-        !empFilter || empFilter === "all employees" || raisedBy === empFilter;
-      if (isMonthMatch && isEmpMatch) {
-        if (status === "approved") {
-          totalAdhocApproved += Number(data.amount) || 0;
-        } else if (status === "rejected") {
-          totalAdhocRejected += Number(data.amount) || 0;
-        }
-      }
-    });
-
-    // ✅ Render summary with adhoc separation
-    renderAccountantSummary({
-      selectedMonth,
-      selectedEmployee,
-      totalApproved,
-      totalRejected,
-      totalPending,
-      totalAdvance: totalAdvanceReceived,
-      totalSubmitted,
-      totalFinalApproved,
-      totalAdhoc,
-      totalAdhocApproved,
-      totalAdhocRejected
-    });
-
-    // 🔽 Breakdown toggle handlers
-    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        const breakdown = document.getElementById(`breakdown-${id}`);
-        if (!breakdown) return;
-        const isVisible = breakdown.style.display === 'block';
-        breakdown.style.display = isVisible ? 'none' : 'block';
-        btn.textContent = isVisible ? '▶' : '▼';
-      });
-    });
-
-  } catch (err) {
-    console.error("renderTable Fatal Error:", err);
-    const tbody = document.querySelector('#expenseTable tbody');
-    if (tbody) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="8" style="text-align:center; color:red; padding:1em;">
-            ❌ Error loading expenses. Check console for details.
-          </td>
-        </tr>`;
-    }
-    const summaryEl = document.getElementById("accountantSummary");
-    if (summaryEl) {
-      summaryEl.innerHTML = "";
-    }
-  }
-}
-
-// --- Paste this OUTSIDE the async renderTable function ---
-
-function renderAccountantSummary({
-  selectedMonth,
-  selectedEmployee,
-  totalApproved,
-  totalRejected,
-  totalPending,
-  totalAdvance,
-  totalSubmitted,
-  totalFinalApproved,
-  totalAdhoc,
-  totalAdhocApproved,
-  totalAdhocRejected
-}) {
-  const summaryContainer = document.getElementById("accountantSummary");
-  if (!summaryContainer) return;
-
-  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
-    month: "long",
-    year: "numeric"
-  });
-
-  const netPayable = (totalFinalApproved + totalAdhocApproved) - totalAdvance;
-  const netLabel = netPayable < 0
-    ? "💰 Advance exceeds approved"
-    : "🔶 Net payable to employee";
-
-  summaryContainer.innerHTML = `
-    <div class="summary-block">
-      <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
-      <table class="summary-table">
-        <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
-        <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td></tr>
-        <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
-        <tr><td>⏳ Pending Expenses to be reviewed by Accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
-        <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-        <tr><td>📌 Adhoc Requests submitted (Manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>
-        <tr><td>🔷 Adhoc Requests approved by Manager:</td><td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td></tr>
-        <tr><td>❌ Adhoc Requests rejected by Manager:</td><td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td></tr>
-        <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
-      </table>
-      ${netPayable < 0 ? `
-        <div style="margin-top:0.5em; font-size:0.9em; color:#888;">
-          Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
-        </div>` : ""}
-    </div>
-  `;
-}
-
 
 // 🧾 Advance cash table
 
