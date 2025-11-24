@@ -442,6 +442,15 @@ function sanitize(val) {
   return str.replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '').replace(/\s+/g, ' ').trim();
 }
 
+function setupMonthFilter() {
+  // Example: sets current month if not already set
+  const monthInput = document.getElementById("monthPicker");
+  if (monthInput && !monthInput.value) {
+    monthInput.value = new Date().toISOString().slice(0, 7); // yyyy-mm format
+  }
+}
+
+
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", async () => {
   setupLogout();
