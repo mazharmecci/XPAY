@@ -318,16 +318,12 @@ async function renderExpenses(currentUserId) {
 
     monthlyClaimsTable.innerHTML += `
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">🧾 Total expenses submitted:</td>
+        <td colspan="5" style="text-align:right;">🧾 Total expenses submitted by emp:</td>
         <td>${INR.format(totalSubmitted)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
         <td colspan="5" style="text-align:right;">✅ Approved by Accountant:</td>
         <td>${INR.format(totalApproved)}</td>
-      </tr>
-      <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="5" style="text-align:right;">📌 Adhoc Requests approved by Manager:</td>
-        <td><span style="color:#007bff;">${INR.format(totalAdhocApproved)}</span></td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
         <td colspan="5" style="text-align:right;">❌ Rejected by Accountant:</td>
@@ -342,8 +338,12 @@ async function renderExpenses(currentUserId) {
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">📌 Total Adhoc Requests submitted:</td>
+        <td colspan="5" style="text-align:right;">📌 Total Adhoc Requests submitted by emp:</td>
         <td><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td>
+      </tr>
+      <tr style="font-weight:bold; background:#f9f9f9;">
+        <td colspan="5" style="text-align:right;">📌 Adhoc Requests approved by Manager:</td>
+        <td><span style="color:#007bff;">${INR.format(totalAdhocApproved)}</span></td>
       </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
         <td colspan="5" style="text-align:right;">${netLabel}:</td>
