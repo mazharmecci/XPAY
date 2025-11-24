@@ -136,9 +136,20 @@ function buildBreakdown(exp) {
 }
 
 // Main render - renderMnagerClaims
-
 async function renderManagerClaims() {
+  const legendHtml = `
+    <div id="claimLegend" class="claim-legend">
+      <span style="background:#f9f9ff; border-radius:3px; padding:2px 7px; margin-right:10px;">Mixed Claim: blue background</span>
+      <span style="color:#007bff;">Adhoc Only</span>: Tracked for audit purpose
+    </div>
+  `;
+
   const tableBody = document.querySelector("#managerClaimsTable tbody");
+  const tableWrapper = document.querySelector("#managerClaimsTable").parentElement;
+  if (tableWrapper && !document.getElementById("claimLegend")) {
+    tableWrapper.insertAdjacentHTML("afterbegin", legendHtml);
+  }
+
   const monthPicker = document.getElementById("monthPicker");
   const empSel = document.getElementById("employeeFilter");
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
@@ -161,105 +172,87 @@ async function renderManagerClaims() {
 
   records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-  // 🔄 Pull manager decisions from adhocRequests
-  const adhocDecisionMap = new Map(); // key: `${date}|${amount}` → "approved" | "rejected"
+  // For manager summary calculations
   let totalAdhocApproved = 0;
   let totalAdhocRejected = 0;
+  let totalFinalApproved = 0;
+  let totalApproved = 0;
+  let totalRejected = 0;
+  let totalPending = 0;
+  let totalAdhoc = 0;
 
-  const adhocSnap = await getDocs(collection(db, "adhocRequests"));
-  adhocSnap.forEach(docSnap => {
-    const req = docSnap.data();
-    const dateStr = typeof req.date === "string" ? req.date : "";
-    const status = (req.status || "").toLowerCase();
-    const amount = Number(req.amount) || 0;
-    const raisedBy = (req.raisedBy || "").toLowerCase();
-    const empFilter = selectedEmployee.trim().toLowerCase();
-    const isMonthMatch = dateStr.slice(0, 7) === selectedMonth;
-    const isEmpMatch = !empFilter || raisedBy === empFilter;
+  let rowBuffer = "";
+  for (const exp of records) {
+    const regularAmount = getRegularAmount(exp);
+    const adhocAmount = getAdhocAmount(exp);
+    const employeeName = await getEmployeeName(exp.userId, userCache);
 
-    if (isMonthMatch && isEmpMatch && amount > 0) {
-      const key = `${dateStr}|${amount}`;
-      adhocDecisionMap.set(key, status);
-      if (status === "approved") totalAdhocApproved += amount;
-      else if (status === "rejected") totalAdhocRejected += amount;
+    totalAdhoc += adhocAmount;
+
+    // SUMMARY MATH:
+    // Only count Adhoc approvals/rejections for expense rows genuinely FinalApproved or RejectedByManager
+    if ((exp.status || "") === "FinalApproved") {
+      totalAdhocApproved += adhocAmount;
+      totalFinalApproved += regularAmount + adhocAmount;
+    } else if ((exp.status || "").toLowerCase() === "rejectedbymanager") {
+      totalAdhocRejected += adhocAmount;
+      totalRejected += regularAmount;
+    } else if ((exp.status || "") === "Approved") {
+      totalApproved += regularAmount;
+    } else if ((exp.status || "") === "Rejected") {
+      totalRejected += regularAmount;
+    } else {
+      totalPending += regularAmount;
     }
-  });
 
-  let totalApproved = 0,
-      totalRejected = 0,
-      totalPending = 0,
-      totalFinalApproved = 0,
-      totalAdhoc = 0;
+    // BADGE LOGIC & ROW COLOR
+    let badgeHtml = "";
+    if ((exp.status || "") === "FinalApproved") {
+      badgeHtml = `<span class="badge final-approved">✅ Final Approved by Manager</span>`;
+    } else if ((exp.status || "").toLowerCase() === "rejectedbymanager") {
+      badgeHtml = `<span class="badge rejected">❌ Rejected by Manager</span>`;
+    } else if ((exp.status || "") === "Approved") {
+      badgeHtml = `<span class="badge approved">✅ Accountant Approved</span>`;
+    } else if ((exp.status || "") === "Rejected") {
+      badgeHtml = `<span class="badge rejected">❌ Rejected</span>`;
+    } else {
+      badgeHtml = `<span class="badge pending">⏳ Pending</span>`;
+    }
 
-// Insert this above your table in the HTML (outside JS):
-// <div id="claimLegend" class="claim-legend">
-//   <span style="background:#f9f9ff; border-radius:3px; padding:2px 7px; margin-right:10px;">Mixed Claim: blue background</span>
-//   <span style="color:#007bff;">Adhoc Only</span>: Tracked for audit purpose
-// </div>
+    const isMixed = regularAmount > 0 && adhocAmount > 0;
+    const isAdhocOnly = (regularAmount === 0 && adhocAmount > 0);
+    const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : '';
 
-let rowBuffer = "";
-for (const exp of records) {
-  const regularAmount = getRegularAmount(exp);
-  const adhocAmount = getAdhocAmount(exp);
-  const employeeName = await getEmployeeName(exp.userId, userCache);
-
-  totalAdhoc += adhocAmount;
-
-  const adhocKey = `${exp.date || ""}|${adhocAmount || 0}`;
-  const managerDecision = adhocDecisionMap.get(adhocKey); // "approved" | "rejected"
-
-  let badgeHtml = "";
-  if (managerDecision === "approved" || (exp.status === "FinalApproved")) {
-    badgeHtml = `<span class="badge final-approved">✅ Final Approved by Manager</span>`;
-    totalFinalApproved += regularAmount + adhocAmount;
-  } else if (managerDecision === "rejected") {
-    badgeHtml = `<span class="badge rejected">❌ Rejected by Manager</span>`;
-    totalRejected += regularAmount;
-  } else if (exp.status === "Approved") {
-    badgeHtml = `<span class="badge approved">✅ Accountant Approved</span>`;
-    totalApproved += regularAmount;
-  } else if (exp.status === "Rejected") {
-    badgeHtml = `<span class="badge rejected">❌ Rejected</span>`;
-    totalRejected += regularAmount;
-  } else {
-    badgeHtml = `<span class="badge pending">⏳ Pending</span>`;
-    totalPending += regularAmount;
+    rowBuffer += `
+      <tr ${rowStyle}>
+        <td>${employeeName}</td>
+        <td>${exp.date || "-"}</td>
+        <td>${exp.workflowType || "-"}</td>
+        <td>
+          <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
+          <span style="margin-left:0.5em;">Click to view breakdown</span>
+          <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
+            ${buildBreakdown(exp)}
+          </div>
+        </td>
+        <td style="font-size:0.85em; color:#555;">
+          Regular: ₹${regularAmount} <br>
+          Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
+        </td>
+        <td>${badgeHtml}</td>
+        ${
+          isAdhocOnly
+          ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc Only – Tracked for audit purpose</td>`
+          : `<td>
+               <input type="checkbox" class="select-claim" data-id="${exp.id}">
+             </td>
+             <td>
+               <input type="text" class="manager-comment" placeholder="Comment (optional)">
+             </td>`
+        }
+      </tr>
+    `;
   }
-
-  const isMixed = regularAmount > 0 && adhocAmount > 0;
-  const isAdhocOnly = (regularAmount === 0 && adhocAmount > 0);
-  const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : '';
-
-  rowBuffer += `
-    <tr ${rowStyle}>
-      <td>${employeeName}</td>
-      <td>${exp.date || "-"}</td>
-      <td>${exp.workflowType || "-"}</td>
-      <td>
-        <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
-        <span style="margin-left:0.5em;">Click to view breakdown</span>
-        <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
-          ${buildBreakdown(exp)}
-        </div>
-      </td>
-      <td style="font-size:0.85em; color:#555;">
-        Regular: ₹${regularAmount} <br>
-        Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
-      </td>
-      <td>${badgeHtml}</td>
-      ${
-        isAdhocOnly
-        ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc Only – Tracked for audit purpose</td>`
-        : `<td>
-             <input type="checkbox" class="select-claim" data-id="${exp.id}">
-           </td>
-           <td>
-             <input type="text" class="manager-comment" placeholder="Comment (optional)">
-           </td>`
-      }
-    </tr>
-  `;
-}
 
   tableBody.innerHTML = rowBuffer;
 
