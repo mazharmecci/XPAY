@@ -135,8 +135,8 @@ function buildBreakdown(exp) {
   }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
-// Main render
-// Main render
+// Main render - renderMnagerClaims
+
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   const monthPicker = document.getElementById("monthPicker");
@@ -161,13 +161,35 @@ async function renderManagerClaims() {
 
   records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
+  // 🔄 Pull manager decisions from adhocRequests
+  const adhocDecisionMap = new Map(); // key: `${date}|${amount}` → "approved" | "rejected"
+  let totalAdhocApproved = 0;
+  let totalAdhocRejected = 0;
+
+  const adhocSnap = await getDocs(collection(db, "adhocRequests"));
+  adhocSnap.forEach(docSnap => {
+    const req = docSnap.data();
+    const dateStr = typeof req.date === "string" ? req.date : "";
+    const status = (req.status || "").toLowerCase();
+    const amount = Number(req.amount) || 0;
+    const raisedBy = (req.raisedBy || "").toLowerCase();
+    const empFilter = selectedEmployee.trim().toLowerCase();
+    const isMonthMatch = dateStr.slice(0, 7) === selectedMonth;
+    const isEmpMatch = !empFilter || raisedBy === empFilter;
+
+    if (isMonthMatch && isEmpMatch && amount > 0) {
+      const key = `${dateStr}|${amount}`;
+      adhocDecisionMap.set(key, status);
+      if (status === "approved") totalAdhocApproved += amount;
+      else if (status === "rejected") totalAdhocRejected += amount;
+    }
+  });
+
   let totalApproved = 0,
       totalRejected = 0,
       totalPending = 0,
       totalFinalApproved = 0,
-      totalAdhoc = 0,
-      totalAdhocApproved = 0,
-      totalAdhocRejected = 0;
+      totalAdhoc = 0;
 
   let rowBuffer = "";
   for (const exp of records) {
@@ -177,25 +199,37 @@ async function renderManagerClaims() {
 
     totalAdhoc += adhocAmount;
 
+    const adhocKey = `${exp.date || ""}|${adhocAmount || 0}`;
+    const managerDecision = adhocDecisionMap.get(adhocKey); // "approved" | "rejected"
+
     let badgeClass = "", badgeText = "";
-    if (exp.status === "Approved") {
-      badgeClass = "badge approved";
-      badgeText = "Accountant Approved";
-      totalApproved += regularAmount;
-    } else if (exp.status === "Rejected") {
-      badgeClass = "badge rejected";
-      badgeText = "Rejected";
-      totalRejected += regularAmount;
-      totalAdhocRejected += adhocAmount; // ✅ track manager‑rejected adhoc
-    } else if (exp.status === "FinalApproved") {
+    if (managerDecision === "approved") {
       badgeClass = "badge final-approved";
-      badgeText = "Final Approved";
+      badgeText = "Final Approved by Manager";
       totalFinalApproved += regularAmount + adhocAmount;
-      totalAdhocApproved += adhocAmount; // ✅ track manager‑approved adhoc
+    } else if (managerDecision === "rejected") {
+      badgeClass = "badge rejected";
+      badgeText = "Rejected by Manager";
+      totalRejected += regularAmount;
     } else {
-      badgeClass = "badge pending";
-      badgeText = "Pending";
-      totalPending += regularAmount;
+      const status = exp.status || "";
+      if (status === "Approved") {
+        badgeClass = "badge approved";
+        badgeText = "Accountant Approved";
+        totalApproved += regularAmount;
+      } else if (status === "Rejected") {
+        badgeClass = "badge rejected";
+        badgeText = "Rejected";
+        totalRejected += regularAmount;
+      } else if (status === "FinalApproved") {
+        badgeClass = "badge final-approved";
+        badgeText = "Final Approved";
+        totalFinalApproved += regularAmount + adhocAmount;
+      } else {
+        badgeClass = "badge pending";
+        badgeText = "Pending";
+        totalPending += regularAmount;
+      }
     }
 
     const isMixed = regularAmount > 0 && adhocAmount > 0;
@@ -226,7 +260,6 @@ async function renderManagerClaims() {
 
   tableBody.innerHTML = rowBuffer;
 
-  // Attach breakdown toggler
   document.querySelectorAll('.toggle-breakdown').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
@@ -238,12 +271,7 @@ async function renderManagerClaims() {
     });
   });
 
-  // Summary calculation
-  const totalSubmittedAmount = records.reduce((sum, exp) => {
-    return sum + getRegularAmount(exp) + getAdhocAmount(exp);
-  }, 0);
-
-  // Fetch and process advance cash
+  // 🔄 Advance cash
   const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
   let totalAdvanceReceived = 0;
   advanceSnapshot.forEach(docSnap => {
@@ -260,7 +288,7 @@ async function renderManagerClaims() {
     }
   });
 
-  // Render summary block
+  // ✅ Summary block
   renderManagerSummary({
     selectedMonth,
     selectedEmployee,
@@ -269,7 +297,7 @@ async function renderManagerClaims() {
     totalPending,
     totalFinalApproved,
     totalAdvance: totalAdvanceReceived,
-    totalSubmitted: totalSubmittedAmount,
+    totalSubmitted: records.reduce((sum, exp) => sum + getRegularAmount(exp) + getAdhocAmount(exp), 0),
     totalAdhoc,
     totalAdhocApproved,
     totalAdhocRejected
@@ -322,7 +350,6 @@ function renderManagerSummary({
     </div>
   `;
 }
-
 
 // Export to CSV for final approved
 function downloadFinalApproved() {
