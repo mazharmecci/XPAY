@@ -466,7 +466,7 @@ monthPicker?.addEventListener("change", () => {
   showEmployeeReimbursementStatus(userName, updatedMonth);
 });
 
-// --- Init ---
+// 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
