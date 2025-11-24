@@ -411,32 +411,52 @@ async function renderExpenses(currentUserId) {
 }
 
 // --- Bank Reimbursement Status Block (Employee View) ---
+// 🔹 Helper: Get latest bank status for employee/month
+async function getLatestBankStatus(userId, selectedMonth) {
+  const q = query(
+    collection(db, "bankEvents"),
+    where("userId", "==", userId),
+    where("month", "==", selectedMonth),
+    orderBy("updatedAt", "desc"),
+    limit(1)
+  );
+
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const data = snap.docs[0].data();
+    return data.reimbursed === true;
+  }
+  return null; // no record found
+}
+
+// --- Bank Reimbursement Status Block (Employee View) ---
 async function showEmployeeReimbursementStatus(userId, selectedMonth) {
   const statusDiv = document.getElementById("employeeReimbursementStatus");
   if (!statusDiv) return;
 
   let statusHtml = "";
   try {
-    const docSnap = await getDoc(doc(db, "paymentConfirmations", userId));
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      const isReimbursed = data.month === selectedMonth && data.reimbursed === true;
+    const isReimbursed = await getLatestBankStatus(userId, selectedMonth);
 
+    if (isReimbursed === true) {
       statusHtml = `
         <div style="margin-bottom:6px; font-weight:500;">
           Bank Reimbursement Status for <span style="color:#2196F3;">${selectedMonth}</span>:
-          <span style="font-weight:bold; color:${isReimbursed ? "green" : "red"}; margin-left:8px;">
-            ${isReimbursed ? "Credited ✅" : "Pending ⏳"}
-          </span>
+          <span style="font-weight:bold; color:green; margin-left:8px;">Credited ✅</span>
+        </div>
+      `;
+    } else if (isReimbursed === false) {
+      statusHtml = `
+        <div style="margin-bottom:6px; font-weight:500;">
+          Bank Reimbursement Status for <span style="color:#2196F3;">${selectedMonth}</span>:
+          <span style="font-weight:bold; color:red; margin-left:8px;">Pending ⏳</span>
         </div>
       `;
     } else {
       statusHtml = `
         <div style="margin-bottom:6px; font-weight:500;">
           Bank Reimbursement Status for <span style="color:#2196F3;">${selectedMonth}</span>:
-          <span style="font-weight:bold; color:orange; margin-left:8px;">
-            Not Confirmed
-          </span>
+          <span style="font-weight:bold; color:orange; margin-left:8px;">Not Confirmed</span>
         </div>
       `;
     }
@@ -447,8 +467,6 @@ async function showEmployeeReimbursementStatus(userId, selectedMonth) {
 
   statusDiv.innerHTML = statusHtml;
 }
-
-// --- Main Init Block ---
 
 document.addEventListener("DOMContentLoaded", () => {
   // 🔹 Logout button logic
@@ -468,6 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
       adhocToggleBtn.textContent = isVisible ? "▶ Show examples" : "▼ Hide examples";
       adhocToggleBtn.setAttribute("aria-expanded", String(!isVisible));
     });
+
     adhocToggleBtn.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -480,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
-      setTimeout(() => window.location.href = "login.html", 1500);
+      setTimeout(() => (window.location.href = "login.html"), 1500);
       return;
     }
 
@@ -497,27 +516,33 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // 🔹 Retrieve employee name, normalized
-      const employeeName = userDoc.exists() ? (userDoc.data().name || "").toLowerCase().trim() : "";
+      const employeeName = userDoc.exists()
+        ? (userDoc.data().name || "").toLowerCase().trim()
+        : "";
 
       // 🔹 Get initial month
       const monthPicker = document.getElementById("monthPicker");
-      const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+      const getSelectedMonth = () =>
+        monthPicker?.value || new Date().toISOString().slice(0, 7);
+
+      const selectedMonth = getSelectedMonth();
 
       // 🔹 Expense form logic (if present)
       const form = document.getElementById("expenseForm");
       if (form) form.onsubmit = createSubmitExpense(currentUserId);
 
-      // 🔹 Render expenses on load/month change
-      monthPicker?.addEventListener("change", () => renderExpenses(currentUserId));
+      // 🔹 Render expenses + bank status on load
       await renderExpenses(currentUserId);
-
-            // 🔹 Show bank reimbursement status on load
       await showEmployeeReimbursementStatus(currentUserId, selectedMonth);
-            // 🔹 Update bank status when month changes
-          monthPicker?.addEventListener("change", async () => {
-      const updatedMonth = monthPicker.value || new Date().toISOString().slice(0, 7);
-      await showEmployeeReimbursementStatus(currentUserId, updatedMonth);
-    });
+
+      // 🔹 Update both when month changes (single listener)
+      if (monthPicker) {
+        monthPicker.addEventListener("change", async () => {
+          const updatedMonth = getSelectedMonth();
+          await renderExpenses(currentUserId);
+          await showEmployeeReimbursementStatus(currentUserId, updatedMonth);
+        });
+      }
     } catch (err) {
       console.error("❌ Error loading user/role:", err);
       showToast("Failed to load user profile.", "error");
