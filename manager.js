@@ -8,7 +8,7 @@ const INR = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" 
 
 // ✅ Canonical list of regular (accountant-eligible) fields
 const REGULAR_KEYS = [
-  "fuel","fare","boarding","food","localConveyance","PostCourier","misc",
+  "fuel","fare","boarding","food","localConveyance","postCourier","misc",
   "monthlyConveyance","monthlyPhone"
 ];
 function getRegularAmount(exp) {
@@ -123,7 +123,7 @@ function buildBreakdown(exp) {
   return Object.entries({
     "🕓 Trip Info": ["placeVisited"],
     "🗓️ Monthly Claims": ["advanceCash","monthlyConveyance","monthlyPhone","adhocRequest"],
-    "🚗 Travel Costs": ["fuel","fare","boarding","food","localConveyance","PostCourier","misc"]
+    "🚗 Travel Costs": ["fuel","fare","boarding","food","localConveyance","postCourier","misc"]
   }).map(([groupName, keys]) => {
     const items = keys.map(key => {
       const value = Number(exp[key]) || 0;
