@@ -640,57 +640,25 @@ function sanitize(val) {
 }
 
 // 🧾 Bank Reimbursement Workflow — Refined for Parity
-async function initBankWorkflow(employeeName, isAccountantView) {
-  const monthPicker = document.getElementById("monthPicker");
-  const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
-  const reimbursementBlock = document.getElementById("reimbursementBlock");
 
-  if (!employeeName || employeeName.toLowerCase() === "all") {
-    reimbursementBlock.innerHTML = `
-      <div style="color:#f44336; font-weight:500; padding:12px 8px;">
-        Please select an individual employee to enable bank reimbursement confirmation.
-      </div>
-    `;
-    return;
-  }
-
-  const empKey = employeeName.toLowerCase().trim();
-
-  // 🔹 Fetch status from Firestore
-  async function getReimbursementStatus(empKey) {
-    try {
-      const docSnap = await getDoc(doc(db, "paymentConfirmations", empKey));
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        return data.month === selectedMonth && data.reimbursed === true;
-      }
-    } catch (err) {
-      console.error("Error fetching reimbursement status:", err);
-    }
-    return false;
-  }
-
-  const isReimbursed = await getReimbursementStatus(empKey);
-
-// 🔹 Helper: Get latest bank status for an employee/month
-async function getLatestBankStatus(userId, selectedMonth) {
+// --- Helper: Get latest bank status for an employee/month ---
+async function getLatestBankStatus(employeeUid, selectedMonth) {
   const q = query(
     collection(db, "bankEvents"),
-    where("userId", "==", userId),
+    where("userId", "==", employeeUid),
     where("month", "==", selectedMonth),
     orderBy("updatedAt", "desc"),
     limit(1)
   );
-
   const snap = await getDocs(q);
   if (!snap.empty) {
     const data = snap.docs[0].data();
     return data.reimbursed === true;
   }
-  return null; // no record found
+  return false;
 }
 
-// 🔹 Main workflow initializer
+// --- Main workflow: renders bank status block and toggle ---
 async function initBankWorkflow(employeeUid, employeeName, isAccountantView) {
   const monthPicker = document.getElementById("monthPicker");
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
@@ -705,92 +673,77 @@ async function initBankWorkflow(employeeUid, employeeName, isAccountantView) {
     return;
   }
 
-  // 🔹 Fetch latest status
   const isReimbursed = await getLatestBankStatus(employeeUid, selectedMonth);
 
-  // 🔹 Render block
-  function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
-    const html = `
-      <div style="margin-bottom:6px; font-weight:500;">
-        Employee: <span style="color:#2196F3;">${employeeName}</span>
-        | Month: <span style="color:#2196F3;">${selectedMonth}</span>
-      </div>
-      <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
-        <thead>
-          <tr style="background:#f0f8ff;">
-            <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
-            <th style="text-align:left; padding:8px;">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="padding:8px;">Final reimbursement credited to employee account</td>
-            <td style="padding:8px;">
-              ${
-                isAccountantView
-                  ? `<button class="reimb-btn" data-emp="${employeeUid}" data-month="${selectedMonth}" 
-                        style="background:${isReimbursed ? '#4CAF50' : '#f44336'};color:#fff;border:none;
-                               padding:7px 16px;border-radius:4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
-                      ${isReimbursed ? "Yes" : "No"}
-                   </button>
-                   <span style="margin-left:10px; font-weight:600; color:${isReimbursed ? 'green' : 'red'};">
-                     ${isReimbursed ? "Reimbursed" : "Not Reimbursed"}
+  const html = `
+    <div style="margin-bottom:6px; font-weight:500;">
+      Employee: <span style="color:#2196F3;">${employeeName}</span>
+      | Month: <span style="color:#2196F3;">${selectedMonth}</span>
+    </div>
+    <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f0f8ff;">
+          <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
+          <th style="text-align:left; padding:8px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:8px;">Final reimbursement credited to employee account</td>
+          <td style="padding:8px;">
+            ${
+              isAccountantView
+                ? `<button class="reimb-btn" data-emp="${employeeUid}" data-month="${selectedMonth}" 
+                      style="background:${isReimbursed ? '#4CAF50' : '#f44336'};color:#fff;border:none;
+                             padding:7px 16px;border-radius:4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
+                    ${isReimbursed ? "Yes" : "No"}
+                 </button>
+                 <span style="margin-left:10px; font-weight:600; color:${isReimbursed ? 'green' : 'red'};">
+                   ${isReimbursed ? "Reimbursed" : "Not Reimbursed"}
+                 </span>`
+                : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">
+                     ${isReimbursed ? "Yes" : "No"}
                    </span>`
-                  : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">
-                       ${isReimbursed ? "Yes" : "No"}
-                     </span>`
-              }
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-    reimbursementBlock.innerHTML = html;
+            }
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+  reimbursementBlock.innerHTML = html;
 
-    // 🔹 Toggle logic (accountant only)
-    if (isAccountantView) {
-      const btn = document.querySelector(".reimb-btn");
-      if (btn) {
-        btn.onclick = async () => {
-          const empUid = btn.dataset.emp;
-          const month = btn.dataset.month;
-          const newStatus = !(btn.textContent.trim() === "Yes");
+  // Button handler (toggle) for accountant view
+  if (isAccountantView) {
+    const btn = document.querySelector(".reimb-btn");
+    if (btn) {
+      btn.onclick = async () => {
+        const empUid = btn.dataset.emp;
+        const month = btn.dataset.month;
+        const newStatus = !(btn.textContent.trim() === "Yes");
 
-          await addDoc(collection(db, "bankEvents"), {
-            userId: empUid,
-            month,
-            reimbursed: newStatus,
-            updatedBy: "accountant",
-            updatedAt: serverTimestamp()
-          });
+        await addDoc(collection(db, "bankEvents"), {
+          userId: empUid,
+          month,
+          reimbursed: newStatus,
+          updatedBy: "accountant",
+          updatedAt: serverTimestamp()
+        });
 
-          showToast(`Reimbursement status updated to ${newStatus ? "Yes" : "No"}`, "success");
-          renderReimbursementConfirmation(employeeName, selectedMonth, newStatus, isAccountantView);
-        };
-      }
+        showToast(`Reimbursement status updated to ${newStatus ? "Yes" : "No"}`, "success");
+        await initBankWorkflow(empUid, employeeName, isAccountantView);
+      };
     }
   }
-
-  // 🔹 Initial render
-  renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView);
 }
-
-// --- Filter & page integration (Accountant View) ---
-const employeeFilter = document.getElementById('employeeFilter');
-function refreshBankBlock() {
-  const employeeUid = employeeFilter.value || "";
-  const employeeName = employeeFilter.options[employeeFilter.selectedIndex]?.text || "";
-  initBankWorkflow(employeeUid, employeeName, true); // Accountant view
-}
-employeeFilter.addEventListener('change', refreshBankBlock);
-// Initial render on page load
-refreshBankBlock();
 
 // 🚦 Init
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Attach logout
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
 
+  // Standard page setup
   populateEmployeeDropdown();
   populateAdvanceEmployeeDropdown();
   populateEmployeeFilter();
@@ -818,10 +771,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById("advanceMonth")?.addEventListener("change", renderAdvanceCashTable);
   document.getElementById("advanceEmployee")?.addEventListener("change", renderAdvanceCashTable);
 
+  // --- Accountant authentication and bank workflow ---
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
-      setTimeout(() => (window.location.href = "login.html"), 1500);
+      setTimeout(() => window.location.href = "login.html", 1500);
       return;
     }
 
@@ -843,14 +797,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- BANK REIMBURSEMENT WORKFLOW ---
     const employeeFilter = document.getElementById('employeeFilter');
-    let selectedEmployeeName = "";
-    if (employeeFilter) {
-      selectedEmployeeName = employeeFilter.value || "";
-      employeeFilter.addEventListener('change', () => {
-        selectedEmployeeName = employeeFilter.value || "";
-        initBankWorkflow(selectedEmployeeName, true);
-      });
+    function refreshBankBlock() {
+      const employeeUid = employeeFilter.value || "";
+      const employeeName = employeeFilter.options[employeeFilter.selectedIndex]?.text || "";
+      initBankWorkflow(employeeUid, employeeName, true);
     }
-    initBankWorkflow(selectedEmployeeName, true);
-  }); // <-- Closes onAuthStateChanged async function
-}); // <-- Closes DOMContentLoaded event handler
+    employeeFilter.addEventListener('change', refreshBankBlock);
+    document.getElementById("monthPicker")?.addEventListener('change', refreshBankBlock);
+
+    // Initial load
+    refreshBankBlock();
+  });
+});
