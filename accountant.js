@@ -413,19 +413,21 @@ function renderAccountantSummary({
   `;
 }
 
-  // 🧾 Bank reimbursement code
+// 🧾 Bank reimbursement code
 
 async function initBankWorkflow(employeeName, isAccountantView) {
   const monthPicker = document.getElementById("monthPicker");
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
 
-  // 🧾 Helper to preload reimbursement status from Firestore
+  // 🧾 Helper to preload reimbursement status from Firestore (correct document path)
   async function getReimbursementStatus(employeeName, selectedMonth) {
     const empKey = (employeeName || "").toLowerCase();
+    const docKey = `${empKey}_${selectedMonth}`; // Composite key per employee+month
     try {
-      const docSnap = await getDoc(doc(db, "paymentConfirmations", empKey));
+      const docSnap = await getDoc(doc(db, "paymentConfirmations", docKey));
       if (docSnap.exists()) {
         const data = docSnap.data();
+        // Month check is a safeguard; not strictly required, but good practice
         const monthMatch = (data.month || "").slice(0, 7) === selectedMonth;
         return monthMatch && data.reimbursed === true;
       }
@@ -474,15 +476,16 @@ async function initBankWorkflow(employeeName, isAccountantView) {
     document.getElementById("reimbursementBlock").innerHTML = html;
   }
 
-  // --- Bank confirmation toggle handler ---
+  // --- Toggle handler: also corrected to use the composite docKey
   function setupReimbursementToggle() {
     document.querySelectorAll(".toggle-reimbursement").forEach(toggle => {
       toggle.addEventListener("change", async () => {
         const empName = (toggle.dataset.emp || "").toLowerCase();
         const month = toggle.dataset.month;
+        const docKey = `${empName}_${month}`; // Composite key for doc reference
         const reimbursed = toggle.checked;
 
-        await setDoc(doc(db, "paymentConfirmations", empName), {
+        await setDoc(doc(db, "paymentConfirmations", docKey), {
           month,
           reimbursed,
           updatedBy: "accountant",
@@ -494,6 +497,7 @@ async function initBankWorkflow(employeeName, isAccountantView) {
     });
   }
 }
+
 
 // 🧾 Advance cash table
 
