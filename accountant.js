@@ -289,8 +289,8 @@ async function renderTable() {
             Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
           </td>
           <td>${statusBadge}</td>
-          ${
-            (regularAmount === 0 && adhocAmount > 0)
+          ${(
+            regularAmount === 0 && adhocAmount > 0
               ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Tracked for audit purpose</td>`
               : `<td>
                    <input type="checkbox" class="action-checkbox" data-id="${exp.id}" 
@@ -300,9 +300,8 @@ async function renderTable() {
                    <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" 
                      title="Add comment for regular expenses. Adhoc is manager-only." />
                  </td>`
-          }
+          )}
         </tr>`;
-    }
 
     // advances by month + optional employee filter
     let totalAdvanceReceived = 0;
