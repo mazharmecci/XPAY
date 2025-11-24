@@ -413,15 +413,14 @@ function renderAccountantSummary({
   `;
 }
 
-// 🧾 Bank Reimbursement Workflow — Paste Ready
+// 🧾 Bank Reimbursement Workflow
 
-// Main function: Call whenever you want to show/update the reimbursement panel
+// 🧾 Bank Reimbursement Workflow — Refined for Parity
 async function initBankWorkflow(employeeName, isAccountantView) {
   const monthPicker = document.getElementById("monthPicker");
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
   const reimbursementBlock = document.getElementById("reimbursementBlock");
 
-  // Only allow toggle/block if a single employee is selected
   if (!employeeName || employeeName.toLowerCase() === "all") {
     reimbursementBlock.innerHTML = `
       <div style="color:#f44336; font-weight:500; padding:12px 8px;">
@@ -431,16 +430,15 @@ async function initBankWorkflow(employeeName, isAccountantView) {
     return;
   }
 
-  // Helper: Get status from Firestore
-  async function getReimbursementStatus(employeeName, selectedMonth) {
-    const empKey = (employeeName || "").toLowerCase();
-    const docKey = `${empKey}_${selectedMonth}`;
+  const empKey = employeeName.toLowerCase().trim();
+
+  // 🔹 Fetch status from Firestore
+  async function getReimbursementStatus(empKey) {
     try {
-      const docSnap = await getDoc(doc(db, "paymentConfirmations", docKey));
+      const docSnap = await getDoc(doc(db, "paymentConfirmations", empKey));
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const monthMatch = (data.month || "").slice(0, 7) === selectedMonth;
-        return monthMatch && data.reimbursed === true;
+        return data.month === selectedMonth && data.reimbursed === true;
       }
     } catch (err) {
       console.error("Error fetching reimbursement status:", err);
@@ -448,13 +446,11 @@ async function initBankWorkflow(employeeName, isAccountantView) {
     return false;
   }
 
-  // Get status for this employee/month
-  const isReimbursed = await getReimbursementStatus(employeeName, selectedMonth);
+  const isReimbursed = await getReimbursementStatus(empKey);
 
-  // Render the block
+  // 🔹 Render block
   renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView);
 
-  // Render function with Yes/No button logic
   function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
     const html = `
       <div style="margin-bottom:6px; font-weight:500;">
@@ -487,17 +483,16 @@ async function initBankWorkflow(employeeName, isAccountantView) {
     `;
     reimbursementBlock.innerHTML = html;
 
-    // Button toggler wiring, only for accountant
+    // 🔹 Toggle logic
     if (isAccountantView) {
       const btn = document.querySelector(".reimb-btn");
       if (btn) {
         btn.onclick = async () => {
-          const empName = (btn.dataset.emp || "").toLowerCase();
+          const empKey = (btn.dataset.emp || "").toLowerCase().trim();
           const month = btn.dataset.month;
-          const docKey = `${empName}_${month}`;
-          const newStatus = !(btn.textContent.trim() === "Yes"); // Toggle
+          const newStatus = !(btn.textContent.trim() === "Yes");
 
-          await setDoc(doc(db, "paymentConfirmations", docKey), {
+          await setDoc(doc(db, "paymentConfirmations", empKey), {
             month,
             reimbursed: newStatus,
             updatedBy: "accountant",
@@ -505,14 +500,12 @@ async function initBankWorkflow(employeeName, isAccountantView) {
           }, { merge: true });
 
           showToast(`Reimbursement status updated to ${newStatus ? "Yes" : "No"}`, "success");
-          // Re-render the block so button color and text update instantly
           renderReimbursementConfirmation(employeeName, selectedMonth, newStatus, isAccountantView);
         };
       }
     }
   }
 }
-
 
 // --- Filter & page integration (Accountant View) ---
 const employeeFilter = document.getElementById('employeeFilter');
