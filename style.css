@@ -11,6 +11,12 @@
   margin-top: 2em;
 }
 
+.claim-legend {
+  font-size: 0.98em;
+  margin-bottom: 12px;
+  color: #444;
+}
+
 .legend {
   margin-bottom: 0.5em;
   font-size: 0.85em;
