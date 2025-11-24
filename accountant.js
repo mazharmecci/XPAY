@@ -14,7 +14,7 @@ function normalizeStatus(status) {
   const s = (status || "").toLowerCase();
   if (s === "approved") return "Approved";
   if (s === "finalapproved") return "FinalApproved";
-  if (s === "rejected") return "Rejected";
+  if (s === "rejected") return "RejectedByAccountant";
   if (s === "rejectedbymanager") return "RejectedByManager";
   if (s === "pending") return "Pending";
   return "Unknown";
@@ -40,8 +40,8 @@ function getStatusBadge(status, regularStatus = "") {
   }
   if (s === "approved") return `<span class="badge approved">Accountant Approved</span>`;
   if (s === "finalapproved") return `<span class="badge final-approved">Final Approved</span>`;
-  if (s === "rejected") return `<span class="badge rejected">Rejected</span>`;
-  if (s === "rejectedbymanager") return `<span class="badge rejected">Rejected by Manager</span>`;
+  if (s === "rejected") return `<span class="badge rejected">Rejected by accountant</span>`;
+  if (s === "rejectedbymanager") return `<span class="badge rejected">Rejected by manager</span>`;
   if (s === "pending") return `<span class="badge pending">Pending</span>`;
   return `<span class="badge unknown">Unknown</span>`;
 }
