@@ -194,7 +194,7 @@ function renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge) {
     </tr>`;
 }
 
-// Main renderExpenses employee
+// --- Main renderExpenses for employee ---
 async function renderExpenses(currentUserId) {
   try {
     const tripInfoTable = document.querySelector("#tripInfoTable tbody");
@@ -366,46 +366,51 @@ async function renderExpenses(currentUserId) {
     const netReimbursementDue = (totalApproved + totalAdhocApproved) - totalAdvanceReceived;
     const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "🔶 Net payable to employee";
 
-   monthlyClaimsTable.innerHTML += `
-  <tr style="font-weight:bold; background:#fff;">
-    <td colspan="5" style="text-align:right;">🧾 Total expenses submitted by emp:</td>
-    <td>${INR.format(totalSubmitted)}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">✅ Approved by Accountant:</td>
-    <td>${INR.format(totalApproved)}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">❌ Rejected by Accountant:</td>
-    <td>${INR.format(totalRejected)}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#f9f9f9;">
-    <td colspan="5" style="text-align:right;">⏳ Pending Expenses yet to get approved (excl Adhoc):</td>
-    <td>${INR.format(totalPending)}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#e6f7ff;">
-    <td colspan="5" style="text-align:right;">💸 Advance Cash Received (${selectedMonth}):</td>
-    <td>${INR.format(totalAdvanceReceived)}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#fff;">
-    <td colspan="5" style="text-align:right;">🛠 Total Adhoc Requests submitted by emp:</td>
-    <td>${INR.format(totalAdhocSubmitted)}</td>
-  </tr>
-  <tr style="font-weight:bold; background:#fff;">
-    <td colspan="5" style="text-align:right;">🔷 Adhoc Requests approved by Manager:</td>
-    <td><span style="color:green;">${INR.format(totalAdhocApproved)}</span></td>
-  </tr>
-  <tr style="font-weight:bold; background:#fff;">
-    <td colspan="5" style="text-align:right;">❌ Adhoc Requests rejected by Manager:</td>
-    <td><span style="color:red;">${INR.format(totalAdhocRejected)}</span></td>
-  </tr>
-  <tr style="font-weight:bold; background:#fff;">
-    <td colspan="5" style="text-align:right;">${netLabel}:</td>
-    <td>${INR.format(netReimbursementDue)}</td>
-  </tr>
-`;
+    monthlyClaimsTable.innerHTML += `
+      <tr style="font-weight:bold; background:#fff;">
+        <td colspan="5" style="text-align:right;">🧾 Total expenses submitted by emp:</td>
+        <td>${INR.format(totalSubmitted)}</td>
+      </tr>
+      <tr style="font-weight:bold; background:#f9f9f9;">
+        <td colspan="5" style="text-align:right;">✅ Approved by Accountant:</td>
+        <td>${INR.format(totalApproved)}</td>
+      </tr>
+      <tr style="font-weight:bold; background:#f9f9f9;">
+        <td colspan="5" style="text-align:right;">❌ Rejected by Accountant:</td>
+        <td>${INR.format(totalRejected)}</td>
+      </tr>
+      <tr style="font-weight:bold; background:#f9f9f9;">
+        <td colspan="5" style="text-align:right;">⏳ Pending Expenses yet to get approved (excl Adhoc):</td>
+        <td>${INR.format(totalPending)}</td>
+      </tr>
+      <tr style="font-weight:bold; background:#e6f7ff;">
+        <td colspan="5" style="text-align:right;">💸 Advance Cash Received (${selectedMonth}):</td>
+        <td>${INR.format(totalAdvanceReceived)}</td>
+      </tr>
+      <tr style="font-weight:bold; background:#fff;">
+        <td colspan="5" style="text-align:right;">🛠 Total Adhoc Requests submitted by emp:</td>
+        <td>${INR.format(totalAdhocSubmitted)}</td>
+      </tr>
+      <tr style="font-weight:bold; background:#fff;">
+        <td colspan="5" style="text-align:right;">🔷 Adhoc Requests approved by Manager:</td>
+        <td><span style="color:green;">${INR.format(totalAdhocApproved)}</span></td>
+      </tr>
+      <tr style="font-weight:bold; background:#fff;">
+        <td colspan="5" style="text-align:right;">❌ Adhoc Requests rejected by Manager:</td>
+        <td><span style="color:red;">${INR.format(totalAdhocRejected)}</span></td>
+      </tr>
+      <tr style="font-weight:bold; background:#fff;">
+        <td colspan="5" style="text-align:right;">${netLabel}:</td>
+        <td>${INR.format(netReimbursementDue)}</td>
+      </tr>
+    `;
+  } catch (err) {
+    console.error("❌ Error rendering employee expenses:", err);
+    showToast("Failed to load employee expenses.", "error");
+  }
+}
 
-  // 🚦 Init
+// --- Init ---
 document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) logoutBtn.addEventListener("click", logoutUser);
@@ -466,4 +471,4 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast("Failed to load user profile.", "error");
     }
   });
-}); // <--- Ensure this closing brace is present!
+});
