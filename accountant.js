@@ -217,12 +217,14 @@ async function renderTable() {
     }
 
     const userCache = {};
-    let totalApproved = 0;
-    let totalRejected = 0;
-    let totalPending = 0;
-    let totalSubmitted = 0;
-    let totalFinalApproved = 0;
-    let totalAdhoc = 0;
+    let totalApproved = 0;            // accountant-approved regular
+    let totalRejected = 0;            // accountant-rejected regular
+    let totalPending = 0;             // accountant-pending regular
+    let totalSubmitted = 0;           // regular + adhoc
+    let totalFinalApprovedRegular = 0;// manager-final-approved regular
+    let totalAdhoc = 0;               // all adhoc submitted (from expenses)
+    let totalAdhocApproved = 0;       // adhoc approved by manager (from expenses)
+    let totalAdhocRejected = 0;       // adhoc rejected by manager (from expenses)
 
     for (const exp of filteredExpenses) {
       let employeeName = exp.userId || "-";
@@ -236,28 +238,30 @@ async function renderTable() {
         employeeName = userCache[exp.userId];
       }
 
+      // amounts
       let regularAmount = 0;
-      let adhocAmount = 0;
-
       ["fuel","fare","boarding","food","localConveyance","postCourier","misc",
        "monthlyConveyance","monthlyPhone"]
         .forEach(key => { if (exp[key]) regularAmount += Number(exp[key]); });
 
-      if (exp.adhocRequest) {
-        adhocAmount = Number(exp.adhocRequest);
-        totalAdhoc += adhocAmount;
-      }
+      const adhocAmount = Number(exp.adhocRequest) || 0;
 
-      const totalAmount = regularAmount + adhocAmount;
-      totalSubmitted += totalAmount;
+      totalAdhoc += adhocAmount;
+      totalSubmitted += (regularAmount + adhocAmount);
 
       const normalized = normalizeStatus(exp.status);
+
+      // accountant buckets: only regular amounts
       if (normalized === "Approved") {
         totalApproved += regularAmount;
-      } else if (normalized === "FinalApproved") {
-        totalFinalApproved += regularAmount;
       } else if (normalized === "Rejected") {
         totalRejected += regularAmount;
+        // manager rejected adhoc lives on the same record
+        totalAdhocRejected += adhocAmount;
+      } else if (normalized === "FinalApproved") {
+        totalFinalApprovedRegular += regularAmount;
+        // manager approved adhoc lives on the same record
+        totalAdhocApproved += adhocAmount;
       } else {
         totalPending += regularAmount;
       }
@@ -265,7 +269,6 @@ async function renderTable() {
       const breakdownHTML = buildBreakdown(exp);
       const statusBadge = getStatusBadge(exp.status);
 
-      const isAdhocOnly = regularAmount === 0 && adhocAmount > 0;
       const isMixed = regularAmount > 0 && adhocAmount > 0;
       const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : '';
 
@@ -287,7 +290,7 @@ async function renderTable() {
           </td>
           <td>${statusBadge}</td>
           ${
-            isAdhocOnly
+            (regularAmount === 0 && adhocAmount > 0)
               ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Tracked for audit purpose</td>`
               : `<td>
                    <input type="checkbox" class="action-checkbox" data-id="${exp.id}" 
@@ -300,6 +303,120 @@ async function renderTable() {
           }
         </tr>`;
     }
+
+    // advances by month + optional employee filter
+    let totalAdvanceReceived = 0;
+    const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
+    advanceSnapshot.forEach(docSnap => {
+      const adv = docSnap.data();
+      const advDate = typeof adv.date === "string" ? adv.date : "";
+      const advMonth = advDate.slice(0, 7);
+      const isMonthMatch = advMonth === selectedMonth;
+      const empFilter = selectedEmployee?.toLowerCase() || "";
+      const empId = (adv.employeeId || "").toLowerCase();
+      const empName = (adv.employeeName || "").toLowerCase();
+      const isEmpMatch =
+        !empFilter || empFilter === "all employees" ||
+        empId === empFilter || empName === empFilter;
+      if (isMonthMatch && isEmpMatch) {
+        totalAdvanceReceived += Number(adv.advanceCash) || 0;
+      }
+    });
+
+    // summary render (manager-approved adhoc comes from expenses, not adhocRequests)
+    renderAccountantSummary({
+      selectedMonth,
+      selectedEmployee,
+      totalApproved,
+      totalRejected,
+      totalPending,
+      totalAdvance: totalAdvanceReceived,
+      totalSubmitted,
+      totalFinalApproved: totalFinalApprovedRegular,
+      totalAdhoc,
+      totalAdhocApproved,
+      totalAdhocRejected
+    });
+
+    // breakdown toggles
+    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const breakdown = document.getElementById(`breakdown-${id}`);
+        if (!breakdown) return;
+        const isVisible = breakdown.style.display === 'block';
+        breakdown.style.display = isVisible ? 'none' : 'block';
+        btn.textContent = isVisible ? '▶' : '▼';
+      });
+    });
+
+  } catch (err) {
+    console.error("renderTable Fatal Error:", err);
+    const tbody = document.querySelector('#expenseTable tbody');
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color:red; padding:1em;">
+            ❌ Error loading expenses. Check console for details.
+          </td>
+        </tr>`;
+    }
+    const summaryEl = document.getElementById("accountantSummary");
+    if (summaryEl) {
+      summaryEl.innerHTML = "";
+    }
+  }
+}
+
+// 📋 Summary renderer with adhoc separation
+function renderAccountantSummary({
+  selectedMonth,
+  selectedEmployee,
+  totalApproved,
+  totalRejected,
+  totalPending,
+  totalAdvance,
+  totalSubmitted,
+  totalFinalApproved,
+  totalAdhoc,
+  totalAdhocApproved,
+  totalAdhocRejected
+}) {
+  const summaryContainer = document.getElementById("accountantSummary");
+  if (!summaryContainer) return;
+
+  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
+    month: "long",
+    year: "numeric"
+  });
+
+  // Net payable includes manager-final-approved regular + manager-approved adhoc, minus advances
+  const netPayable = (totalFinalApproved + totalAdhocApproved) - totalAdvance;
+  const netLabel = netPayable < 0
+    ? "💰 Advance exceeds approved"
+    : "🔶 Net payable to employee";
+
+  summaryContainer.innerHTML = `
+    <div class="summary-block">
+      <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
+      <table class="summary-table">
+        <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
+        <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td></tr>
+        <tr><td>❌ Rejected by Accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>⏳ Pending Expenses to be reviewed by Accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
+        <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr><td>📌 Adhoc Requests submitted (Manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>
+        <tr><td>🔷 Adhoc Requests approved by Manager:</td><td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td></tr>
+        <tr><td>❌ Adhoc Requests rejected by Manager:</td><td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td></tr>
+        <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
+      </table>
+      ${netPayable < 0 ? `
+        <div style="margin-top:0.5em; font-size:0.9em; color:#888;">
+          Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
+        </div>` : ""}
+    </div>
+  `;
+}
 
     // 🔄 Sum accountant-recorded advances
     let totalAdvanceReceived = 0;
