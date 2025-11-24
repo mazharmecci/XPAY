@@ -9,12 +9,13 @@ const INR = new Intl.NumberFormat("en-IN", {
   currency: "INR",
 });
 
-// 🔄 Status normalizer (ADDED – used in renderTable)
+// 🔄 Status normalizer
 function normalizeStatus(status) {
   const s = (status || "").toLowerCase();
   if (s === "approved") return "Approved";
   if (s === "finalapproved") return "FinalApproved";
-  if (s === "rejected" || s === "rejectedbymanager") return "Rejected";
+  if (s === "rejected") return "Rejected";
+  if (s === "rejectedbymanager") return "RejectedByManager";
   if (s === "pending") return "Pending";
   return "Unknown";
 }
@@ -364,7 +365,7 @@ async function renderTable() {
   }
 }
 
-// --- Only ONE summary function ---
+// --- Accountant Summary (Adhoc rows only reflect Manager decisions)
 function renderAccountantSummary({
   selectedMonth,
   selectedEmployee,
@@ -397,7 +398,7 @@ function renderAccountantSummary({
       <table class="summary-table">
         <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
         <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td></tr>
-        <tr><td>❌ Rejected by accountant:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>❌ Rejected by accountant (Regular only):</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
         <tr><td>⏳ Pending expenses to be reviewed by accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
         <tr><td>💸 Advance cash received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
         <tr><td>📌 Adhoc Requests submitted (manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>
@@ -405,14 +406,9 @@ function renderAccountantSummary({
         <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td></tr>
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
-      ${netPayable < 0 ? `
-        <div style="margin-top:0.5em; font-size:0.9em; color:#888;">
-          Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
-        </div>` : ""}
     </div>
   `;
 }
-
 
 // 🧾 Advance cash table
 
@@ -549,28 +545,51 @@ async function approveSelected() {
       console.error("Error approving:", err);
     }
   }
-  showToast(`${success} expense(s) approved.`);
+  if (success > 0) showToast(`${success} regular expense(s) approved.`);
   renderTable();
 }
 
-// ❌ Reject selected expenses
+// ❌ Reject selected expenses (restricted to Regular only)
 async function rejectSelected() {
   const checkboxes = document.querySelectorAll('.action-checkbox:checked');
   let success = 0;
   for (const cb of checkboxes) {
     try {
       const expenseId = cb.dataset.id;
-      const commentBox = document.querySelector(`.comment-box[data-id="${expenseId}"]`);
-      await updateDoc(doc(db, "expenses", expenseId), {
-        status: "Rejected",
-        accountant_comment: commentBox ? commentBox.value : ""
-      });
-      success++;
+      const expenseDoc = await getDoc(doc(db, "expenses", expenseId));
+      if (!expenseDoc.exists()) continue;
+
+      const exp = expenseDoc.data();
+      const regularAmount =
+        (Number(exp.fuel) || 0) +
+        (Number(exp.fare) || 0) +
+        (Number(exp.boarding) || 0) +
+        (Number(exp.food) || 0) +
+        (Number(exp.localConveyance) || 0) +
+        (Number(exp.postCourier) || 0) +
+        (Number(exp.misc) || 0) +
+        (Number(exp.monthlyConveyance) || 0) +
+        (Number(exp.monthlyPhone) || 0);
+
+      const adhocAmount = Number(exp.adhocRequest) || 0;
+
+      // ✅ Restrict rejection: only if Regular > 0
+      if (regularAmount > 0) {
+        const commentBox = document.querySelector(`.comment-box[data-id="${expenseId}"]`);
+        await updateDoc(doc(db, "expenses", expenseId), {
+          status: "Rejected",
+          accountant_comment: commentBox ? commentBox.value : ""
+        });
+        success++;
+      } else if (adhocAmount > 0) {
+        // 🚫 Block accountant rejection of Adhoc
+        showToast("Adhoc Requests can only be rejected by Manager.", "warning");
+      }
     } catch (err) {
       console.error("Error rejecting:", err);
     }
   }
-  showToast(`${success} expense(s) rejected.`);
+  if (success > 0) showToast(`${success} regular expense(s) rejected.`);
   renderTable();
 }
 
