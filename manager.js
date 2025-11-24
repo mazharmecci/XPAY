@@ -191,72 +191,75 @@ async function renderManagerClaims() {
       totalFinalApproved = 0,
       totalAdhoc = 0;
 
-  let rowBuffer = "";
-  for (const exp of records) {
-    const regularAmount = getRegularAmount(exp);
-    const adhocAmount = getAdhocAmount(exp);
-    const employeeName = await getEmployeeName(exp.userId, userCache);
+// Insert this above your table in the HTML (outside JS):
+// <div id="claimLegend" class="claim-legend">
+//   <span style="background:#f9f9ff; border-radius:3px; padding:2px 7px; margin-right:10px;">Mixed Claim: blue background</span>
+//   <span style="color:#007bff;">Adhoc Only</span>: Tracked for audit purpose
+// </div>
 
-    totalAdhoc += adhocAmount;
+let rowBuffer = "";
+for (const exp of records) {
+  const regularAmount = getRegularAmount(exp);
+  const adhocAmount = getAdhocAmount(exp);
+  const employeeName = await getEmployeeName(exp.userId, userCache);
 
-    const adhocKey = `${exp.date || ""}|${adhocAmount || 0}`;
-    const managerDecision = adhocDecisionMap.get(adhocKey); // "approved" | "rejected"
+  totalAdhoc += adhocAmount;
 
-    let badgeClass = "", badgeText = "";
-    if (managerDecision === "approved") {
-      badgeClass = "badge final-approved";
-      badgeText = "Final Approved by Manager";
-      totalFinalApproved += regularAmount + adhocAmount;
-    } else if (managerDecision === "rejected") {
-      badgeClass = "badge rejected";
-      badgeText = "Rejected by Manager";
-      totalRejected += regularAmount;
-    } else {
-      const status = exp.status || "";
-      if (status === "Approved") {
-        badgeClass = "badge approved";
-        badgeText = "Accountant Approved";
-        totalApproved += regularAmount;
-      } else if (status === "Rejected") {
-        badgeClass = "badge rejected";
-        badgeText = "Rejected";
-        totalRejected += regularAmount;
-      } else if (status === "FinalApproved") {
-        badgeClass = "badge final-approved";
-        badgeText = "Final Approved";
-        totalFinalApproved += regularAmount + adhocAmount;
-      } else {
-        badgeClass = "badge pending";
-        badgeText = "Pending";
-        totalPending += regularAmount;
-      }
-    }
+  const adhocKey = `${exp.date || ""}|${adhocAmount || 0}`;
+  const managerDecision = adhocDecisionMap.get(adhocKey); // "approved" | "rejected"
 
-    const isMixed = regularAmount > 0 && adhocAmount > 0;
-    const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : '';
-
-    rowBuffer += `
-      <tr ${rowStyle}>
-        <td>${employeeName}</td>
-        <td>${exp.date || "-"}</td>
-        <td>${exp.workflowType || "-"}</td>
-        <td>
-          <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
-          <span style="margin-left:0.5em;">Click to view breakdown</span>
-          <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
-            ${buildBreakdown(exp)}
-          </div>
-        </td>
-        <td style="font-size:0.85em; color:#555;">
-          Regular: ₹${regularAmount} <br>
-          Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
-        </td>
-        <td><span class="${badgeClass}">${badgeText}</span></td>
-        <td><input type="checkbox" class="select-claim" data-id="${exp.id}"></td>
-        <td><input type="text" class="manager-comment" placeholder="Comment (optional)"></td>
-      </tr>
-    `;
+  let badgeHtml = "";
+  if (managerDecision === "approved" || (exp.status === "FinalApproved")) {
+    badgeHtml = `<span class="badge final-approved">✅ Final Approved by Manager</span>`;
+    totalFinalApproved += regularAmount + adhocAmount;
+  } else if (managerDecision === "rejected") {
+    badgeHtml = `<span class="badge rejected">❌ Rejected by Manager</span>`;
+    totalRejected += regularAmount;
+  } else if (exp.status === "Approved") {
+    badgeHtml = `<span class="badge approved">✅ Accountant Approved</span>`;
+    totalApproved += regularAmount;
+  } else if (exp.status === "Rejected") {
+    badgeHtml = `<span class="badge rejected">❌ Rejected</span>`;
+    totalRejected += regularAmount;
+  } else {
+    badgeHtml = `<span class="badge pending">⏳ Pending</span>`;
+    totalPending += regularAmount;
   }
+
+  const isMixed = regularAmount > 0 && adhocAmount > 0;
+  const isAdhocOnly = (regularAmount === 0 && adhocAmount > 0);
+  const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : '';
+
+  rowBuffer += `
+    <tr ${rowStyle}>
+      <td>${employeeName}</td>
+      <td>${exp.date || "-"}</td>
+      <td>${exp.workflowType || "-"}</td>
+      <td>
+        <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
+        <span style="margin-left:0.5em;">Click to view breakdown</span>
+        <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
+          ${buildBreakdown(exp)}
+        </div>
+      </td>
+      <td style="font-size:0.85em; color:#555;">
+        Regular: ₹${regularAmount} <br>
+        Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
+      </td>
+      <td>${badgeHtml}</td>
+      ${
+        isAdhocOnly
+        ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc Only – Tracked for audit purpose</td>`
+        : `<td>
+             <input type="checkbox" class="select-claim" data-id="${exp.id}">
+           </td>
+           <td>
+             <input type="text" class="manager-comment" placeholder="Comment (optional)">
+           </td>`
+      }
+    </tr>
+  `;
+}
 
   tableBody.innerHTML = rowBuffer;
 
