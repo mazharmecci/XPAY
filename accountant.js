@@ -447,34 +447,62 @@ async function initBankWorkflow(employeeName, isAccountantView) {
   if (isAccountantView) setupReimbursementToggle();
 
   // --- Render Bank Confirmation Table ---
-  function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
-    const html = `
-      <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
-        <thead>
-          <tr style="background:#f0f8ff;">
-            <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
-            <th style="text-align:left; padding:8px;">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="padding:8px;">Final reimbursement credited to employee account</td>
-            <td style="padding:8px;">
-              ${
-                isAccountantView
-                  ? `<label class="switch">
-                       <input type="checkbox" ${isReimbursed ? "checked" : ""} data-emp="${employeeName}" data-month="${selectedMonth}" class="toggle-reimbursement">
-                       <span class="slider round"></span>
-                     </label>`
-                  : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">${isReimbursed ? "Yes" : "No"}</span>`
-              }
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-    document.getElementById("reimbursementBlock").innerHTML = html;
+function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
+  const html = `
+    <div style="margin-bottom:6px; font-weight:500;">
+      Employee: <span style="color:#2196F3;">${employeeName}</span>
+      | Month: <span style="color:#2196F3;">${selectedMonth}</span>
+    </div>
+    <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f0f8ff;">
+          <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
+          <th style="text-align:left; padding:8px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:8px;">Final reimbursement credited to employee account</td>
+          <td style="padding:8px;">
+            ${
+              isAccountantView
+                ? `<button class="reimb-btn" data-emp="${employeeName}" data-month="${selectedMonth}" style="background:${isReimbursed ? '#4CAF50' : '#f44336'};color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
+                      ${isReimbursed ? "Yes" : "No"}
+                   </button>
+                   <span style="margin-left:10px; font-weight:600; color:${isReimbursed ? 'green' : 'red'};">${isReimbursed ? "Reimbursed" : "Not Reimbursed"}</span>`
+                : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">${isReimbursed ? "Yes" : "No"}</span>`
+            }
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+  document.getElementById("reimbursementBlock").innerHTML = html;
+
+  // Attach button event only if accountant
+  if (isAccountantView) {
+    const btn = document.querySelector(".reimb-btn");
+    if (btn) {
+      btn.onclick = async () => {
+        const empName = (btn.dataset.emp || "").toLowerCase();
+        const month = btn.dataset.month;
+        const docKey = `${empName}_${month}`;
+        const newStatus = !(btn.textContent.trim() === "Yes"); // Toggle logic
+
+        await setDoc(doc(db, "paymentConfirmations", docKey), {
+          month,
+          reimbursed: newStatus,
+          updatedBy: "accountant",
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        showToast(`Reimbursement status updated to ${newStatus ? "Yes" : "No"}`, "success");
+        // Re-render to show the new status immediately
+        renderReimbursementConfirmation(employeeName, selectedMonth, newStatus, isAccountantView);
+      };
+    }
   }
+}
 
   // --- Toggle handler: also corrected to use the composite docKey
   function setupReimbursementToggle() {
