@@ -388,7 +388,7 @@ async function renderExpenses(currentUserId) {
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">🛠 Total Adhoc Requests submitted by emp:</td>
+        <td colspan="5" style="text-align:right;">📌 Total Adhoc Requests submitted by emp:</td>
         <td>${INR.format(totalAdhocSubmitted)}</td>
       </tr>
       <tr style="font-weight:bold; background:#fff;">
