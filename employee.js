@@ -420,7 +420,7 @@ async function showEmployeeReimbursementStatus(employeeName, selectedMonth) {
   let statusHtml = "";
   try {
     // 🔹 Fetch doc by employeeName (doc ID)
-    const docSnap = await getDoc(doc(db, "paymentConfirmations", empKey));
+   const docSnap = await getDoc(doc(db, "paymentConfirmations", employeeName.toLowerCase()));
 
     if (docSnap.exists()) {
       const data = docSnap.data();
