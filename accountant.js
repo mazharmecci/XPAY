@@ -499,6 +499,168 @@ async function rejectSelected() {
 
 // ...Place your unchanged helpers and init code below...
 
+// 📥 CSV Export
+function downloadApprovedCSV() {
+  const tableBody = document.querySelector("#expenseTable tbody");
+  if (!tableBody) {
+    alert("No expenses table found.");
+    return;
+  }
+  const rows = Array.from(tableBody.querySelectorAll("tr"));
+  const approvedExpenses = [];
+  rows.forEach((row, i) => {
+    const cells = row.querySelectorAll("td");
+    if (cells.length < 8) return;
+    const statusSpan = cells[5].querySelector("span");
+    const statusText = statusSpan ? statusSpan.textContent.trim().toLowerCase() : "";
+    if (statusText !== "accountant approved" && statusText !== "approved") return;
+    approvedExpenses.push([
+      i + 1,
+      sanitize(cells[1].textContent),
+      sanitize(cells[2].textContent),
+      sanitize(cells[3].textContent),
+      sanitize(cells[4].textContent),
+      sanitize(statusSpan ? statusSpan.textContent : cells[5].textContent),
+      sanitize(cells[7].querySelector("input") ? cells[7].querySelector("input").value : "")
+    ]);
+  });
+
+  if (approvedExpenses.length === 0) {
+    alert("No approved expenses found.");
+    return;
+  }
+
+  const csvRows = [
+    ["S.No", "Date", "Type", "Place/Details", "Total Amount", "Status", "Comment"],
+    ...approvedExpenses
+  ];
+  const BOM = "\uFEFF";
+  const csvContent = csvRows.map(row => row.map(escapeCSV).join(",")).join("\n");
+  const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "ApprovedExpenses.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
+
+// 📊 CSV helpers
+function escapeCSV(val) {
+  const str = String(val ?? "");
+  const clean = str.replace(/\n/g, " ").replace(/\r/g, " ").trim();
+  if (/[,"\n]/.test(clean)) {
+    return `"${clean.replace(/"/g, '""')}"`;
+  }
+  return clean;
+}
+
+function sanitize(val) {
+  const str = String(val ?? "");
+  return str
+    .replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// 🧾 Bank Reimbursement Workflow — Refined for Parity
+
+// --- Helper: Get latest bank status for an employee/month ---
+async function getLatestBankStatus(employeeUid, selectedMonth) {
+  const q = query(
+    collection(db, "bankEvents"),
+    where("userId", "==", employeeUid),
+    where("month", "==", selectedMonth),
+    orderBy("updatedAt", "desc"),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const data = snap.docs[0].data();
+    return data.reimbursed === true;
+  }
+  return false;
+}
+
+// --- Main workflow: renders bank status block and toggle ---
+async function initBankWorkflow(employeeUid, employeeName, isAccountantView) {
+  const monthPicker = document.getElementById("monthPicker");
+  const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+  const reimbursementBlock = document.getElementById("reimbursementBlock");
+
+  if (!employeeUid || employeeName.toLowerCase() === "all") {
+    reimbursementBlock.innerHTML = `
+      <div style="color:#f44336; font-weight:500; padding:12px 8px;">
+        Please select an individual employee to enable bank reimbursement confirmation.
+      </div>
+    `;
+    return;
+  }
+
+  const isReimbursed = await getLatestBankStatus(employeeUid, selectedMonth);
+
+  const html = `
+    <div style="margin-bottom:6px; font-weight:500;">
+      Employee: <span style="color:#2196F3;">${employeeName}</span>
+      | Month: <span style="color:#2196F3;">${selectedMonth}</span>
+    </div>
+    <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f0f8ff;">
+          <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
+          <th style="text-align:left; padding:8px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:8px;">Final reimbursement credited to employee account</td>
+          <td style="padding:8px;">
+            ${
+              isAccountantView
+                ? `<button class="reimb-btn" data-emp="${employeeUid}" data-month="${selectedMonth}" 
+                      style="background:${isReimbursed ? '#4CAF50' : '#f44336'};color:#fff;border:none;
+                             padding:7px 16px;border-radius:4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
+                    ${isReimbursed ? "Yes" : "No"}
+                 </button>
+                 <span style="margin-left:10px; font-weight:600; color:${isReimbursed ? 'green' : 'red'};">
+                   ${isReimbursed ? "Reimbursed" : "Not Reimbursed"}
+                 </span>`
+                : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">
+                     ${isReimbursed ? "Yes" : "No"}
+                   </span>`
+            }
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+  reimbursementBlock.innerHTML = html;
+
+  // Button handler (toggle) for accountant view
+  if (isAccountantView) {
+    const btn = document.querySelector(".reimb-btn");
+    if (btn) {
+      btn.onclick = async () => {
+        const empUid = btn.dataset.emp;
+        const month = btn.dataset.month;
+        const newStatus = !(btn.textContent.trim() === "Yes");
+
+        await addDoc(collection(db, "bankEvents"), {
+          userId: empUid,
+          month,
+          reimbursed: newStatus,
+          updatedBy: "accountant",
+          updatedAt: serverTimestamp()
+        });
+
+        showToast(`Reimbursement status updated to ${newStatus ? "Yes" : "No"}`, "success");
+        await initBankWorkflow(empUid, employeeName, isAccountantView);
+      };
+    }
+  }
+}
+
 // 🚦 Init
 document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.querySelector('.logout-btn');
