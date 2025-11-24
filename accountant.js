@@ -413,118 +413,116 @@ function renderAccountantSummary({
   `;
 }
 
-// 🧾 Bank reimbursement code
+// 🧾 Bank Reimbursement Workflow — Paste Ready
 
+// Main function: Call whenever you want to show/update the reimbursement panel
 async function initBankWorkflow(employeeName, isAccountantView) {
   const monthPicker = document.getElementById("monthPicker");
   const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+  const reimbursementBlock = document.getElementById("reimbursementBlock");
 
-  // 🧾 Helper to preload reimbursement status from Firestore (correct document path)
+  // Only allow toggle/block if a single employee is selected
+  if (!employeeName || employeeName.toLowerCase() === "all") {
+    reimbursementBlock.innerHTML = `
+      <div style="color:#f44336; font-weight:500; padding:12px 8px;">
+        Please select an individual employee to enable bank reimbursement confirmation.
+      </div>
+    `;
+    return;
+  }
+
+  // Helper: Get status from Firestore
   async function getReimbursementStatus(employeeName, selectedMonth) {
     const empKey = (employeeName || "").toLowerCase();
-    const docKey = `${empKey}_${selectedMonth}`; // Composite key per employee+month
+    const docKey = `${empKey}_${selectedMonth}`;
     try {
       const docSnap = await getDoc(doc(db, "paymentConfirmations", docKey));
       if (docSnap.exists()) {
         const data = docSnap.data();
-        // Month check is a safeguard; not strictly required, but good practice
         const monthMatch = (data.month || "").slice(0, 7) === selectedMonth;
         return monthMatch && data.reimbursed === true;
       }
     } catch (err) {
       console.error("Error fetching reimbursement status:", err);
     }
-    return false; // default to false if not found or error
+    return false;
   }
 
-  // Preload reimbursement status
+  // Get status for this employee/month
   const isReimbursed = await getReimbursementStatus(employeeName, selectedMonth);
 
-  // Render confirmation table
+  // Render the block
   renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView);
 
-  // Wire up toggle if accountant
-  if (isAccountantView) setupReimbursementToggle();
-
-  // --- Render Bank Confirmation Table ---
-function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
-  const html = `
-    <div style="margin-bottom:6px; font-weight:500;">
-      Employee: <span style="color:#2196F3;">${employeeName}</span>
-      | Month: <span style="color:#2196F3;">${selectedMonth}</span>
-    </div>
-    <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
-      <thead>
-        <tr style="background:#f0f8ff;">
-          <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
-          <th style="text-align:left; padding:8px;">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style="padding:8px;">Final reimbursement credited to employee account</td>
-          <td style="padding:8px;">
-            ${
-              isAccountantView
-                ? `<button class="reimb-btn" data-emp="${employeeName}" data-month="${selectedMonth}" style="background:${isReimbursed ? '#4CAF50' : '#f44336'};color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
+  // Render function with Yes/No button logic
+  function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
+    const html = `
+      <div style="margin-bottom:6px; font-weight:500;">
+        Employee: <span style="color:#2196F3;">${employeeName}</span>
+        | Month: <span style="color:#2196F3;">${selectedMonth}</span>
+      </div>
+      <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f0f8ff;">
+            <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
+            <th style="text-align:left; padding:8px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:8px;">Final reimbursement credited to employee account</td>
+            <td style="padding:8px;">
+              ${
+                isAccountantView
+                  ? `<button class="reimb-btn" data-emp="${employeeName}" data-month="${selectedMonth}" style="background:${isReimbursed ? '#4CAF50' : '#f44336'};color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
                       ${isReimbursed ? "Yes" : "No"}
                    </button>
                    <span style="margin-left:10px; font-weight:600; color:${isReimbursed ? 'green' : 'red'};">${isReimbursed ? "Reimbursed" : "Not Reimbursed"}</span>`
-                : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">${isReimbursed ? "Yes" : "No"}</span>`
-            }
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  `;
-  document.getElementById("reimbursementBlock").innerHTML = html;
+                  : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">${isReimbursed ? "Yes" : "No"}</span>`
+              }
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    reimbursementBlock.innerHTML = html;
 
-  // Attach button event only if accountant
-  if (isAccountantView) {
-    const btn = document.querySelector(".reimb-btn");
-    if (btn) {
-      btn.onclick = async () => {
-        const empName = (btn.dataset.emp || "").toLowerCase();
-        const month = btn.dataset.month;
-        const docKey = `${empName}_${month}`;
-        const newStatus = !(btn.textContent.trim() === "Yes"); // Toggle logic
+    // Button toggler wiring, only for accountant
+    if (isAccountantView) {
+      const btn = document.querySelector(".reimb-btn");
+      if (btn) {
+        btn.onclick = async () => {
+          const empName = (btn.dataset.emp || "").toLowerCase();
+          const month = btn.dataset.month;
+          const docKey = `${empName}_${month}`;
+          const newStatus = !(btn.textContent.trim() === "Yes"); // Toggle
 
-        await setDoc(doc(db, "paymentConfirmations", docKey), {
-          month,
-          reimbursed: newStatus,
-          updatedBy: "accountant",
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+          await setDoc(doc(db, "paymentConfirmations", docKey), {
+            month,
+            reimbursed: newStatus,
+            updatedBy: "accountant",
+            updatedAt: serverTimestamp()
+          }, { merge: true });
 
-        showToast(`Reimbursement status updated to ${newStatus ? "Yes" : "No"}`, "success");
-        // Re-render to show the new status immediately
-        renderReimbursementConfirmation(employeeName, selectedMonth, newStatus, isAccountantView);
-      };
+          showToast(`Reimbursement status updated to ${newStatus ? "Yes" : "No"}`, "success");
+          // Re-render the block so button color and text update instantly
+          renderReimbursementConfirmation(employeeName, selectedMonth, newStatus, isAccountantView);
+        };
+      }
     }
   }
 }
 
-  // --- Toggle handler: also corrected to use the composite docKey
-  function setupReimbursementToggle() {
-    document.querySelectorAll(".toggle-reimbursement").forEach(toggle => {
-      toggle.addEventListener("change", async () => {
-        const empName = (toggle.dataset.emp || "").toLowerCase();
-        const month = toggle.dataset.month;
-        const docKey = `${empName}_${month}`; // Composite key for doc reference
-        const reimbursed = toggle.checked;
 
-        await setDoc(doc(db, "paymentConfirmations", docKey), {
-          month,
-          reimbursed,
-          updatedBy: "accountant",
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-
-        showToast(`Reimbursement status updated to ${reimbursed ? "Yes" : "No"}`, "success");
-      });
-    });
-  }
+// --- Filter & page integration (Accountant View) ---
+const employeeFilter = document.getElementById('employeeFilter');
+function refreshBankBlock() {
+  const employeeName = employeeFilter.value || "";
+  initBankWorkflow(employeeName, true); // Accountant view
 }
+employeeFilter.addEventListener('change', refreshBankBlock);
+// Initial render on page load
+refreshBankBlock();
 
 
 // 🧾 Advance cash table
