@@ -199,34 +199,9 @@
         </div>
       </section>
 
-
         <hr class="section-divider" />
 
-         <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
-          <thead>
-            <tr style="background:#f0f8ff;">
-              <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
-              <th style="text-align:left; padding:8px;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding:8px;">Final reimbursement credited to employee account</td>
-              <td style="padding:8px;">
-                ${
-                  isAccountantView
-                    ? `<label class="switch">
-                         <input type="checkbox" ${isReimbursed ? "checked" : ""} data-emp="${employeeName}" data-month="${selectedMonth}" class="toggle-reimbursement">
-                         <span class="slider round"></span>
-                       </label>`
-                    : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">${isReimbursed ? "Yes" : "No"}</span>`
-                }
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-<hr class="section-divider" />
+      <div id="employeeReimbursementStatus"></div>
       
       <!-- 🚪 Logout Button -->
       <div class="logout-container">
