@@ -334,13 +334,13 @@ function renderManagerSummary({
       <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
       <table class="summary-table">
         <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
-        <tr><td>✅ Accountant-approved regulars:</td><td class="amount-cell">${INR.format(totalApproved)}</td></tr>
-        <tr><td>❌ Accountant Rejected regulars:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
-        <tr><td>⏳ Pending regulars final approval needed:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
-        <tr><td>📌 Total Adhoc Requests submitted:</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhoc)}</span></td></tr>
-        <tr><td>🔷 Adhoc Requests approved by Manager:</td><td class="amount-cell"><span style="color:green;">${INR.format(totalAdhocApproved)}</span></td></tr>
-        <tr><td>❌ Adhoc Requests rejected by Manager:</td><td class="amount-cell"><span style="color:red;">${INR.format(totalAdhocRejected)}</span></td></tr>
+        <tr><td>✅ Accountant-approved regular claims:</td><td class="amount-cell">${INR.format(totalApproved)}</td></tr>
+        <tr><td>❌ Accountant-rejected regular claims:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>⏳ Pending expenses from accountant (needed approval):</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
         <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr><td>📌 Total Adhoc Requests submitted:</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhoc)}</span></td></tr>
+        <tr><td>🔷 Adhoc Requests approved by manager:</td><td class="amount-cell"><span style="color:green;">${INR.format(totalAdhocApproved)}</span></td></tr>
+        <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell"><span style="color:red;">${INR.format(totalAdhocRejected)}</span></td></tr>        
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
       ${netPayable < 0 ? `
