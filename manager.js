@@ -248,6 +248,7 @@ async function renderManagerClaims() {
         </td>
       </tr>
     `;
+  }
 
   tableBody.innerHTML = rowBuffer;
 
