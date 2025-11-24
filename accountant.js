@@ -30,6 +30,18 @@ function showToast(message, type = 'success') {
   setTimeout(() => (toast.style.display = 'none'), 3000);
 }
 
+// 🚪 Logout
+function logoutUser() {
+  signOut(auth)
+    .then(() => {
+      window.location.href = "login.html";
+    })
+    .catch(err => {
+      showToast("Logout failed", "error");
+      console.error(err);
+    });
+}
+
 // 🏷️ Status badge (supports dual status)
 function getStatusBadge(status, regularStatus = "") {
   const s = (status || "").toLowerCase();
