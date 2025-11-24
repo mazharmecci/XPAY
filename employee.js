@@ -410,6 +410,67 @@ async function renderExpenses(currentUserId) {
   }
 }
 
+// Bank confirmation flow
+
+async function showEmployeeReimbursementStatus(employeeName, selectedMonth) {
+  const statusDiv = document.getElementById("employeeReimbursementStatus");
+  if (!statusDiv) return;
+
+  const empKey = (employeeName || "").toLowerCase();
+  const docKey = `${empKey}_${selectedMonth}`;
+  let statusHtml = "";
+  
+  try {
+    const docSnap = await getDoc(doc(db, "paymentConfirmations", docKey));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const isReimbursed = (data.month || "").slice(0, 7) === selectedMonth && data.reimbursed === true;
+      statusHtml = `
+        <div style="margin-bottom:6px; font-weight:500;">
+          Bank Reimbursement Status for <span style="color:#2196F3;">${selectedMonth}</span>:
+          <span style="font-weight:bold; color:${isReimbursed ? "green" : "red"}; margin-left:8px;">
+            ${isReimbursed ? "Credited ✅" : "Pending ⏳"}
+          </span>
+        </div>
+      `;
+    } else {
+      statusHtml = `
+        <div style="margin-bottom:6px; font-weight:500;">
+          Bank Reimbursement Status for <span style="color:#2196F3;">${selectedMonth}</span>:
+          <span style="font-weight:bold; color:orange; margin-left:8px;">
+            Not Confirmed
+          </span>
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error("Error fetching employee reimbursement status:", err);
+    statusHtml = `
+      <div style="color:#f44336;">Error loading bank reimbursement status.</div>
+    `;
+  }
+  
+  statusDiv.innerHTML = statusHtml;
+}
+
+// Example usage—after you have employeeName and selectedMonth
+// E.g. after employee authentication:
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  const employeeName = userDoc.exists() ? userDoc.data().name : "";
+  const monthPicker = document.getElementById("monthPicker");
+  const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+  
+  showEmployeeReimbursementStatus(employeeName, selectedMonth);
+
+  // If month picker may change:
+  monthPicker.addEventListener('change', () => {
+    const newMonth = monthPicker.value || new Date().toISOString().slice(0, 7);
+    showEmployeeReimbursementStatus(employeeName, newMonth);
+  });
+});
+
 // --- Init ---
 document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.querySelector(".logout-btn");
