@@ -413,6 +413,29 @@ function renderAccountantSummary({
   `;
 }
 
+// 🧾 Bank confirmation toggle
+
+function setupReimbursementToggle() {
+  document.querySelectorAll(".toggle-reimbursement").forEach(toggle => {
+    toggle.addEventListener("change", async () => {
+      const empName = (toggle.dataset.emp || "").toLowerCase();
+      const month = toggle.dataset.month;
+      const reimbursed = toggle.checked;
+
+      await setDoc(doc(db, "paymentConfirmations", empName), {
+        month,
+        reimbursed,
+        updatedBy: "accountant",
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      showToast(`Reimbursement status updated to ${reimbursed ? "Yes" : "No"}`, "success");
+    });
+  });
+}
+
+Call setupReimbursementToggle()
+
 // 🧾 Advance cash table
 
 function formatDateDDMMYYYY(dateStr) {
