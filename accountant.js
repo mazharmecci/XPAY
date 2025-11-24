@@ -42,6 +42,107 @@ function logoutUser() {
     });
 }
 
+// 👤 Employee Filter
+async function populateEmployeeFilter() {
+  const empSel = document.getElementById("employeeFilter");
+  if (!empSel) return;
+  empSel.innerHTML = `<option value="">All Employees</option>`;
+  try {
+    const usersSnap = await getDocs(collection(db, "users"));
+    const userList = [];
+    usersSnap.forEach(docSnap => {
+      const dat = docSnap.data();
+      if (dat.role && dat.role.toLowerCase() === "employee") {
+        userList.push({ id: docSnap.id, name: dat.name || docSnap.id });
+      }
+    });
+    userList.sort((a, b) => a.name.localeCompare(b.name));
+    userList.forEach(user => {
+      const opt = document.createElement("option");
+      opt.value = user.id;
+      opt.textContent = user.name;
+      empSel.appendChild(opt);
+    });
+  } catch {
+    showToast("Error loading employees.", "error");
+  }
+}
+
+// 👤 Employee dropdown
+async function populateEmployeeDropdown() {
+  const dropdown = document.getElementById("employeeName");
+  if (!dropdown) return;
+
+  try {
+    const querySnapshot = await getDocs(collection(db, "users"));
+    querySnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.role?.toLowerCase() === "employee") {
+        const option = document.createElement("option");
+        option.value = data.name;
+        option.textContent = data.name;
+        dropdown.appendChild(option);
+      }
+    });
+  } catch (err) {
+    console.error("Error loading employee names:", err);
+  }
+}
+
+// 👤 Employee dropdown - For Advance table
+async function populateAdvanceEmployeeDropdown() {
+  const dropdown = document.getElementById("advanceEmployee");
+  if (!dropdown) return;
+
+  const seenNames = new Set();
+  const querySnapshot = await getDocs(collection(db, "users"));
+  querySnapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const name = data.name?.trim();
+    if (data.role?.toLowerCase() === "employee" && name && !seenNames.has(name)) {
+      seenNames.add(name);
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      dropdown.appendChild(option);
+    }
+  });
+}
+
+// 🔎 Fetch expenses
+async function fetchExpenses(selectedMonth, selectedEmployee) {
+  const snapshot = await getDocs(collection(db, "expenses"));
+  const records = [];
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const dateStr = typeof data.date === 'string' ? data.date : '';
+    const matchesMonth = dateStr.slice(0, 7) === selectedMonth;
+    const matchesEmployee =
+      !selectedEmployee ||
+      selectedEmployee === "" ||
+      selectedEmployee === "All Employees" ||
+      data.userId === selectedEmployee;
+    if (matchesMonth && matchesEmployee) {
+      records.push({ ...data, id: docSnap.id });
+    }
+  });
+  records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  return records;
+}
+
+// 🧾 Breakdown builder
+function buildBreakdown(exp) {
+  return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
+    const items = keys.map(key => {
+      const value = Number(exp[key]) || 0;
+      if (key === "placeVisited" && exp[key]) return `${FIELD_LABELS[key]}: ${exp[key]}`;
+      if (key === "adhocRequest" && value > 0) return `<span style="color:#007bff;"><strong>${FIELD_LABELS[key]}: ₹${value}</strong></span>`;
+      return value > 0 ? `${FIELD_LABELS[key]}: ₹${value}` : '';
+    }).filter(Boolean);
+    return items.length ? `<strong>${groupName}</strong><br>${items.join(', ')}` : '';
+  }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
+}
+
 // 🏷️ Status badge (supports dual status)
 function getStatusBadge(status, regularStatus = "") {
   const s = (status || "").toLowerCase();
