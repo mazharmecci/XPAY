@@ -403,8 +403,7 @@ async function renderExpenses(currentUserId) {
         <td colspan="5" style="text-align:right;">${netLabel}:</td>
         <td>${INR.format(netReimbursementDue)}</td>
       </tr>
-    `;
-    }
+    `;    
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
