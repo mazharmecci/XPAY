@@ -416,9 +416,11 @@ function renderAccountantSummary({
 
 // 🧾 Calling Bank workflow
 
+const monthPicker = document.getElementById("monthPicker");
+const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+
 renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, true);
 setupReimbursementToggle();
-
 
 // 🧾 Render Bank Confirmation Table
 function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
