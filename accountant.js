@@ -492,8 +492,8 @@ async function initBankWorkflow(employeeName, isAccountantView) {
           const month = btn.dataset.month;
           const newStatus = !(btn.textContent.trim() === "Yes");
 
-          await setDoc(doc(db, "paymentConfirmations", empKey), {
-            month,
+          await setDoc(doc(db, "paymentConfirmations", employeeName.toLowerCase()), {
+            month: selectedMonth,
             reimbursed: newStatus,
             updatedBy: "accountant",
             updatedAt: serverTimestamp()
