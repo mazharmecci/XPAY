@@ -413,8 +413,44 @@ function renderAccountantSummary({
   `;
 }
 
-// 🧾 Bank confirmation toggle
 
+// 🧾 Calling Bank workflow
+
+renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, true);
+setupReimbursementToggle();
+
+
+// 🧾 Render Bank Confirmation Table
+function renderReimbursementConfirmation(employeeName, selectedMonth, isReimbursed, isAccountantView) {
+  const html = `
+    <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f0f8ff;">
+          <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
+          <th style="text-align:left; padding:8px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:8px;">Final reimbursement credited to employee account</td>
+          <td style="padding:8px;">
+            ${
+              isAccountantView
+                ? `<label class="switch">
+                     <input type="checkbox" ${isReimbursed ? "checked" : ""} data-emp="${employeeName}" data-month="${selectedMonth}" class="toggle-reimbursement">
+                     <span class="slider round"></span>
+                   </label>`
+                : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">${isReimbursed ? "Yes" : "No"}</span>`
+            }
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+  document.getElementById("reimbursementBlock").innerHTML = html;
+}
+
+// 🧾 Bank confirmation toggle handler
 function setupReimbursementToggle() {
   document.querySelectorAll(".toggle-reimbursement").forEach(toggle => {
     toggle.addEventListener("change", async () => {
@@ -434,7 +470,6 @@ function setupReimbursementToggle() {
   });
 }
 
-Call setupReimbursementToggle()
 
 // 🧾 Advance cash table
 
