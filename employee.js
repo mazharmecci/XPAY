@@ -416,10 +416,10 @@ async function showEmployeeReimbursementStatus(employeeName, selectedMonth) {
   const statusDiv = document.getElementById("employeeReimbursementStatus");
   if (!statusDiv) return;
 
-  const empKey = (employeeName || "").toLowerCase();
+  const empKey = (employeeName || "").toLowerCase().trim();
   const docKey = `${empKey}_${selectedMonth}`;
   let statusHtml = "";
-  
+
   try {
     const docSnap = await getDoc(doc(db, "paymentConfirmations", docKey));
     if (docSnap.exists()) {
@@ -449,26 +449,21 @@ async function showEmployeeReimbursementStatus(employeeName, selectedMonth) {
       <div style="color:#f44336;">Error loading bank reimbursement status.</div>
     `;
   }
-  
+
   statusDiv.innerHTML = statusHtml;
 }
 
-// Example usage—after you have employeeName and selectedMonth
-// E.g. after employee authentication:
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-  const userDoc = await getDoc(doc(db, 'users', user.uid));
-  const employeeName = userDoc.exists() ? userDoc.data().name : "";
-  const monthPicker = document.getElementById("monthPicker");
-  const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
-  
-  showEmployeeReimbursementStatus(employeeName, selectedMonth);
+const userName = userDoc.exists() ? (userDoc.data().name || "").toLowerCase().trim() : "";
+const monthPicker = document.getElementById("monthPicker");
+const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
 
-  // If month picker may change:
-  monthPicker.addEventListener('change', () => {
-    const newMonth = monthPicker.value || new Date().toISOString().slice(0, 7);
-    showEmployeeReimbursementStatus(employeeName, newMonth);
-  });
+// Call this after setup
+showEmployeeReimbursementStatus(userName, selectedMonth);
+
+// If month picker changes, update the block:
+monthPicker?.addEventListener("change", () => {
+  const updatedMonth = monthPicker.value || new Date().toISOString().slice(0, 7);
+  showEmployeeReimbursementStatus(userName, updatedMonth);
 });
 
 // --- Init ---
