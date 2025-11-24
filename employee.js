@@ -212,7 +212,7 @@ async function renderExpenses(currentUserId) {
     travelCostTable.innerHTML = "";
     monthlyClaimsTable.innerHTML = "";
 
-    // 🔹 Get user name for adhocRequests filtering
+    // 🔹 Get employee name for adhocRequests filtering
     let employeeName = "";
     if (currentUserId) {
       const userDoc = await getDoc(doc(db, "users", currentUserId));
@@ -220,33 +220,27 @@ async function renderExpenses(currentUserId) {
     }
     const employeeKey = (employeeName || "").toLowerCase();
 
-    // 🔹 Pull authoritative manager decisions from adhocRequests
-    //    Build a lightweight decision map keyed by date + amount (best available without adhocId)
-    const adhocDecisionMap = new Map(); // key: `${date}|${amount}` -> "approved" | "rejected"
+    // 🔹 Pull manager decisions from adhocRequests
+    const adhocDecisionMap = new Map(); // key: `${date}|${amount}` → "approved" | "rejected"
     let totalAdhocApproved = 0;
     let totalAdhocRejected = 0;
-    {
-      const adhocSnap = await getDocs(collection(db, "adhocRequests"));
-      adhocSnap.forEach(docSnap => {
-        const req = docSnap.data();
-        const dateStr = typeof req.date === "string" ? req.date : "";
-        const monthMatch = dateStr.slice(0, 7) === selectedMonth;
-        const raisedBy = (req.raisedBy || "").toLowerCase();
-        const status = (req.status || "").toLowerCase();
-        const amount = Number(req.amount) || 0;
 
-        if (monthMatch && raisedBy === employeeKey && amount > 0) {
-          const key = `${dateStr}|${amount}`;
-          if (status === "approved") {
-            adhocDecisionMap.set(key, "approved");
-            totalAdhocApproved += amount;
-          } else if (status === "rejected") {
-            adhocDecisionMap.set(key, "rejected");
-            totalAdhocRejected += amount;
-          }
-        }
-      });
-    }
+    const adhocSnap = await getDocs(collection(db, "adhocRequests"));
+    adhocSnap.forEach(docSnap => {
+      const req = docSnap.data();
+      const dateStr = typeof req.date === "string" ? req.date : "";
+      const monthMatch = dateStr.slice(0, 7) === selectedMonth;
+      const raisedBy = (req.raisedBy || "").toLowerCase();
+      const status = (req.status || "").toLowerCase();
+      const amount = Number(req.amount) || 0;
+
+      if (monthMatch && raisedBy === employeeKey && amount > 0) {
+        const key = `${dateStr}|${amount}`;
+        adhocDecisionMap.set(key, status);
+        if (status === "approved") totalAdhocApproved += amount;
+        else if (status === "rejected") totalAdhocRejected += amount;
+      }
+    });
 
     // 🔹 Fetch employee expenses for month
     const snapshot = await getDocs(collection(db, "expenses"));
@@ -259,6 +253,19 @@ async function renderExpenses(currentUserId) {
       }
     });
     records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+    // 🔄 Fallback: derive Adhoc approvals/rejections from expense rows if not already counted
+    records.forEach(exp => {
+      const adhocAmount = Number(exp.adhocRequest) || 0;
+      const normalized = normalizeStatus(exp.status);
+      const adhocKey = `${exp.date || ""}|${adhocAmount || 0}`;
+      const alreadyCounted = adhocDecisionMap.has(adhocKey);
+
+      if (!alreadyCounted && adhocAmount > 0) {
+        if (normalized === "FinalApproved") totalAdhocApproved += adhocAmount;
+        else if (normalized === "Rejected") totalAdhocRejected += adhocAmount;
+      }
+    });
 
     // 🔹 Totals
     let monthlyTotal = 0;
