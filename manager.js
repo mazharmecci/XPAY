@@ -136,6 +136,7 @@ function buildBreakdown(exp) {
 }
 
 // Main render
+// Main render
 async function renderManagerClaims() {
   const tableBody = document.querySelector("#managerClaimsTable tbody");
   const monthPicker = document.getElementById("monthPicker");
@@ -160,13 +161,18 @@ async function renderManagerClaims() {
 
   records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-  let totalApproved = 0, totalRejected = 0, totalPending = 0, totalFinalApproved = 0, totalAdhoc = 0;
+  let totalApproved = 0,
+      totalRejected = 0,
+      totalPending = 0,
+      totalFinalApproved = 0,
+      totalAdhoc = 0,
+      totalAdhocApproved = 0,
+      totalAdhocRejected = 0;
 
   let rowBuffer = "";
   for (const exp of records) {
     const regularAmount = getRegularAmount(exp);
     const adhocAmount = getAdhocAmount(exp);
-    const total = regularAmount + adhocAmount;
     const employeeName = await getEmployeeName(exp.userId, userCache);
 
     totalAdhoc += adhocAmount;
@@ -180,10 +186,12 @@ async function renderManagerClaims() {
       badgeClass = "badge rejected";
       badgeText = "Rejected";
       totalRejected += regularAmount;
+      totalAdhocRejected += adhocAmount; // ✅ track manager‑rejected adhoc
     } else if (exp.status === "FinalApproved") {
       badgeClass = "badge final-approved";
       badgeText = "Final Approved";
       totalFinalApproved += regularAmount + adhocAmount;
+      totalAdhocApproved += adhocAmount; // ✅ track manager‑approved adhoc
     } else {
       badgeClass = "badge pending";
       badgeText = "Pending";
@@ -262,7 +270,9 @@ async function renderManagerClaims() {
     totalFinalApproved,
     totalAdvance: totalAdvanceReceived,
     totalSubmitted: totalSubmittedAmount,
-    totalAdhoc
+    totalAdhoc,
+    totalAdhocApproved,
+    totalAdhocRejected
   });
 }
 
@@ -276,7 +286,9 @@ function renderManagerSummary({
   totalFinalApproved,
   totalAdvance,
   totalSubmitted,
-  totalAdhoc
+  totalAdhoc,
+  totalAdhocApproved,
+  totalAdhocRejected
 }) {
   const summaryContainer = document.getElementById("managerSummaryBlock");
   if (!summaryContainer) return;
@@ -297,7 +309,9 @@ function renderManagerSummary({
         <tr><td>✅ Accountant-approved regulars:</td><td class="amount-cell">${INR.format(totalApproved)}</td></tr>
         <tr><td>❌ Accountant Rejected regulars:</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
         <tr><td>⏳ Pending regulars final approval needed:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
-        <tr><td>📌 Adhoc Requests (Manager approval needed):</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhoc)}</span></td></tr>
+        <tr><td>📌 Total Adhoc Requests submitted:</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhoc)}</span></td></tr>
+        <tr><td>🔷 Adhoc Requests approved by Manager:</td><td class="amount-cell"><span style="color:green;">${INR.format(totalAdhocApproved)}</span></td></tr>
+        <tr><td>❌ Adhoc Requests rejected by Manager:</td><td class="amount-cell"><span style="color:red;">${INR.format(totalAdhocRejected)}</span></td></tr>
         <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
@@ -308,6 +322,7 @@ function renderManagerSummary({
     </div>
   `;
 }
+
 
 // Export to CSV for final approved
 function downloadFinalApproved() {
