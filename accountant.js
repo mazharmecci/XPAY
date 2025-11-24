@@ -174,7 +174,6 @@ function getStatusBadge(status) {
   return `<span class="badge unknown">Unknown</span>`;
 }
 
-// 🖥️ Render accountant table with adhoc separation
 async function renderTable() {
   try {
     const monthPicker = document.getElementById('monthPicker');
@@ -217,14 +216,14 @@ async function renderTable() {
     }
 
     const userCache = {};
-    let totalApproved = 0;            // accountant-approved regular
-    let totalRejected = 0;            // accountant-rejected regular
-    let totalPending = 0;             // accountant-pending regular
-    let totalSubmitted = 0;           // regular + adhoc
-    let totalFinalApprovedRegular = 0;// manager-final-approved regular
-    let totalAdhoc = 0;               // all adhoc submitted (from expenses)
-    let totalAdhocApproved = 0;       // adhoc approved by manager (from expenses)
-    let totalAdhocRejected = 0;       // adhoc rejected by manager (from expenses)
+    let totalApproved = 0;
+    let totalRejected = 0;
+    let totalPending = 0;
+    let totalSubmitted = 0;
+    let totalFinalApprovedRegular = 0;
+    let totalAdhoc = 0;
+    let totalAdhocApproved = 0;
+    let totalAdhocRejected = 0;
 
     for (const exp of filteredExpenses) {
       let employeeName = exp.userId || "-";
@@ -256,11 +255,9 @@ async function renderTable() {
         totalApproved += regularAmount;
       } else if (normalized === "Rejected") {
         totalRejected += regularAmount;
-        // manager rejected adhoc lives on the same record
         totalAdhocRejected += adhocAmount;
       } else if (normalized === "FinalApproved") {
         totalFinalApprovedRegular += regularAmount;
-        // manager approved adhoc lives on the same record
         totalAdhocApproved += adhocAmount;
       } else {
         totalPending += regularAmount;
@@ -289,8 +286,8 @@ async function renderTable() {
             Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
           </td>
           <td>${statusBadge}</td>
-          ${(
-            regularAmount === 0 && adhocAmount > 0
+          ${
+            (regularAmount === 0 && adhocAmount > 0)
               ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Tracked for audit purpose</td>`
               : `<td>
                    <input type="checkbox" class="action-checkbox" data-id="${exp.id}" 
@@ -300,10 +297,11 @@ async function renderTable() {
                    <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" 
                      title="Add comment for regular expenses. Adhoc is manager-only." />
                  </td>`
-          )}
+          }
         </tr>`;
+    }  // <--- THIS closes the for loop!
 
-    // advances by month + optional employee filter
+    // These blocks -- advances, summary, handlers -- should be OUTSIDE the for loop:
     let totalAdvanceReceived = 0;
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     advanceSnapshot.forEach(docSnap => {
