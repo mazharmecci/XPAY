@@ -1,7 +1,7 @@
 // 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import { getDoc, getDocs, addDoc, collection, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getDoc, getDocs, addDoc, setDoc, serverTimestamp, collection, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 // 💰 Currency formatter (ADDED – required by renderAccountantSummary)
 const INR = new Intl.NumberFormat("en-IN", {
