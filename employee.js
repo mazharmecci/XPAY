@@ -411,15 +411,13 @@ async function renderExpenses(currentUserId) {
 }
 
 // --- Bank Reimbursement Status Block (Employee View) ---
-async function showEmployeeReimbursementStatus(employeeName, selectedMonth) {
+async function showEmployeeReimbursementStatus(userId, selectedMonth) {
   const statusDiv = document.getElementById("employeeReimbursementStatus");
   if (!statusDiv) return;
 
-  const empKey = (employeeName || "").toLowerCase().trim();
-
   let statusHtml = "";
   try {
-    const docSnap = await getDoc(doc(db, "paymentConfirmations", empKey));
+    const docSnap = await getDoc(doc(db, "paymentConfirmations", userId));
     if (docSnap.exists()) {
       const data = docSnap.data();
       const isReimbursed = data.month === selectedMonth && data.reimbursed === true;
@@ -514,13 +512,12 @@ document.addEventListener("DOMContentLoaded", () => {
       await renderExpenses(currentUserId);
 
             // 🔹 Show bank reimbursement status on load
-      await showEmployeeReimbursementStatus(employeeName, selectedMonth);
+      await showEmployeeReimbursementStatus(currentUserId, selectedMonth);
             // 🔹 Update bank status when month changes
-      monthPicker?.addEventListener("change", async () => {
-        const updatedMonth = monthPicker.value || new Date().toISOString().slice(0, 7);
-        await showEmployeeReimbursementStatus(employeeName, updatedMonth);
-      });
-
+          monthPicker?.addEventListener("change", async () => {
+      const updatedMonth = monthPicker.value || new Date().toISOString().slice(0, 7);
+      await showEmployeeReimbursementStatus(currentUserId, updatedMonth);
+    });
     } catch (err) {
       console.error("❌ Error loading user/role:", err);
       showToast("Failed to load user profile.", "error");
