@@ -231,8 +231,9 @@ async function renderExpenses(currentUserId) {
     let totalRejected = 0;
     let totalPending = 0;
     let totalAdvanceReceived = 0;
-    let totalAdhoc = 0;          // all adhoc submitted
-    let totalAdhocApproved = 0;  // adhoc approved by manager
+    let totalAdhoc = 0;
+    let totalAdhocApproved = 0;
+    let totalAdhocRejected = 0;
 
     records.forEach((exp, index) => {
       const badge = getStatusBadge(exp.status);
@@ -271,9 +272,10 @@ async function renderExpenses(currentUserId) {
         totalApproved += regularAmount;
       } else if (normalized === "FinalApproved") {
         totalApproved += regularAmount;
-        totalAdhocApproved += adhocAmount; // ✅ manager-approved adhoc
+        totalAdhocApproved += adhocAmount;
       } else if (normalized === "Rejected") {
         totalRejected += regularAmount;
+        totalAdhocRejected += adhocAmount;
       } else {
         totalPending += regularAmount;
       }
@@ -341,9 +343,13 @@ async function renderExpenses(currentUserId) {
         <td colspan="5" style="text-align:right;">📌 Total Adhoc Requests submitted by emp:</td>
         <td><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td>
       </tr>
-      <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="5" style="text-align:right;">📌 Adhoc Requests approved by Manager:</td>
-        <td><span style="color:#007bff;">${INR.format(totalAdhocApproved)}</span></td>
+      <tr style="font-weight:bold; background:#f0fff0;">
+        <td colspan="5" style="text-align:right;">🔷 Adhoc Requests approved by Manager:</td>
+        <td><span style="color:green;">${INR.format(totalAdhocApproved)}</span></td>
+      </tr>
+      <tr style="font-weight:bold; background:#fff0f0;">
+        <td colspan="5" style="text-align:right;">❌ Adhoc Requests rejected by Manager:</td>
+        <td><span style="color:red;">${INR.format(totalAdhocRejected)}</span></td>
       </tr>
       <tr style="font-weight:bold; background:#e8ffe8;">
         <td colspan="5" style="text-align:right;">${netLabel}:</td>
@@ -361,6 +367,7 @@ async function renderExpenses(currentUserId) {
     showToast("Failed to load expenses.", "error");
   }
 }
+
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
