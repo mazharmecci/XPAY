@@ -494,11 +494,6 @@ async function rejectSelected() {
   renderTable();
 }
 
-// (rest unchanged: advance cash logic, CSV, bank workflow...)
-// --- All remaining code: downloadApprovedCSV, sanitize, escapeCSV, bank block, etc. ---
-
-// ...Place your unchanged helpers and init code below...
-
 // 📥 CSV Export
 function downloadApprovedCSV() {
   const tableBody = document.querySelector("#expenseTable tbody");
@@ -662,20 +657,81 @@ async function initBankWorkflow(employeeUid, employeeName, isAccountantView) {
 }
 
 // 🚦 Init
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Attach logout
   const logoutBtn = document.querySelector('.logout-btn');
   if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
 
-  populateEmployeeDropdown();
-  populateAdvanceEmployeeDropdown();
-  populateEmployeeFilter();
+  // Safe function checks before calling (avoids load-order bugs)
+  if (typeof populateEmployeeDropdown === "function") populateEmployeeDropdown();
+  if (typeof populateAdvanceEmployeeDropdown === "function") populateAdvanceEmployeeDropdown();
+  if (typeof populateEmployeeFilter === "function") populateEmployeeFilter();
 
+  // Action listeners for approve/reject
   document.getElementById('approveBtn')?.addEventListener('click', approveSelected);
   document.getElementById('rejectBtn')?.addEventListener('click', rejectSelected);
   document.getElementById('monthPicker')?.addEventListener('change', renderTable);
   document.getElementById('employeeFilter')?.addEventListener('change', renderTable);
+  document.getElementById('downloadApprovedBtn')?.addEventListener('click', downloadApprovedCSV);
 
-  // ...other event listeners and authentication, as in your recent code.
+  // Advance cash form
+  const advanceForm = document.getElementById('advanceCashForm');
+  if (advanceForm) advanceForm.addEventListener('submit', recordAdvanceCash);
 
-  // Your additional helpers such as recordAdvanceCash, renderAdvanceCashTable, downloadApprovedCSV, etc.
+  // Advance cash workflow UI toggle
+  document.getElementById('goToAdvanceCashBtn')?.addEventListener('click', () => {
+    const workflow = document.getElementById('advanceCashWorkflow');
+    if (!workflow) return;
+    if (workflow.style.display === '' || workflow.style.display === 'none') {
+      workflow.style.display = 'block';
+      workflow.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      workflow.style.display = 'none';
+    }
+  });
+
+  // Advance cash filters
+  document.getElementById('advanceMonth')?.addEventListener('change', renderAdvanceCashTable);
+  document.getElementById('advanceEmployee')?.addEventListener('change', renderAdvanceCashTable);
+
+  // --- Accountant authentication and secure workflow separation ---
+  onAuthStateChanged(auth, async user => {
+    if (!user) {
+      showToast("You must be logged in.", "error");
+      setTimeout(() => (window.location.href = "login.html"), 1500);
+      return;
+    }
+
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userData = userDoc.exists() ? userDoc.data() : {};
+    const role = (userData.role || '').toLowerCase();
+
+    if (role !== 'accountant') {
+      alert("Access denied. Accountant role required.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    const lb = document.querySelector('.logout-btn');
+    if (lb) lb.textContent = `🚪 Logout (${role})`;
+
+    await renderTable?.();          // Show main table with dual-status logic
+    await renderAdvanceCashTable?.();
+
+    // --- BANK REIMBURSEMENT WORKFLOW ---
+    const employeeFilter = document.getElementById('employeeFilter');
+    function refreshBankBlock() {
+      const employeeUid = employeeFilter.value || "";
+      const employeeName = employeeFilter.options[employeeFilter.selectedIndex]?.text || "";
+      if (typeof initBankWorkflow === "function") {
+        initBankWorkflow(employeeUid, employeeName, true);
+      }
+    }
+    employeeFilter?.addEventListener('change', refreshBankBlock);
+    document.getElementById('monthPicker')?.addEventListener('change', refreshBankBlock);
+
+    // Initial reimbursement load
+    refreshBankBlock();
+  });
 });
