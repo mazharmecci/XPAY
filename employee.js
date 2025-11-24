@@ -376,7 +376,7 @@ async function renderExpenses(currentUserId) {
         <td>${INR.format(totalRejected)}</td>
       </tr>
       <tr style="font-weight:bold; background:#f9f9f9;">
-        <td colspan="5" style="text-align:right;">⏳ Pending Expenses yet to get approved:</td>
+        <td colspan="5" style="text-align:right;">⏳ Pending Expenses yet to get approved (excl Adhoc):</td>
         <td>${INR.format(totalPending)}</td>
       </tr>
       <tr style="font-weight:bold; background:#e6f7ff;">
