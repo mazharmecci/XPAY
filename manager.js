@@ -205,13 +205,16 @@ async function calculateAdvanceCash(selectedMonth, selectedEmployee) {
   const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
   let totalAdvanceReceived = 0;
   const empFilter = selectedEmployee.trim().toLowerCase();
+
   advanceSnapshot.forEach(docSnap => {
     const adv = docSnap.data();
-    const advDate = typeof adv.date === "string"
-        const advDate = typeof adv.date === "string" ? adv.date : "";
+
+    // ✅ Declare once
+    const advDate = typeof adv.date === "string" ? adv.date : "";
     const advMonth = advDate.slice(0, 7);
     const empId = (adv.employeeId || "").toLowerCase();
     const empName = (adv.employeeName || "").toLowerCase();
+
     const isMonthMatch = advMonth === selectedMonth;
     const isEmpMatch = !empFilter || empId === empFilter || empName === empFilter;
 
