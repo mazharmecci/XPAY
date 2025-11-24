@@ -194,7 +194,7 @@ function renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge) {
     </tr>`;
 }
 
-// 📊 Render Employee Expenses with authoritative Adhoc decisions and badge override
+// Main renderExpenses employee
 async function renderExpenses(currentUserId) {
   try {
     const tripInfoTable = document.querySelector("#tripInfoTable tbody");
@@ -299,18 +299,17 @@ async function renderExpenses(currentUserId) {
 
       totalAdhocSubmitted += adhoc;
 
-      // 👇 Badge override: if there is an authoritative manager decision for this adhoc, reflect it
+      // 🔹 Badge override
       const normalized = normalizeStatus(exp.status);
       const adhocKey = `${exp.date || ""}|${adhoc || 0}`;
-      const managerDecision = adhocDecisionMap.get(adhocKey); // "approved" | "rejected" | undefined
+      const managerDecision = adhocDecisionMap.get(adhocKey);
 
       let badge = "";
       if (managerDecision === "approved") {
-        badge = '<span class="badge final-approved">Final Approved by Manager</span>';
+        badge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
       } else if (managerDecision === "rejected") {
-        badge = '<span class="badge rejected">Rejected by Manager</span>';
+        badge = '<span class="badge rejected">❌ Rejected by Manager</span>';
       } else {
-        // fall back to existing status mapping
         badge = getStatusBadge(exp.status);
       }
 
@@ -326,22 +325,20 @@ async function renderExpenses(currentUserId) {
         sn, date, convey, phone, adhoc, badge
       );
 
-      // Accountant buckets for regular
+      // 🔹 Accountant buckets for regular
       const regularAmount = travelSum + convey + phone;
       if (normalized === "Approved") {
         totalApproved += regularAmount;
       } else if (normalized === "FinalApproved") {
         totalApproved += regularAmount;
-        // note: adhoc totals are taken from adhocRequests authoritative above
       } else if (normalized === "Rejected") {
         totalRejected += regularAmount;
-        // adhoc rejection is already captured from adhocRequests
       } else {
         totalPending += regularAmount;
       }
     });
 
-    // 🔹 Fetch accountant-recorded advance cash
+    // 🔹 Fetch advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     const advanceRecords = [];
     advanceSnapshot.forEach(docSnap => {
@@ -364,7 +361,7 @@ async function renderExpenses(currentUserId) {
       totalAdvanceReceived += Number(record.advanceCash) || 0;
     });
 
-    // 🧾 Final Summary Block (uses authoritative adhoc totals)
+    // 🧾 Final Summary Block
     const totalSubmitted = monthlyTotal + travelTotal;
     const netReimbursementDue = (totalApproved + totalAdhocApproved) - totalAdvanceReceived;
     const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "🔶 Net payable to employee";
@@ -391,33 +388,23 @@ async function renderExpenses(currentUserId) {
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
       <tr style="font-weight:bold; background:#fff;">
-        <td colspan="5" style="text-align:right;">📌 Total Adhoc Requests submitted by emp:</td>
-        <td><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhocSubmitted)}</span></td>
+        <td colspan="5" style="text-align:right;">🛠 Total Adhoc Requests submitted by emp:</td>
+        <td>${INR.format(totalAdhocSubmitted)}</td>
       </tr>
-      <tr style="font-weight:bold; background:#f0fff0;">
+      <tr style="font-weight:bold; background:#fff;">
         <td colspan="5" style="text-align:right;">🔷 Adhoc Requests approved by Manager:</td>
         <td><span style="color:green;">${INR.format(totalAdhocApproved)}</span></td>
       </tr>
-      <tr style="font-weight:bold; background:#fff0f0;">
+      <tr style="font-weight:bold; background:#fff;">
         <td colspan="5" style="text-align:right;">❌ Adhoc Requests rejected by Manager:</td>
         <td><span style="color:red;">${INR.format(totalAdhocRejected)}</span></td>
       </tr>
-      <tr style="font-weight:bold; background:#e8ffe8;">
+      <tr style="font-weight:bold; background:#fff;">
         <td colspan="5" style="text-align:right;">${netLabel}:</td>
         <td>${INR.format(netReimbursementDue)}</td>
       </tr>
-      ${netReimbursementDue < 0 ? `
-        <tr>
-          <td colspan="6" style="font-size:0.9em; color:#888;">
-            Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
-          </td>
-        </tr>` : ""}
     `;
-  } catch (err) {
-    console.error("❌ Error rendering expenses:", err);
-    showToast("Failed to load expenses.", "error");
-  }
-}
+    }
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
