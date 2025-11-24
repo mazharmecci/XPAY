@@ -194,7 +194,7 @@ function renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge) {
     </tr>`;
 }
 
-// 📊 Render Employee Expenses
+// 📊 Render Employee Expenses with authoritative Adhoc decisions and badge override
 async function renderExpenses(currentUserId) {
   try {
     const tripInfoTable = document.querySelector("#tripInfoTable tbody");
@@ -212,9 +212,45 @@ async function renderExpenses(currentUserId) {
     travelCostTable.innerHTML = "";
     monthlyClaimsTable.innerHTML = "";
 
+    // 🔹 Get user name for adhocRequests filtering
+    let employeeName = "";
+    if (currentUserId) {
+      const userDoc = await getDoc(doc(db, "users", currentUserId));
+      employeeName = userDoc.exists() ? (userDoc.data().name || "") : "";
+    }
+    const employeeKey = (employeeName || "").toLowerCase();
+
+    // 🔹 Pull authoritative manager decisions from adhocRequests
+    //    Build a lightweight decision map keyed by date + amount (best available without adhocId)
+    const adhocDecisionMap = new Map(); // key: `${date}|${amount}` -> "approved" | "rejected"
+    let totalAdhocApproved = 0;
+    let totalAdhocRejected = 0;
+    {
+      const adhocSnap = await getDocs(collection(db, "adhocRequests"));
+      adhocSnap.forEach(docSnap => {
+        const req = docSnap.data();
+        const dateStr = typeof req.date === "string" ? req.date : "";
+        const monthMatch = dateStr.slice(0, 7) === selectedMonth;
+        const raisedBy = (req.raisedBy || "").toLowerCase();
+        const status = (req.status || "").toLowerCase();
+        const amount = Number(req.amount) || 0;
+
+        if (monthMatch && raisedBy === employeeKey && amount > 0) {
+          const key = `${dateStr}|${amount}`;
+          if (status === "approved") {
+            adhocDecisionMap.set(key, "approved");
+            totalAdhocApproved += amount;
+          } else if (status === "rejected") {
+            adhocDecisionMap.set(key, "rejected");
+            totalAdhocRejected += amount;
+          }
+        }
+      });
+    }
+
+    // 🔹 Fetch employee expenses for month
     const snapshot = await getDocs(collection(db, "expenses"));
     const records = [];
-
     snapshot.forEach(docSnap => {
       const exp = docSnap.data();
       const dateStr = typeof exp.date === "string" ? exp.date : "";
@@ -222,25 +258,21 @@ async function renderExpenses(currentUserId) {
         records.push(exp);
       }
     });
-
     records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
+    // 🔹 Totals
     let monthlyTotal = 0;
     let travelTotal = 0;
     let totalApproved = 0;
     let totalRejected = 0;
     let totalPending = 0;
     let totalAdvanceReceived = 0;
-    let totalAdhoc = 0;
-    let totalAdhocApproved = 0;
-    let totalAdhocRejected = 0;
+    let totalAdhocSubmitted = 0;
 
+    // 🔹 Render rows with badge override based on adhocDecisionMap
     records.forEach((exp, index) => {
-      const badge = getStatusBadge(exp.status);
       const sn = index + 1;
       const date = exp.date || "-";
-
-      tripInfoTable.innerHTML += renderTripInfoRow(sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge);
 
       const fuel = safeAmount(exp.fuel);
       const fare = safeAmount(exp.fare);
@@ -252,55 +284,67 @@ async function renderExpenses(currentUserId) {
       const travelSum = fuel + fare + boarding + food + local + postCourier + misc;
       travelTotal += travelSum;
 
-      travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge);
-
       const convey = safeAmount(exp.monthlyConveyance);
       const phone = safeAmount(exp.monthlyPhone);
       const adhoc = safeAmount(exp.adhocRequest);
       const monthlySum = convey + phone + adhoc;
       monthlyTotal += monthlySum;
 
-      totalAdhoc += adhoc;
+      totalAdhocSubmitted += adhoc;
 
-      monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge);
-
-      const regularAmount = travelSum + convey + phone;
-      const adhocAmount = adhoc;
+      // 👇 Badge override: if there is an authoritative manager decision for this adhoc, reflect it
       const normalized = normalizeStatus(exp.status);
+      const adhocKey = `${exp.date || ""}|${adhoc || 0}`;
+      const managerDecision = adhocDecisionMap.get(adhocKey); // "approved" | "rejected" | undefined
 
+      let badge = "";
+      if (managerDecision === "approved") {
+        badge = '<span class="badge final-approved">Final Approved by Manager</span>';
+      } else if (managerDecision === "rejected") {
+        badge = '<span class="badge rejected">Rejected by Manager</span>';
+      } else {
+        // fall back to existing status mapping
+        badge = getStatusBadge(exp.status);
+      }
+
+      tripInfoTable.innerHTML += renderTripInfoRow(
+        sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge
+      );
+
+      travelCostTable.innerHTML += renderTravelCostRow(
+        sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge
+      );
+
+      monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(
+        sn, date, convey, phone, adhoc, badge
+      );
+
+      // Accountant buckets for regular
+      const regularAmount = travelSum + convey + phone;
       if (normalized === "Approved") {
         totalApproved += regularAmount;
       } else if (normalized === "FinalApproved") {
         totalApproved += regularAmount;
-        totalAdhocApproved += adhocAmount;
+        // note: adhoc totals are taken from adhocRequests authoritative above
       } else if (normalized === "Rejected") {
         totalRejected += regularAmount;
-        totalAdhocRejected += adhocAmount;
+        // adhoc rejection is already captured from adhocRequests
       } else {
         totalPending += regularAmount;
       }
     });
 
-    // 🔄 Fetch accountant-recorded advance cash
-    let employeeName = "";
-    if (currentUserId) {
-      const userDoc = await getDoc(doc(db, "users", currentUserId));
-      employeeName = userDoc.exists() ? (userDoc.data().name || "") : "";
-    }
-
+    // 🔹 Fetch accountant-recorded advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     const advanceRecords = [];
-
     advanceSnapshot.forEach(docSnap => {
       const data = docSnap.data();
       const dateStr = typeof data.date === "string" ? data.date : "";
       const sameMonth = dateStr.slice(0, 7) === selectedMonth;
-      const sameEmp = (data.employeeName || "").toLowerCase() === (employeeName || "").toLowerCase();
+      const sameEmp = (data.employeeName || "").toLowerCase() === employeeKey;
       if (sameEmp && sameMonth) advanceRecords.push(data);
     });
-
     advanceRecords.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-
     advanceRecords.forEach((record, index) => {
       monthlyClaimsTable.innerHTML += `
         <tr style="background:#fffbe6;">
@@ -313,7 +357,7 @@ async function renderExpenses(currentUserId) {
       totalAdvanceReceived += Number(record.advanceCash) || 0;
     });
 
-    // 🧾 Final Summary Block
+    // 🧾 Final Summary Block (uses authoritative adhoc totals)
     const totalSubmitted = monthlyTotal + travelTotal;
     const netReimbursementDue = (totalApproved + totalAdhocApproved) - totalAdvanceReceived;
     const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "🔶 Net payable to employee";
@@ -341,7 +385,7 @@ async function renderExpenses(currentUserId) {
       </tr>
       <tr style="font-weight:bold; background:#fff;">
         <td colspan="5" style="text-align:right;">📌 Total Adhoc Requests submitted by emp:</td>
-        <td><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td>
+        <td><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhocSubmitted)}</span></td>
       </tr>
       <tr style="font-weight:bold; background:#f0fff0;">
         <td colspan="5" style="text-align:right;">🔷 Adhoc Requests approved by Manager:</td>
@@ -367,7 +411,6 @@ async function renderExpenses(currentUserId) {
     showToast("Failed to load expenses.", "error");
   }
 }
-
 
 // 🚦 Init
 document.addEventListener("DOMContentLoaded", () => {
