@@ -495,18 +495,6 @@ async function initBankWorkflow(employeeName, isAccountantView) {
   }
 }
 
-// --- Example usage, after DOMContentLoaded ---
-// You must determine employeeName and isAccountantView from your app context.
-
-document.addEventListener("DOMContentLoaded", () => {
-  // These will depend on your page logic:
-  const employeeName = /* get current employee name */;
-  const isAccountantView = /* true/false depending on user role */;
-  initBankWorkflow(employeeName, isAccountantView);
-});
-
-
-
 // 🧾 Advance cash table
 
 function formatDateDDMMYYYY(dateStr) {
@@ -766,25 +754,42 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById("advanceEmployee")?.addEventListener("change", renderAdvanceCashTable);
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      showToast("You must be logged in.", "error");
-      setTimeout(() => (window.location.href = "login.html"), 1500);
-      return;
-    }
+  if (!user) {
+    showToast("You must be logged in.", "error");
+    setTimeout(() => (window.location.href = "login.html"), 1500);
+    return;
+  }
 
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    const role = (userDoc.exists() ? userDoc.data().role : '').toLowerCase();
+  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  const userData = userDoc.exists() ? userDoc.data() : {};
+  const role = (userData.role || '').toLowerCase();
 
-    if (role !== 'accountant') {
-      alert("Access denied. Accountant role required.");
-      window.location.href = "login.html";
-      return;
-    }
+  if (role !== 'accountant') {
+    alert("Access denied. Accountant role required.");
+    window.location.href = "login.html";
+    return;
+  }
 
-    const lb = document.querySelector('.logout-btn');
-    if (lb) lb.textContent = `🚪 Logout (${role})`;
+  const lb = document.querySelector('.logout-btn');
+  if (lb) lb.textContent = `🚪 Logout (${role})`;
 
-    await renderTable();
-    await renderAdvanceCashTable();
-  });
+  await renderTable();
+  await renderAdvanceCashTable();
+
+  // --- BANK REIMBURSEMENT WORKFLOW ---
+  // Assuming you want to confirm reimbursement for employees:
+  // For accountant, show the toggle for the selected employee from the filter/dropdown
+  const employeeFilter = document.getElementById('employeeFilter');
+  let selectedEmployeeName = "";
+  if (employeeFilter) {
+    selectedEmployeeName = employeeFilter.value || "";
+    // Optionally wire up a change handler so bank workflow refreshes when filter changes:
+    employeeFilter.addEventListener('change', () => {
+      selectedEmployeeName = employeeFilter.value || "";
+      initBankWorkflow(selectedEmployeeName, true); // Always accountant view here
+    });
+  }
+
+  // Initial render for whichever employee is selected on page load
+  initBankWorkflow(selectedEmployeeName, true); // Accountant view
 });
