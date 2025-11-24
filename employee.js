@@ -466,4 +466,3 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast("Failed to load user profile.", "error");
     }
   });
-});
