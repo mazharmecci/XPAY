@@ -222,7 +222,7 @@ async function renderTable() {
     let totalPending = 0;
     let totalSubmitted = 0;
     let totalFinalApproved = 0;
-    let totalAdhoc = 0; // 🔵 track adhoc separately
+    let totalAdhoc = 0;
 
     for (const exp of filteredExpenses) {
       let employeeName = exp.userId || "-";
@@ -236,7 +236,6 @@ async function renderTable() {
         employeeName = userCache[exp.userId];
       }
 
-      // 🔄 split regular vs adhoc
       let regularAmount = 0;
       let adhocAmount = 0;
 
@@ -254,9 +253,9 @@ async function renderTable() {
 
       const normalized = normalizeStatus(exp.status);
       if (normalized === "Approved") {
-        totalApproved += regularAmount; // ✅ accountant only
+        totalApproved += regularAmount;
       } else if (normalized === "FinalApproved") {
-        totalFinalApproved += regularAmount; // ✅ manager final approval
+        totalFinalApproved += regularAmount;
       } else if (normalized === "Rejected") {
         totalRejected += regularAmount;
       } else {
@@ -265,16 +264,13 @@ async function renderTable() {
 
       const breakdownHTML = buildBreakdown(exp);
       const statusBadge = getStatusBadge(exp.status);
-      
+
       const hasAdhoc = adhocAmount > 0;
       const isAdhocOnly = regularAmount === 0 && adhocAmount > 0;
       const isMixed = regularAmount > 0 && adhocAmount > 0;
-      
-      // 🎨 Apply subtle tint for mixed rows
-      const rowStyle = isMixed
-        ? 'style="background-color:#f9f9ff;"'   // light bluish tint
-        : '';
-      
+
+      const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : '';
+
       tbody.innerHTML += `
         <tr ${rowStyle}>
           <td>${employeeName}</td>
@@ -305,7 +301,7 @@ async function renderTable() {
                  </td>`
           }
         </tr>`;
-          }
+    }
 
     // 🔄 Sum accountant-recorded advances
     let totalAdvanceReceived = 0;
@@ -326,6 +322,23 @@ async function renderTable() {
       }
     });
 
+    // 🔄 Sum manager-approved adhoc requests
+    let totalAdhocApproved = 0;
+    const adhocSnapshot = await getDocs(collection(db, "adhocRequests"));
+    adhocSnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const dateStr = typeof data.date === "string" ? data.date : "";
+      const isMonthMatch = dateStr.slice(0, 7) === selectedMonth;
+      const isApproved = (data.status || "").toLowerCase() === "approved";
+      const empFilter = selectedEmployee?.toLowerCase() || "";
+      const raisedBy = (data.raisedBy || "").toLowerCase();
+      const isEmpMatch =
+        !empFilter || empFilter === "all employees" || raisedBy === empFilter;
+      if (isMonthMatch && isApproved && isEmpMatch) {
+        totalAdhocApproved += Number(data.amount) || 0;
+      }
+    });
+
     // ✅ Render summary with adhoc separation
     renderAccountantSummary({
       selectedMonth,
@@ -336,7 +349,8 @@ async function renderTable() {
       totalAdvance: totalAdvanceReceived,
       totalSubmitted,
       totalFinalApproved,
-      totalAdhoc
+      totalAdhoc,
+      totalAdhocApproved // ✅ now passed correctly
     });
 
     // 🔽 Breakdown toggle handlers
@@ -366,6 +380,7 @@ async function renderTable() {
     if (summaryEl) summaryEl.innerHTML = "";
   }
 }
+
 
 // 📋 Summary renderer with adhoc separation
 function renderAccountantSummary({
@@ -402,6 +417,7 @@ function renderAccountantSummary({
           <tr><td>⏳ Pending Expenses to be reviewed by Accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
           <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
           <tr><td>📌 Adhoc Requests (Manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhoc)}</span></td></tr>
+          <tr><td>🔷 Adhoc Requests approved by Manager:</td><td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td></tr>
           <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
         </table>
         ${netPayable < 0 ? `
