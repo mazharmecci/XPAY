@@ -220,8 +220,8 @@ async function renderExpenses(currentUserId) {
     }
     const employeeKey = (employeeName || "").toLowerCase();
 
-    // --- Pull manager decisions from adhocRequests collection ---
-    const adhocDecisionMap = new Map(); // key: `${date}|${amount}` → "approved" | "rejected"
+    // 🔹 Pull manager decisions from adhocRequests
+    const adhocDecisionMap = new Map();
     let totalAdhocApproved = 0;
     let totalAdhocRejected = 0;
 
@@ -242,7 +242,7 @@ async function renderExpenses(currentUserId) {
       }
     });
 
-    // --- Fetch employee expenses for the month ---
+    // 🔹 Fetch employee expenses for month
     const snapshot = await getDocs(collection(db, "expenses"));
     const records = [];
     snapshot.forEach(docSnap => {
@@ -254,22 +254,7 @@ async function renderExpenses(currentUserId) {
     });
     records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-    // --- ADDED: robust Adhoc approved/rejected fallback logic ---
-    records.forEach(exp => {
-      const adhocAmount = Number(exp.adhocRequest) || 0;
-      const normalized = normalizeStatus(exp.status);
-      const adhocKey = `${exp.date || ""}|${adhocAmount || 0}`;
-      const alreadyCounted = adhocDecisionMap.has(adhocKey);
-
-      if (!alreadyCounted && adhocAmount > 0) {
-        // Robustly count ALL FinalApproved or Rejected/RejectedByManager
-        if (normalized === "FinalApproved") totalAdhocApproved += adhocAmount;
-        // ✅ FIX: count RejectedByManager and Rejected!
-        else if (normalized === "Rejected" || normalized === "RejectedByManager") totalAdhocRejected += adhocAmount;
-      }
-    });
-
-    // --- Totals (other) ---
+    // 🔹 Totals
     let monthlyTotal = 0;
     let travelTotal = 0;
     let totalApproved = 0;
@@ -278,7 +263,7 @@ async function renderExpenses(currentUserId) {
     let totalAdvanceReceived = 0;
     let totalAdhocSubmitted = 0;
 
-    // --- Render rows/badges ---
+    // 🔹 Render rows with badge override
     records.forEach((exp, index) => {
       const sn = index + 1;
       const date = exp.date || "-";
@@ -290,7 +275,6 @@ async function renderExpenses(currentUserId) {
       const local = safeAmount(exp.localConveyance);
       const postCourier = safeAmount(exp.postCourier);
       const misc = safeAmount(exp.misc);
-
       const travelSum = fuel + fare + boarding + food + local + postCourier + misc;
       travelTotal += travelSum;
 
@@ -302,16 +286,21 @@ async function renderExpenses(currentUserId) {
 
       totalAdhocSubmitted += adhoc;
 
-      // --- Badge logic
-      const normalized = normalizeStatus(exp.status);
       const adhocKey = `${exp.date || ""}|${adhoc || 0}`;
       const managerDecision = adhocDecisionMap.get(adhocKey);
+      let normalized = normalizeStatus(exp.status);
 
-      let badge = "";
+      // 🔄 Override normalized status if manager decision exists
       if (managerDecision === "approved") {
-        badge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
+        normalized = "FinalApproved";
       } else if (managerDecision === "rejected") {
-        badge = '<span class="badge rejected">❌ Rejected by Manager</span>';
+        normalized = "RejectedByManager";
+      }
+
+      // 🔹 Badge logic
+      let badge = "";
+      if (normalized === "FinalApproved") {
+        badge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
       } else if (normalized === "RejectedByManager") {
         badge = '<span class="badge rejected">❌ Rejected by Manager</span>';
       } else {
@@ -330,7 +319,7 @@ async function renderExpenses(currentUserId) {
         sn, date, convey, phone, adhoc, badge
       );
 
-      // --- Accountant buckets for regular claims
+      // 🔹 Accountant buckets for regular claims
       const regularAmount = travelSum + convey + phone;
       if (normalized === "Approved") {
         totalApproved += regularAmount;
@@ -341,9 +330,15 @@ async function renderExpenses(currentUserId) {
       } else {
         totalPending += regularAmount;
       }
+
+      // 🔄 Fallback Adhoc summary logic
+      if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
+        if (normalized === "FinalApproved") totalAdhocApproved += adhoc;
+        else if (normalized === "Rejected" || normalized === "RejectedByManager") totalAdhocRejected += adhoc;
+      }
     });
 
-    // --- Advance cash
+    // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     const advanceRecords = [];
     advanceSnapshot.forEach(docSnap => {
@@ -366,7 +361,7 @@ async function renderExpenses(currentUserId) {
       totalAdvanceReceived += Number(record.advanceCash) || 0;
     });
 
-    // --- Final summary block
+    // 🔹 Final summary block
     const totalSubmitted = monthlyTotal + travelTotal;
     const netReimbursementDue = (totalApproved + totalAdhocApproved) - totalAdvanceReceived;
     const netLabel = netReimbursementDue < 0 ? "💰 Advance exceeds approved" : "🔶 Net payable to employee";
@@ -387,8 +382,8 @@ async function renderExpenses(currentUserId) {
       <tr style="font-weight:bold; background:#f9f9f9;">
         <td colspan="5" style="text-align:right;">⏳ Pending Expenses yet to get approved (excl Adhoc):</td>
         <td>${INR.format(totalPending)}</td>
-      </tr>
-      <tr style="font-weight:bold; background:#e6f7ff;">
+      </tr> 
+     <tr style="font-weight:bold; background:#e6f7ff;">
         <td colspan="5" style="text-align:right;">💸 Advance Cash Received (${selectedMonth}):</td>
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
