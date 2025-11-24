@@ -14,11 +14,34 @@ function normalizeStatus(status) {
   const s = (status || "").toLowerCase();
   if (s === "approved") return "Approved";
   if (s === "finalapproved") return "FinalApproved";
-  if (s === "rejected") return "RejectedByAccountant";
+  if (s === "rejected") return "RejectedByAccount";
   if (s === "rejectedbymanager") return "RejectedByManager";
   if (s === "pending") return "Pending";
   return "Unknown";
 }
+
+// 🧩 Field Labels and Grouping
+const FIELD_GROUPS = {
+  "🧭 Trip Info": ["placeVisited"],
+  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc"], // ✅ added misc
+  "📅 Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone", "adhocRequest"] // ✅ added adhoc
+};
+
+const FIELD_LABELS = {
+  placeVisited: "Place Visited",
+  fuel: "Fuel",
+  fare: "Fare",
+  boarding: "Boarding",
+  food: "Food",
+  localConveyance: "Local Conveyance",
+  postCourier: "Post Courier",
+  misc: "Misc",              // ✅ added
+  advanceCash: "Advance Cash",
+  monthlyConveyance: "Monthly Conveyance",
+  monthlyPhone: "Monthly Phone",
+  adhocRequest: "Adhoc Request" // ✅ added
+};
+
 
 // 🍞 Toast Notification
 function showToast(message, type = 'success') {
@@ -33,9 +56,7 @@ function showToast(message, type = 'success') {
 // 🚪 Logout
 function logoutUser() {
   signOut(auth)
-    .then(() => {
-      window.location.href = "login.html";
-    })
+    .then(() => (window.location.href = "login.html"))
     .catch(err => {
       showToast("Logout failed", "error");
       console.error(err);
@@ -143,90 +164,18 @@ function buildBreakdown(exp) {
   }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
-// 🏷️ Status badge (supports dual status)
-function getStatusBadge(status, regularStatus = "") {
+// 🏷️ Status badge
+function getStatusBadge(status) {
   const s = (status || "").toLowerCase();
-  const r = (regularStatus || "").toLowerCase();
-
-  if (r === "rejected" && s === "pending") {
-    return `<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>`;
-  }
   if (s === "approved") return `<span class="badge approved">Accountant Approved</span>`;
   if (s === "finalapproved") return `<span class="badge final-approved">Final Approved</span>`;
-  if (s === "rejected") return `<span class="badge rejected">Rejected by accountant</span>`;
-  if (s === "rejectedbymanager") return `<span class="badge rejected">Rejected by manager</span>`;
+  if (s === "rejected") return `<span class="badge rejected">Rejected by Accountant</span>`;
+  if (s === "rejectedbymanager") return `<span class="badge rejected">Rejected by Manager</span>`;
   if (s === "pending") return `<span class="badge pending">Pending</span>`;
   return `<span class="badge unknown">Unknown</span>`;
 }
 
-// ❌ Reject selected expenses (Regular only)
-async function rejectSelected() {
-  const checkboxes = document.querySelectorAll('.action-checkbox:checked');
-  let success = 0;
-  for (const cb of checkboxes) {
-    try {
-      const expenseId = cb.dataset.id;
-      const expenseDoc = await getDoc(doc(db, "expenses", expenseId));
-      if (!expenseDoc.exists()) continue;
-
-      const exp = expenseDoc.data();
-      const regularAmount =
-        (Number(exp.fuel) || 0) +
-        (Number(exp.fare) || 0) +
-        (Number(exp.boarding) || 0) +
-        (Number(exp.food) || 0) +
-        (Number(exp.localConveyance) || 0) +
-        (Number(exp.postCourier) || 0) +
-        (Number(exp.misc) || 0) +
-        (Number(exp.monthlyConveyance) || 0) +
-        (Number(exp.monthlyPhone) || 0);
-
-      const adhocAmount = Number(exp.adhocRequest) || 0;
-      const commentBox = document.querySelector(`.comment-box[data-id="${expenseId}"]`);
-
-      if (regularAmount > 0) {
-        // ✅ Reject only Regular portion
-        await updateDoc(doc(db, "expenses", expenseId), {
-          accountant_regular_status: "Rejected",
-          accountant_comment: commentBox ? commentBox.value : "",
-          // Keep main status Pending if Adhoc exists
-          status: adhocAmount > 0 ? "Pending" : "Rejected"
-        });
-        success++;
-      } else if (adhocAmount > 0) {
-        showToast("Adhoc Requests can only be rejected by Manager.", "warning");
-      }
-    } catch (err) {
-      console.error("Error rejecting:", err);
-    }
-  }
-  if (success > 0) showToast(`${success} regular expense(s) rejected.`);
-  renderTable();
-}
-
-// ✅ Approve selected expenses (Regular only)
-async function approveSelected() {
-  const checkboxes = document.querySelectorAll('.action-checkbox:checked');
-  let success = 0;
-  for (const cb of checkboxes) {
-    try {
-      const expenseId = cb.dataset.id;
-      const commentBox = document.querySelector(`.comment-box[data-id="${expenseId}"]`);
-      await updateDoc(doc(db, "expenses", expenseId), {
-        status: "Approved",
-        accountant_regular_status: "Approved",
-        accountant_comment: commentBox ? commentBox.value : ""
-      });
-      success++;
-    } catch (err) {
-      console.error("Error approving:", err);
-    }
-  }
-  if (success > 0) showToast(`${success} regular expense(s) approved.`);
-  renderTable();
-}
-
-// --- Main renderTable for accountant
+// Main renderTable for accountant
 async function renderTable() {
   try {
     const monthPicker = document.getElementById('monthPicker');
@@ -236,44 +185,95 @@ async function renderTable() {
 
     const expenses = await fetchExpenses(selectedMonth, selectedEmployee);
 
+    const filteredExpenses = expenses.filter(exp => {
+      const advance = Number(exp.advanceCash) || 0;
+      const allOthers =
+        (Number(exp.fuel) || 0) +
+        (Number(exp.fare) || 0) +
+        (Number(exp.boarding) || 0) +
+        (Number(exp.food) || 0) +
+        (Number(exp.localConveyance) || 0) +
+        (Number(exp.postCourier) || 0) +
+        (Number(exp.monthlyConveyance) || 0) +
+        (Number(exp.monthlyPhone) || 0) +
+        (Number(exp.adhocRequest) || 0) +
+        (Number(exp.misc) || 0);
+      return !(advance > 0 && allOthers === 0);
+    });
+
     const tbody = document.querySelector('#expenseTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    if (expenses.length === 0) {
+    if (filteredExpenses.length === 0) {
       tbody.innerHTML = `
         <tr>
           <td colspan="8" style="text-align:center; padding: 1em; color: #888;">
             📭 No expenses found for selection.
           </td>
         </tr>`;
+      const summaryEl = document.getElementById("accountantSummary");
+      if (summaryEl) summaryEl.innerHTML = "";
       return;
     }
 
-    for (const exp of expenses) {
+    const userCache = {};
+    let totalApproved = 0;
+    let totalRejected = 0;
+    let totalPending = 0;
+    let totalSubmitted = 0;
+    let totalFinalApprovedRegular = 0;
+    let totalAdhoc = 0;
+    let totalAdhocApproved = 0;
+    let totalAdhocRejected = 0;
+
+    for (const exp of filteredExpenses) {
+      let employeeName = exp.userId || "-";
+      if (exp.userId && !userCache[exp.userId]) {
+        const userDoc = await getDoc(doc(db, "users", exp.userId));
+        if (userDoc.exists()) {
+          employeeName = userDoc.data().name || employeeName;
+          userCache[exp.userId] = employeeName;
+        }
+      } else if (exp.userId && userCache[exp.userId]) {
+        employeeName = userCache[exp.userId];
+      }
+
+      // amounts
       let regularAmount = 0;
       ["fuel","fare","boarding","food","localConveyance","postCourier","misc",
        "monthlyConveyance","monthlyPhone"]
         .forEach(key => { if (exp[key]) regularAmount += Number(exp[key]); });
 
       const adhocAmount = Number(exp.adhocRequest) || 0;
+
+      totalAdhoc += adhocAmount;
+      totalSubmitted += (regularAmount + adhocAmount);
+
       const normalized = normalizeStatus(exp.status);
-      const regularStatus = exp.accountant_regular_status || "";
+
+      // accountant buckets: only regular amounts
+      if (normalized === "Approved") {
+        totalApproved += regularAmount;
+      } else if (normalized === "Rejected") {
+        totalRejected += regularAmount;
+        totalAdhocRejected += adhocAmount;
+      } else if (normalized === "FinalApproved") {
+        totalFinalApprovedRegular += regularAmount;
+        totalAdhocApproved += adhocAmount;
+      } else {
+        totalPending += regularAmount;
+      }
 
       const breakdownHTML = buildBreakdown(exp);
-      const statusBadge = getStatusBadge(exp.status, regularStatus);
+      const statusBadge = getStatusBadge(exp.status);
 
-      // 🎨 Auto-tint mixed rejection rows
-      let rowStyle = "";
-      if (regularStatus === "Rejected" && normalized === "Pending" && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#ffe6e6;"'; // light red tint
-      } else if (regularAmount > 0 && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#f9f9ff;"'; // light blue tint for mixed
-      }
+      const isMixed = regularAmount > 0 && adhocAmount > 0;
+      const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : '';
 
       tbody.innerHTML += `
         <tr ${rowStyle}>
-          <td>${exp.userId || "-"}</td>
+          <td>${employeeName}</td>
           <td>${exp.date || "-"}</td>
           <td>${exp.workflowType || "-"}</td>
           <td>
@@ -290,19 +290,65 @@ async function renderTable() {
           <td>${statusBadge}</td>
           ${
             (regularAmount === 0 && adhocAmount > 0)
-              ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Manager only</td>`
+              ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Tracked for audit purpose</td>`
               : `<td>
                    <input type="checkbox" class="action-checkbox" data-id="${exp.id}" 
-                     title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." />
+                     title="Only regular expenses will be approved. Adhoc portion is routed to manager." />
                  </td>
                  <td>
-                   <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" />
+                   <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" 
+                     title="Add comment for regular expenses. Adhoc is manager-only." />
                  </td>`
           }
         </tr>`;
-    }
+    }  // <--- for-loop ends here!
+
+    // Now totals for advances and summary rendering (only ONCE and outside of loop)
+    let totalAdvanceReceived = 0;
+    const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
+    advanceSnapshot.forEach(docSnap => {
+      const adv = docSnap.data();
+      const advDate = typeof adv.date === "string" ? adv.date : "";
+      const advMonth = advDate.slice(0, 7);
+      const isMonthMatch = advMonth === selectedMonth;
+      const empFilter = selectedEmployee?.toLowerCase() || "";
+      const empId = (adv.employeeId || "").toLowerCase();
+      const empName = (adv.employeeName || "").toLowerCase();
+      const isEmpMatch =
+        !empFilter || empFilter === "all employees" ||
+        empId === empFilter || empName === empFilter;
+      if (isMonthMatch && isEmpMatch) {
+        totalAdvanceReceived += Number(adv.advanceCash) || 0;
+      }
+    });
+
+    renderAccountantSummary({
+      selectedMonth,
+      selectedEmployee,
+      totalApproved,
+      totalRejected,
+      totalPending,
+      totalAdvance: totalAdvanceReceived,
+      totalSubmitted,
+      totalFinalApproved: totalFinalApprovedRegular,
+      totalAdhoc,
+      totalAdhocApproved,
+      totalAdhocRejected
+    });
+
+    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const breakdown = document.getElementById(`breakdown-${id}`);
+        if (!breakdown) return;
+        const isVisible = breakdown.style.display === 'block';
+        breakdown.style.display = isVisible ? 'none' : 'block';
+        btn.textContent = isVisible ? '▶' : '▼';
+      });
+    });
+
   } catch (err) {
-        console.error("renderTable Fatal Error:", err);
+    console.error("renderTable Fatal Error:", err);
     const tbody = document.querySelector('#expenseTable tbody');
     if (tbody) {
       tbody.innerHTML = `
@@ -313,7 +359,9 @@ async function renderTable() {
         </tr>`;
     }
     const summaryEl = document.getElementById("accountantSummary");
-    if (summaryEl) summaryEl.innerHTML = "";
+    if (summaryEl) {
+      summaryEl.innerHTML = "";
+    }
   }
 }
 
@@ -358,15 +406,357 @@ function renderAccountantSummary({
         <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td></tr>
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
-      ${netPayable < 0 ? `
-        <div style="margin-top:0.5em; font-size:0.9em; color:#888;">
-          Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
-        </div>` : ""}
     </div>
   `;
 }
 
+// 🧾 Advance cash table
+
+function formatDateDDMMYYYY(dateStr) {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr || "-";
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
+async function renderAdvanceCashTable() {
+  const tableBody = document.querySelector("#advanceCashTable tbody");
+  if (!tableBody) return;
+  tableBody.innerHTML = "";
+
+  const selectedMonth = document.getElementById("advanceMonth")?.value || "";
+  const selectedEmployee = document.getElementById("advanceEmployee")?.value?.toLowerCase() || "";
+
+  const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+  const role = userDoc.exists() ? userDoc.data().role?.toLowerCase() : "";
+  const userName = userDoc.exists() ? userDoc.data().name?.toLowerCase() : "";
+
+  const snapshot = await getDocs(collection(db, "advanceCash"));
+  const records = [];
+  snapshot.forEach(docSnap => records.push(docSnap.data()));
+
+  records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  const visibleRecords = records.filter(record => {
+    const recordDate = record.date || "";
+    const recordEmployee = record.employeeName?.toLowerCase() || "";
+
+    const matchMonth = selectedMonth ? recordDate.startsWith(selectedMonth) : true;
+    const matchEmployee = selectedEmployee ? recordEmployee === selectedEmployee : true;
+
+    if (role === "employee") {
+      return recordEmployee === userName && matchMonth;
+    }
+
+    return matchMonth && matchEmployee;
+  });
+
+  if (visibleRecords.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center;">📭 No advance cash records found.</td>
+      </tr>`;
+    return;
+  }
+
+  visibleRecords.forEach(record => {
+    const formattedDate = formatDateDDMMYYYY(record.date);
+    tableBody.innerHTML += `
+      <tr>
+        <td>${record.employeeName || "-"}</td>
+        <td>${formattedDate}</td>
+        <td>₹${record.advanceCash || 0}</td>
+        <td>${record.note || "-"}</td>
+        <td>${record.status || "Recorded"}</td>
+      </tr>`;
+  });
+}
+
+// ✅ Advance cash logic
+async function recordAdvanceCash(e) {
+  e.preventDefault();
+
+  const employeeNameInput = document.getElementById("employeeName");
+  const advanceDateInput = document.getElementById("advanceDate");
+  const advanceAmountInput = document.getElementById("advanceAmount");
+  const advanceNoteInput = document.getElementById("advanceNote");
+
+  const employeeName = employeeNameInput?.value.trim().toLowerCase() || "";
+  const advanceDate = advanceDateInput?.value || "";
+  const advanceAmount = Number(advanceAmountInput?.value) || 0;
+  const advanceNote = advanceNoteInput?.value.trim() || "";
+
+  if (!employeeName || !advanceDate || advanceAmount <= 0) {
+    showToast("Please fill all required fields correctly.", "error");
+    return;
+  }
+
+  try {
+    const usersSnapshot = await getDocs(collection(db, "users"));
+    const matchedUser = usersSnapshot.docs.find(d =>
+      (d.data().name || "").toLowerCase() === employeeName
+    );
+
+    if (!matchedUser) {
+      showToast("Employee not found. Please check the name.", "error");
+      return;
+    }
+
+    const employeeId = matchedUser.id;
+
+    const advanceData = {
+      employeeName,
+      employeeId,
+      date: advanceDate,
+      advanceCash: advanceAmount,
+      note: advanceNote,
+      status: "Recorded",
+      createdBy: auth.currentUser?.uid || ""
+    };
+
+    await addDoc(collection(db, "advanceCash"), advanceData);
+
+    showToast("Advance cash recorded ✅", "success");
+    document.getElementById("advanceCashForm").reset();
+    await renderAdvanceCashTable();
+  } catch (err) {
+    console.error("Error recording advance cash:", err);
+    showToast("Error recording advance ❌", "error");
+  }
+}
+
+// ✅ Approve selected expenses
+async function approveSelected() {
+  const checkboxes = document.querySelectorAll('.action-checkbox:checked');
+  let success = 0;
+  for (const cb of checkboxes) {
+    try {
+      const expenseId = cb.dataset.id;
+      const commentBox = document.querySelector(`.comment-box[data-id="${expenseId}"]`);
+      await updateDoc(doc(db, "expenses", expenseId), {
+        status: "Approved",
+        accountant_comment: commentBox ? commentBox.value : ""
+      });
+      success++;
+    } catch (err) {
+      console.error("Error approving:", err);
+    }
+  }
+  if (success > 0) showToast(`${success} regular expense(s) approved.`);
+  renderTable();
+}
+
+// ❌ Reject selected expenses (restricted to Regular only)
+async function rejectSelected() {
+  const checkboxes = document.querySelectorAll('.action-checkbox:checked');
+  let success = 0;
+  for (const cb of checkboxes) {
+    try {
+      const expenseId = cb.dataset.id;
+      const expenseDoc = await getDoc(doc(db, "expenses", expenseId));
+      if (!expenseDoc.exists()) continue;
+
+      const exp = expenseDoc.data();
+      const regularAmount =
+        (Number(exp.fuel) || 0) +
+        (Number(exp.fare) || 0) +
+        (Number(exp.boarding) || 0) +
+        (Number(exp.food) || 0) +
+        (Number(exp.localConveyance) || 0) +
+        (Number(exp.postCourier) || 0) +
+        (Number(exp.misc) || 0) +
+        (Number(exp.monthlyConveyance) || 0) +
+        (Number(exp.monthlyPhone) || 0);
+
+      const adhocAmount = Number(exp.adhocRequest) || 0;
+
+      // ✅ Restrict rejection: only if Regular > 0
+      if (regularAmount > 0) {
+        const commentBox = document.querySelector(`.comment-box[data-id="${expenseId}"]`);
+        await updateDoc(doc(db, "expenses", expenseId), {
+          status: "Rejected",
+          accountant_comment: commentBox ? commentBox.value : ""
+        });
+        success++;
+      } else if (adhocAmount > 0) {
+        // 🚫 Block accountant rejection of Adhoc
+        showToast("Adhoc Requests can only be rejected by Manager.", "warning");
+      }
+    } catch (err) {
+      console.error("Error rejecting:", err);
+    }
+  }
+  if (success > 0) showToast(`${success} regular expense(s) rejected.`);
+  renderTable();
+}
+
+// 📥 CSV Export
+function downloadApprovedCSV() {
+  const tableBody = document.querySelector("#expenseTable tbody");
+  if (!tableBody) {
+    alert("No expenses table found.");
+    return;
+  }
+  const rows = Array.from(tableBody.querySelectorAll("tr"));
+  const approvedExpenses = [];
+  rows.forEach((row, i) => {
+    const cells = row.querySelectorAll("td");
+    if (cells.length < 8) return;
+    const statusSpan = cells[5].querySelector("span");
+    const statusText = statusSpan ? statusSpan.textContent.trim().toLowerCase() : "";
+    if (statusText !== "accountant approved" && statusText !== "approved") return;
+    approvedExpenses.push([
+      i + 1,
+      sanitize(cells[1].textContent),
+      sanitize(cells[2].textContent),
+      sanitize(cells[3].textContent),
+      sanitize(cells[4].textContent),
+      sanitize(statusSpan ? statusSpan.textContent : cells[5].textContent),
+      sanitize(cells[7].querySelector("input") ? cells[7].querySelector("input").value : "")
+    ]);
+  });
+
+  if (approvedExpenses.length === 0) {
+    alert("No approved expenses found.");
+    return;
+  }
+
+  const csvRows = [
+    ["S.No", "Date", "Type", "Place/Details", "Total Amount", "Status", "Comment"],
+    ...approvedExpenses
+  ];
+  const BOM = "\uFEFF";
+  const csvContent = csvRows.map(row => row.map(escapeCSV).join(",")).join("\n");
+  const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "ApprovedExpenses.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
+
+// 📊 CSV helpers
+function escapeCSV(val) {
+  const str = String(val ?? "");
+  const clean = str.replace(/\n/g, " ").replace(/\r/g, " ").trim();
+  if (/[,"\n]/.test(clean)) {
+    return `"${clean.replace(/"/g, '""')}"`;
+  }
+  return clean;
+}
+
+function sanitize(val) {
+  const str = String(val ?? "");
+  return str
+    .replace(/[\u{1F600}-\u{1F6FF}₹▶📅🧭]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// 🧾 Bank Reimbursement Workflow — Refined for Parity
+
+// --- Helper: Get latest bank status for an employee/month ---
+async function getLatestBankStatus(employeeUid, selectedMonth) {
+  const q = query(
+    collection(db, "bankEvents"),
+    where("userId", "==", employeeUid),
+    where("month", "==", selectedMonth),
+    orderBy("updatedAt", "desc"),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const data = snap.docs[0].data();
+    return data.reimbursed === true;
+  }
+  return false;
+}
+
+// --- Main workflow: renders bank status block and toggle ---
+async function initBankWorkflow(employeeUid, employeeName, isAccountantView) {
+  const monthPicker = document.getElementById("monthPicker");
+  const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+  const reimbursementBlock = document.getElementById("reimbursementBlock");
+
+  if (!employeeUid || employeeName.toLowerCase() === "all") {
+    reimbursementBlock.innerHTML = `
+      <div style="color:#f44336; font-weight:500; padding:12px 8px;">
+        Please select an individual employee to enable bank reimbursement confirmation.
+      </div>
+    `;
+    return;
+  }
+
+  const isReimbursed = await getLatestBankStatus(employeeUid, selectedMonth);
+
+  const html = `
+    <div style="margin-bottom:6px; font-weight:500;">
+      Employee: <span style="color:#2196F3;">${employeeName}</span>
+      | Month: <span style="color:#2196F3;">${selectedMonth}</span>
+    </div>
+    <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f0f8ff;">
+          <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
+          <th style="text-align:left; padding:8px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:8px;">Final reimbursement credited to employee account</td>
+          <td style="padding:8px;">
+            ${
+              isAccountantView
+                ? `<button class="reimb-btn" data-emp="${employeeUid}" data-month="${selectedMonth}" 
+                      style="background:${isReimbursed ? '#4CAF50' : '#f44336'};color:#fff;border:none;
+                             padding:7px 16px;border-radius:4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
+                    ${isReimbursed ? "Yes" : "No"}
+                 </button>
+                 <span style="margin-left:10px; font-weight:600; color:${isReimbursed ? 'green' : 'red'};">
+                   ${isReimbursed ? "Reimbursed" : "Not Reimbursed"}
+                 </span>`
+                : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">
+                     ${isReimbursed ? "Yes" : "No"}
+                   </span>`
+            }
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+  reimbursementBlock.innerHTML = html;
+
+  // Button handler (toggle) for accountant view
+  if (isAccountantView) {
+    const btn = document.querySelector(".reimb-btn");
+    if (btn) {
+      btn.onclick = async () => {
+        const empUid = btn.dataset.emp;
+        const month = btn.dataset.month;
+        const newStatus = !(btn.textContent.trim() === "Yes");
+
+        await addDoc(collection(db, "bankEvents"), {
+          userId: empUid,
+          month,
+          reimbursed: newStatus,
+          updatedBy: "accountant",
+          updatedAt: serverTimestamp()
+        });
+
+        showToast(`Reimbursement status updated to ${newStatus ? "Yes" : "No"}`, "success");
+        await initBankWorkflow(empUid, employeeName, isAccountantView);
+      };
+    }
+  }
+}
+
 // 🚦 Init
+
 document.addEventListener('DOMContentLoaded', () => {
   // Attach logout
   const logoutBtn = document.querySelector('.logout-btn');
@@ -400,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById("advanceMonth")?.addEventListener("change", renderAdvanceCashTable);
   document.getElementById("advanceEmployee")?.addEventListener("change", renderAdvanceCashTable);
 
-  // --- Accountant authentication ---
+  // --- Accountant authentication and bank workflow ---
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       showToast("You must be logged in.", "error");
@@ -423,5 +813,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await renderTable();
     await renderAdvanceCashTable();
+
+    // --- BANK REIMBURSEMENT WORKFLOW ---
+    const employeeFilter = document.getElementById('employeeFilter');
+    function refreshBankBlock() {
+      const employeeUid = employeeFilter.value || "";
+      const employeeName = employeeFilter.options[employeeFilter.selectedIndex]?.text || "";
+      initBankWorkflow(employeeUid, employeeName, true);
+    }
+    employeeFilter.addEventListener('change', refreshBankBlock);
+    document.getElementById("monthPicker")?.addEventListener('change', refreshBankBlock);
+
+    // Initial load
+    refreshBankBlock();
   });
 });
