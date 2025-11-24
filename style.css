@@ -17,6 +17,16 @@
   color: #444;
 }
 
+.badge.final-approved {
+  background: #2e7d32;
+  color: #fff;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.98em;
+  display: inline-block;
+}
+
 .legend {
   margin-bottom: 0.5em;
   font-size: 0.85em;
