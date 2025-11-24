@@ -323,7 +323,6 @@ async function renderTable() {
       }
     });
 
-    // summary render (manager-approved adhoc comes from expenses, not adhocRequests)
     renderAccountantSummary({
       selectedMonth,
       selectedEmployee,
@@ -338,7 +337,6 @@ async function renderTable() {
       totalAdhocRejected
     });
 
-    // breakdown toggles
     document.querySelectorAll('.toggle-breakdown').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -390,7 +388,6 @@ function renderAccountantSummary({
     year: "numeric"
   });
 
-  // Net payable includes manager-final-approved regular + manager-approved adhoc, minus advances
   const netPayable = (totalFinalApproved + totalAdhocApproved) - totalAdvance;
   const netLabel = netPayable < 0
     ? "💰 Advance exceeds approved"
