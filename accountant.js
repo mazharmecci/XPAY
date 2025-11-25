@@ -226,6 +226,7 @@ function renderAccountantSummary({
     </div>
   `;
 }
+}
 
 // 🧾 Advance cash table
 
