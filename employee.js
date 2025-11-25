@@ -334,18 +334,18 @@ async function renderExpenses(currentUserId) {
   // 🔢 Accountant buckets for regular claims
   const regularAmount = travelSum + convey + phone;
   const isRegularRejected = (regularStatus || "").toLowerCase() === "rejected";
+  const isAdhocOnlyPending = normalized === "pending" && isRegularRejected;
   
-  if (normalized === "Approved" || normalized === "FinalApproved") {
+  if (normalized === "approved" || normalized === "finalapproved") {
     totalApproved += regularAmount;
   } else if (
-    normalized === "Rejected" ||
-    normalized === "RejectedByManager" ||
-    normalized === "MixedRejectedPending"
+    normalized === "rejected" ||
+    normalized === "rejectedbymanager" ||
+    normalized === "mixedrejectedpending"
   ) {
     totalRejected += regularAmount;
   } else {
     // ✅ Only count as pending if regular is not rejected
-    const isAdhocOnlyPending = normalized === "Pending" && isRegularRejected;
     if (!isRegularRejected && !isAdhocOnlyPending) {
       totalPending += regularAmount;
     }
@@ -353,12 +353,12 @@ async function renderExpenses(currentUserId) {
   
   // 🔄 Fallback Adhoc summary logic
   if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-    if (normalized === "FinalApproved") {
+    if (normalized === "finalapproved") {
       totalAdhocApproved += adhoc;
     } else if (
-      normalized === "Rejected" ||
-      normalized === "RejectedByManager" ||
-      normalized === "MixedRejectedPending"
+      normalized === "rejected" ||
+      normalized === "rejectedbymanager" ||
+      normalized === "mixedrejectedpending"
     ) {
       totalAdhocRejected += adhoc;
     }
