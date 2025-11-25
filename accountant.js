@@ -158,7 +158,8 @@ async function renderTable() {
       const dateStr = typeof req.date === "string" ? req.date : "";
       const status = (req.status || "").toLowerCase();
       const amount = Number(req.amount) || 0;
-      const key = `${dateStr}|${amount}`;
+      const raisedBy = (req.raisedBy || "").toLowerCase().trim();
+      const key = `${dateStr}|${amount}|${raisedBy}`;
       adhocDecisionMap.set(key, status);
     });
 
@@ -185,8 +186,15 @@ async function renderTable() {
 
       // 🔹 Normalize status with manager override
       const regularStatus = exp.accountant_regular_status || "";
-      const adhocKey = `${exp.date || ""}|${adhocAmount}`;
-      const managerDecision = adhocDecisionMap.get(adhocKey);
+      const employeeKey = (employeeName || "").toLowerCase().trim();
+      const adhocKey = `${exp.date || ""}|${adhocAmount}|${employeeKey}`;
+      let managerDecision = adhocDecisionMap.get(adhocKey);
+      
+      // ✅ Fallback: trust expense record if managerDecision missing
+      if (!managerDecision && exp.status === "FinalApproved") {
+        managerDecision = "approved";
+      }
+      
       let normalized = normalizeStatus(exp.status, regularStatus);
       
       if (managerDecision === "approved") {
