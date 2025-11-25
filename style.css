@@ -8,6 +8,25 @@
   color: #000000 !important;
 }
 
+#downloadApprovedBtn,
+#goToAdvanceCashBtn {
+  background-color: #00bfff; /* Crystal blue */
+  color: #ffffff;            /* White text */
+  border: none;
+  border-radius: 7px;
+  padding: 0.7rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.18s;
+}
+
+#downloadApprovedBtn:hover,
+#goToAdvanceCashBtn:hover {
+  background-color: #009acd; /* Slightly darker crystal blue on hover */
+}
+
+
 /* Expense block/group styling */
 .expense-group {
   margin-bottom: 2.2rem;
