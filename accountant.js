@@ -325,7 +325,6 @@ async function renderTable() {
         rowStyle = 'style="background-color:#f9f9ff;"';
       }
 
-      const breakdownHTML = buildBreakdown(exp);
       tbody.innerHTML += `
         <tr ${rowStyle}>
           <td>${employeeName}</td>
@@ -339,8 +338,8 @@ async function renderTable() {
             </div>
           </td>
           <td style="font-size:0.85em; color:#555;">
-            Regular: ₹${regularAmount} <br>
-            Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
+            Regular: ₹${regularAmount.toFixed(2)}<br>
+            Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount.toFixed(2)}</span>
           </td>
           <td>${statusBadge}</td>
           ${
