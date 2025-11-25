@@ -257,9 +257,13 @@ async function renderTable() {
       const regularStatus = exp.accountant_regular_status || "";
       let normalized = normalizeStatus(exp.status, regularStatus);
 
-      // --- (Manager decision override goes here if you track it) ---
+      // Manager override logic (optional if you track manager decisions separately)
+      // const managerDecision = adhocDecisionMap.get(`${exp.date || ""}|${adhocAmount || 0}`);
+      // if (managerDecision === "approved") normalized = "FinalApproved";
+      // else if (managerDecision === "rejected") normalized = "RejectedByManager";
 
       // 🔹 Accountant summary buckets
+      // ✅ Summary buckets
       if (normalized === "Approved") {
         totalApproved += regularAmount;
       } else if (normalized === "RejectedByAccountant" || normalized === "MixedRejectedPending") {
