@@ -10,13 +10,16 @@ const INR = new Intl.NumberFormat("en-IN", {
 });
 
 // 🔄 Status normalizer (now separates rejected by accountant and manager)
-function normalizeStatus(status) {
+function normalizeStatus(status, regularStatus = "") {
   const s = (status || "").toLowerCase();
-  if (s === "approved") return "Approved";
-  if (s === "finalapproved") return "FinalApproved";
-  if (s === "rejected") return "RejectedByAccountant";
-  if (s === "rejectedbymanager") return "RejectedByManager";
-  if (s === "pending") return "Pending";
+  const r = (regularStatus || "").toLowerCase();
+
+  if (s === "approved" || r === "approved") return "Approved";
+  if (s === "finalapproved" || r === "finalapproved") return "FinalApproved";
+  if (s === "rejected" || r === "rejected") return "RejectedByAccountant";
+  if (s === "rejectedbymanager" || r === "rejectedbymanager") return "RejectedByManager";
+  if (s === "pending" || r === "pending") return "Pending";
+
   return "Unknown";
 }
 
@@ -171,13 +174,23 @@ function getStatusBadge(status, regularStatus = "") {
   if (r === "rejected" && s === "pending") {
     return `<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>`;
   }
-  if (s === "approved") return `<span class="badge approved">Accountant Approved</span>`;
-  if (s === "finalapproved") return `<span class="badge final-approved">Final Approved</span>`;
-  if (s === "rejected") return `<span class="badge rejected">Rejected by Accountant</span>`;
-  if (s === "rejectedbymanager") return `<span class="badge rejected">Rejected by Manager</span>`;
-  if (s === "pending") return `<span class="badge pending">Pending</span>`;
-  return `<span class="badge unknown">Unknown</span>`;
+
+  switch (s) {
+    case "approved":
+      return `<span class="badge approved">✅ Approved by Accountant</span>`;
+    case "finalapproved":
+      return `<span class="badge final-approved">✅ Final Approved by Manager</span>`;
+    case "rejected":
+      return `<span class="badge rejected">❌ Rejected by Accountant</span>`;
+    case "rejectedbymanager":
+      return `<span class="badge rejected">❌ Rejected by Manager</span>`;
+    case "pending":
+      return `<span class="badge pending">⏳ Pending</span>`;
+    default:
+      return `<span class="badge unknown">❔ Unknown</span>`;
+  }
 }
+
 
 // --- Main renderTable with dual-status/tinting/summary logic ---
 async function renderTable() {
@@ -231,7 +244,23 @@ async function renderTable() {
     let totalAdhocApproved = 0;
     let totalAdhocRejected = 0;
 
+    // 🔹 Build adhocDecisionMap (manager approvals)
+    const adhocDecisionMap = new Map();
+    const adhocSnap = await getDocs(collection(db, "adhocRequests"));
+    adhocSnap.forEach(docSnap => {
+      const req = docSnap.data();
+      const dateStr = typeof req.date === "string" ? req.date : "";
+      const status = (req.status || "").toLowerCase();
+      const amount = Number(req.amount) || 0;
+      const raisedBy = (req.raisedBy || "").toLowerCase().trim();
+      if (dateStr.slice(0, 7) === selectedMonth && amount > 0 && raisedBy) {
+        const key = `${dateStr}|${amount}|${raisedBy}`;
+        adhocDecisionMap.set(key, status);
+      }
+    });
+
     for (const exp of filteredExpenses) {
+      // 🔹 Resolve employee name
       let employeeName = exp.userId || "-";
       if (exp.userId && !userCache[exp.userId]) {
         const userDoc = await getDoc(doc(db, "users", exp.userId));
@@ -243,46 +272,65 @@ async function renderTable() {
         employeeName = userCache[exp.userId];
       }
 
+      // 🔹 Calculate amounts
       let regularAmount = 0;
       ["fuel","fare","boarding","food","localConveyance","postCourier","misc","monthlyConveyance","monthlyPhone"]
         .forEach(key => { if (exp[key]) regularAmount += Number(exp[key]); });
 
       const adhocAmount = Number(exp.adhocRequest) || 0;
-
       totalSubmitted += (regularAmount + adhocAmount);
-
-      // For summaries, only track Manager status, not accountant, for Adhoc.
       totalAdhocSubmitted += adhocAmount;
-      const normalized = normalizeStatus(exp.status);
-      const regularStatus = (exp.accountant_regular_status || "").toLowerCase();
 
-      // Only regular amounts for accountant summary buckets
-      if (normalized === "approved") {
+      // 🔹 Normalize status with manager override
+      const regularStatus = exp.accountant_regular_status || "";
+      const employeeKey = (employeeName || "").toLowerCase().trim();
+      const adhocKey = `${exp.date || ""}|${adhocAmount}|${employeeKey}`;
+      let managerDecision = adhocDecisionMap.get(adhocKey);
+
+      if (!managerDecision && exp.status === "FinalApproved") {
+        managerDecision = "approved";
+      }
+
+      let normalized = normalizeStatus(exp.status, regularStatus);
+
+      if (managerDecision === "approved") {
+        normalized = "FinalApproved";
+      } else if (managerDecision === "rejected") {
+        normalized = "RejectedByManager";
+      } else if (exp.status === "approved") {
+        normalized = "Approved";
+      } else if (exp.status === "rejected") {
+        normalized = "RejectedByAccountant";
+      }
+
+      // 🔹 Summary buckets
+      if (normalized === "Approved" || normalized === "FinalApproved") {
         totalApproved += regularAmount;
-      } else if (normalized === "rejectedbyaccountant") {
+      } else if (normalized === "RejectedByAccountant" || normalized === "RejectedByManager") {
         totalRejected += regularAmount;
-      } else if (normalized === "finalapproved") {
-        totalFinalApprovedRegular += regularAmount;
-        // Adhoc Approved by Manager only
-        if (adhocAmount > 0) totalAdhocApproved += adhocAmount;
-      } else if (normalized === "rejectedbymanager") {
-        totalPending += regularAmount; // Adhoc rejected, regular could be approved/pending depending on setup
-        if (adhocAmount > 0) totalAdhocRejected += adhocAmount;
       } else {
         totalPending += regularAmount;
       }
 
-      const breakdownHTML = buildBreakdown(exp);
-      const statusBadge = getStatusBadge(exp.status, regularStatus);
-
-      // Auto-tint for dual-status: Accountant rejects regular, Adhoc is still pending
-      let rowStyle = "";
-      if (regularStatus === "rejected" && normalized === "pending" && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#ffe6e6;"'; // light red
-      } else if (regularAmount > 0 && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#f9f9ff;"';
+      if (managerDecision === "approved" && adhocAmount > 0) {
+        totalAdhocApproved += adhocAmount;
+      } else if (managerDecision === "rejected" && adhocAmount > 0) {
+        totalAdhocRejected += adhocAmount;
       }
 
+      // 🔹 Badge logic
+      const statusBadge = getStatusBadge(normalized, regularStatus);
+
+      // 🔹 Auto-tint for dual-status
+      let rowStyle = "";
+      if (regularStatus.toLowerCase() === "rejected" && normalized === "Pending" && adhocAmount > 0) {
+        rowStyle = 'style="background-color:#ffe6e6;"'; // light red
+      } else if (regularAmount > 0 && adhocAmount > 0) {
+        rowStyle = 'style="background-color:#f9f9ff;"'; // light tint for mixed claims
+      }
+
+      // 🔹 Render row
+      const breakdownHTML = buildBreakdown(exp);
       tbody.innerHTML += `
         <tr ${rowStyle}>
           <td>${employeeName}</td>
@@ -314,7 +362,7 @@ async function renderTable() {
         </tr>`;
     }
 
-    // Advance calculation & summary rendering
+    // 🔹 Advance calculation
     let totalAdvanceReceived = 0;
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     advanceSnapshot.forEach(docSnap => {
@@ -333,6 +381,7 @@ async function renderTable() {
       }
     });
 
+    // 🔹 Render summary
     renderAccountantSummary({
       selectedMonth,
       selectedEmployee,
@@ -347,6 +396,7 @@ async function renderTable() {
       totalAdhocRejected
     });
 
+    // 🔹 Breakdown toggles
     document.querySelectorAll('.toggle-breakdown').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -373,6 +423,7 @@ async function renderTable() {
     if (summaryEl) summaryEl.innerHTML = "";
   }
 }
+        
 
 // --- Only reflect manager actions for Adhoc in summary
 function renderAccountantSummary({
