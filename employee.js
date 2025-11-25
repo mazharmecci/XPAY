@@ -495,9 +495,7 @@ async function renderExpenses(currentUserId) {
   } catch (err) {
     console.error("❌ Error rendering employee expenses:", err);
     showToast("Failed to load employee expenses.", "error");
-  }
-}
-      
+  } 
 
 // --- Bank Reimbursement Status Block (Employee View) ---
 // 🔹 Helper: Get latest bank status for employee/month
