@@ -236,21 +236,33 @@ async function renderTable() {
       totalSubmitted += regularAmount + adhocAmount;
       totalAdhocSubmitted += adhocAmount;
 
-      const regularStatus = exp.accountant_regular_status || "";
-      let normalized = normalizeStatus(exp.status, regularStatus);
+const regularStatus = exp.accountant_regular_status || "";
+let normalized = normalizeStatus(exp.status, regularStatus);
 
       // 🔹 Accountant summary buckets
       if (normalized === "Approved") {
+        // Accountant approved regular
         totalApproved += regularAmount;
-      } else if (normalized === "RejectedByAccountant" || normalized === "MixedRejectedPending") {
+      } else if (normalized === "RejectedByAccountant") {
+        // Accountant rejected regular
+        totalRejected += regularAmount;
+      } else if (normalized === "MixedRejectedPending") {
+        // Accountant rejected regular, manager hasn't acted on Adhoc
         totalRejected += regularAmount;
       } else if (normalized === "FinalApproved") {
+        // Manager approved Adhoc, regular already approved
         totalFinalApprovedRegular += regularAmount;
-        if (adhocAmount > 0) totalAdhocApproved += adhocAmount;
+        if (adhocAmount > 0) {
+          totalAdhocApproved += adhocAmount;
+        }
       } else if (normalized === "RejectedByManager") {
+        // Manager rejected Adhoc, regular still pending
         totalPending += regularAmount;
-        if (adhocAmount > 0) totalAdhocRejected += adhocAmount;
+        if (adhocAmount > 0) {
+          totalAdhocRejected += adhocAmount;
+        }
       } else if (normalized === "Pending") {
+        // Regular still pending, Adhoc undecided
         totalPending += regularAmount;
       }
 
