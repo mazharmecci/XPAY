@@ -269,81 +269,84 @@ async function renderExpenses(currentUserId) {
     let totalAdvanceReceived = 0;
     let totalAdhocSubmitted = 0;
 
-    // 🔹 Render rows with badge override
-    records.forEach((exp, index) => {
-      const sn = index + 1;
-      const date = exp.date || "-";
+// 🔹 Render rows with badge override
+records.forEach((exp, index) => {
+  const sn = index + 1;
+  const date = exp.date || "-";
 
-      const fuel = safeAmount(exp.fuel);
-      const fare = safeAmount(exp.fare);
-      const boarding = safeAmount(exp.boarding);
-      const food = safeAmount(exp.food);
-      const local = safeAmount(exp.localConveyance);
-      const postCourier = safeAmount(exp.postCourier);
-      const misc = safeAmount(exp.misc);
-      const travelSum = fuel + fare + boarding + food + local + postCourier + misc;
-      travelTotal += travelSum;
+  // 🔹 Breakdown fields
+  const fuel = safeAmount(exp.fuel);
+  const fare = safeAmount(exp.fare);
+  const boarding = safeAmount(exp.boarding);
+  const food = safeAmount(exp.food);
+  const local = safeAmount(exp.localConveyance);
+  const postCourier = safeAmount(exp.postCourier);
+  const misc = safeAmount(exp.misc);
+  const travelSum = fuel + fare + boarding + food + local + postCourier + misc;
+  travelTotal += travelSum;
 
-      const convey = safeAmount(exp.monthlyConveyance);
-      const phone = safeAmount(exp.monthlyPhone);
-      const adhoc = safeAmount(exp.adhocRequest);
-      const monthlySum = convey + phone + adhoc;
-      monthlyTotal += monthlySum;
+  const convey = safeAmount(exp.monthlyConveyance);
+  const phone = safeAmount(exp.monthlyPhone);
+  const adhoc = safeAmount(exp.adhocRequest);
+  const monthlySum = convey + phone + adhoc;
+  monthlyTotal += monthlySum;
 
-      totalAdhocSubmitted += adhoc;
+  totalAdhocSubmitted += adhoc;
 
-      let normalized = normalizeStatus(exp.status, regularStatus);
-      
-      if (managerDecision === "approved") {
-        normalized = "FinalApproved";
-      } else if (managerDecision === "rejected") {
-        normalized = "RejectedByManager";
-      } else if (exp.status === "approved") {
-        normalized = "Approved";
-      } else if (exp.status === "rejected") {
-        normalized = "RejectedByAccountant";
-      }
+  // 🔹 Status normalization with manager override
+  const regularStatus = exp.accountant_regular_status || "";
+  const employeeKey = (employeeName || "").toLowerCase().trim();
+  const adhocKey = `${exp.date || ""}|${adhoc}|${employeeKey}`;
+  let managerDecision = adhocDecisionMap.get(adhocKey);
 
-      // 🔹 Badge logic
-      let badge = "";
-      if (normalized === "FinalApproved") {
-        badge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
-      } else if (normalized === "RejectedByManager") {
-        badge = '<span class="badge rejected">❌ Rejected by Manager</span>';
-      } else {
-        badge = getStatusBadge(exp.status);
-      }
+  if (!managerDecision && exp.status === "FinalApproved") {
+    managerDecision = "approved";
+  }
 
-      tripInfoTable.innerHTML += renderTripInfoRow(
-        sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge
-      );
+  let normalized = normalizeStatus(exp.status, regularStatus);
 
-      travelCostTable.innerHTML += renderTravelCostRow(
-        sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge
-      );
+  if (managerDecision === "approved") {
+    normalized = "FinalApproved";
+  } else if (managerDecision === "rejected") {
+    normalized = "RejectedByManager";
+  } else if (exp.status === "approved") {
+    normalized = "Approved";
+  } else if (exp.status === "rejected") {
+    normalized = "RejectedByAccountant";
+  }
 
-      monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(
-        sn, date, convey, phone, adhoc, badge
-      );
+  // 🔹 Badge logic
+  const badge = getStatusBadge(normalized, regularStatus);
 
-      // 🔹 Accountant buckets for regular claims
-      const regularAmount = travelSum + convey + phone;
-      if (normalized === "Approved") {
-        totalApproved += regularAmount;
-      } else if (normalized === "FinalApproved") {
-        totalApproved += regularAmount;
-      } else if (normalized === "Rejected" || normalized === "RejectedByManager") {
-        totalRejected += regularAmount;
-      } else {
-        totalPending += regularAmount;
-      }
+  // 🔹 Render rows
+  tripInfoTable.innerHTML += renderTripInfoRow(
+    sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge
+  );
 
-      // 🔄 Fallback Adhoc summary logic
-      if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-        if (normalized === "FinalApproved") totalAdhocApproved += adhoc;
-        else if (normalized === "Rejected" || normalized === "RejectedByManager") totalAdhocRejected += adhoc;
-      }
-    });
+  travelCostTable.innerHTML += renderTravelCostRow(
+    sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge
+  );
+
+  monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(
+    sn, date, convey, phone, adhoc, badge
+  );
+
+  // 🔹 Accountant buckets for regular claims
+  const regularAmount = travelSum + convey + phone;
+  if (normalized === "Approved" || normalized === "FinalApproved") {
+    totalApproved += regularAmount;
+  } else if (normalized === "RejectedByAccountant" || normalized === "RejectedByManager") {
+    totalRejected += regularAmount;
+  } else {
+    totalPending += regularAmount;
+  }
+
+  // 🔄 Fallback Adhoc summary logic
+  if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
+    if (normalized === "FinalApproved") totalAdhocApproved += adhoc;
+    else if (normalized === "RejectedByManager") totalAdhocRejected += adhoc;
+  }
+});
 
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
