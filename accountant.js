@@ -265,29 +265,53 @@ async function renderTable() {
       // 🔹 Accountant summary buckets
       // ✅ Summary buckets
       if (normalized === "Approved") {
+        // Accountant approved regular
         totalApproved += regularAmount;
       } else if (normalized === "RejectedByAccountant" || normalized === "MixedRejectedPending") {
+        // Accountant rejected regular
         totalRejected += regularAmount;
       } else if (normalized === "FinalApproved") {
+        // Manager approved Adhoc (may include regular already approved)
         totalFinalApprovedRegular += regularAmount;
-        if (adhocAmount > 0) totalAdhocApproved += adhocAmount;
+        if (adhocAmount > 0) {
+          totalAdhocApproved += adhocAmount;
+        }
       } else if (normalized === "RejectedByManager") {
+        // Manager rejected Adhoc, regular still pending
         totalPending += regularAmount;
-        if (adhocAmount > 0) totalAdhocRejected += adhocAmount;
-      } else {
+        if (adhocAmount > 0) {
+          totalAdhocRejected += adhocAmount;
+        }
+      } else if (normalized === "Pending") {
+        // Regular still pending, Adhoc undecided
         totalPending += regularAmount;
       }
 
       // 🔹 Badge logic with fallback
       let statusBadge = "";
-      if (normalized === "FinalApproved") {
-        statusBadge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
-      } else if (normalized === "RejectedByManager") {
-        statusBadge = '<span class="badge rejected">❌ Rejected by Manager</span>';
-      } else if (normalized === "MixedRejectedPending") {
-        statusBadge = '<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>';
-      } else {
-        statusBadge = getStatusBadge(exp.status, regularStatus);
+      
+      switch (normalized) {
+        case "FinalApproved":
+          statusBadge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
+          break;
+        case "RejectedByManager":
+          statusBadge = '<span class="badge rejected">❌ Rejected by Manager</span>';
+          break;
+        case "RejectedByAccountant":
+          statusBadge = '<span class="badge rejected">❌ Rejected by Accountant</span>';
+          break;
+        case "Approved":
+          statusBadge = '<span class="badge approved">✅ Approved by Accountant</span>';
+          break;
+        case "MixedRejectedPending":
+          statusBadge = '<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>';
+          break;
+        case "Pending":
+          statusBadge = '<span class="badge pending">⏳ Pending</span>';
+          break;
+        default:
+          statusBadge = '<span class="badge unknown">❔ Unknown</span>';
+          break;
       }
 
       // 🔹 Render row
