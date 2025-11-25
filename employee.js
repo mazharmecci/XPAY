@@ -220,50 +220,50 @@ async function renderExpenses(currentUserId) {
     }
     const employeeKey = (employeeName || "").toLowerCase();
 
-    // 🔹 Pull manager decisions from adhocRequests
-    const adhocDecisionMap = new Map();
-    let totalAdhocApproved = 0;
-    let totalAdhocRejected = 0;
+   // 🔹 Pull manager decisions from adhocRequests
+const adhocDecisionMap = new Map();
+let totalAdhocApproved = 0;
+let totalAdhocRejected = 0;
 
-    const adhocSnap = await getDocs(collection(db, "adhocRequests"));
-    adhocSnap.forEach(docSnap => {
-      const req = docSnap.data();
-      const dateStr = typeof req.date === "string" ? req.date : "";
-      const monthMatch = dateStr.slice(0, 7) === selectedMonth;
-      const raisedBy = (req.raisedBy || "").toLowerCase();
-      const status = (req.status || "").toLowerCase();
-      const amount = Number(req.amount) || 0;
+const adhocSnap = await getDocs(collection(db, "adhocRequests"));
+adhocSnap.forEach(docSnap => {
+  const req = docSnap.data();
+  const dateStr = typeof req.date === "string" ? req.date : "";
+  const monthMatch = dateStr.slice(0, 7) === selectedMonth;
+  const raisedBy = (req.raisedBy || "").toLowerCase();
+  const status = (req.status || "").toLowerCase();
+  const amount = Number(req.amount) || 0;
 
-      if (monthMatch && raisedBy === employeeKey && amount > 0) {
-        const key = `${dateStr}|${amount}`;
-        adhocDecisionMap.set(key, status);
-        if (status === "approved") totalAdhocApproved += amount;
-        else if (status === "rejected") totalAdhocRejected += amount;
-      }
-    });
+  if (monthMatch && raisedBy === employeeKey && amount > 0) {
+    const key = `${dateStr}|${amount}`;
+    adhocDecisionMap.set(key, status);
+    if (status === "approved") totalAdhocApproved += amount;
+    else if (status === "rejected") totalAdhocRejected += amount;
+  }
+});
 
-    // 🔹 Fetch employee expenses for month
-    const snapshot = await getDocs(collection(db, "expenses"));
-    const records = [];
-    snapshot.forEach(docSnap => {
-      const exp = docSnap.data();
-      const dateStr = typeof exp.date === "string" ? exp.date : "";
-      if (exp.userId === currentUserId && dateStr.slice(0, 7) === selectedMonth) {
-        records.push(exp);
-      }
-    });
-    records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+// 🔹 Fetch employee expenses for month
+const snapshot = await getDocs(collection(db, "expenses"));
+const records = [];
+snapshot.forEach(docSnap => {
+  const exp = docSnap.data();
+  const dateStr = typeof exp.date === "string" ? exp.date : "";
+  if (exp.userId === currentUserId && dateStr.slice(0, 7) === selectedMonth) {
+    records.push(exp);
+  }
+});
+records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-    // 🔹 Totals
-    let monthlyTotal = 0;
-    let travelTotal = 0;
-    let totalApproved = 0;
-    let totalRejected = 0;
-    let totalPending = 0;
-    let totalAdvanceReceived = 0;
-    let totalAdhocSubmitted = 0;
+// 🔹 Totals
+let monthlyTotal = 0;
+let travelTotal = 0;
+let totalApproved = 0;
+let totalRejected = 0;
+let totalPending = 0;
+let totalAdvanceReceived = 0;
+let totalAdhocSubmitted = 0;
 
-    // 🔹 Render rows with badge override
+// 🔹 Render rows with badge override
 records.forEach((exp, index) => {
   const sn = index + 1;
   const date = exp.date || "-";
@@ -288,19 +288,16 @@ records.forEach((exp, index) => {
 
   const adhocKey = `${exp.date || ""}|${adhoc || 0}`;
   const managerDecision = adhocDecisionMap.get(adhocKey);
-  const regularStatus = (exp.accountant_regular_status || "").toLowerCase();
-  
-  // 🔄 Normalize dual status using both status and accountant_regular_status
   const regularStatus = exp.accountant_regular_status || "";
   let normalized = normalizeStatus(exp.status, regularStatus);
-  
+
   // 🔄 Override normalized status if manager decision exists
   if (managerDecision === "approved") {
     normalized = "FinalApproved";
   } else if (managerDecision === "rejected") {
     normalized = "RejectedByManager";
   }
-  
+
   // 🔹 Badge logic with fallback
   let badge = "";
   if (normalized === "FinalApproved") {
@@ -312,7 +309,7 @@ records.forEach((exp, index) => {
   } else {
     badge = getStatusBadge(exp.status, regularStatus);
   }
-
+});
   
     // 🧾 Render rows
     tripInfoTable.innerHTML += renderTripInfoRow(
