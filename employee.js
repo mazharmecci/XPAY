@@ -301,12 +301,16 @@ async function renderExpenses(currentUserId) {
       const managerDecision = adhocDecisionMap.get(adhocKey);
       const regularStatus = exp.accountant_regular_status || "";
       let normalized = normalizeStatus(exp.status, regularStatus);
-
-      // 🔄 Override normalized status if manager decision exists
+      
+      // ✅ Only override if manager explicitly approved or rejected
       if (managerDecision === "approved") {
         normalized = "FinalApproved";
       } else if (managerDecision === "rejected") {
         normalized = "RejectedByManager";
+      } else if (exp.status === "approved") {
+        normalized = "Approved"; // Accountant approved
+      } else if (exp.status === "rejected") {
+        normalized = "Rejected"; // Accountant rejected
       }
 
       // 🔹 Badge logic with fallback
