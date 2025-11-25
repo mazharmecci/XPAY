@@ -495,21 +495,54 @@ button, .logout-btn {
   cursor: pointer;
   transition: background 0.18s;
 }
-#approveBtn, #rejectBtn {
-  background: var(--accent-blue);
-  color: #fff;
-  margin-right: 1rem;
+#approveBtn {
+  background-color: #28a745; /* Green */
+  color: #ffffff; /* White text */
+  border: none;
+  border-radius: 7px;
+  padding: 0.7rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.18s;
 }
-#approveBtn:hover, #rejectBtn:hover {
-  background: #2563eb;
+
+#approveBtn:hover {
+  background-color: #218838; /* Darker green on hover */
 }
+
+#rejectBtn {
+  background-color: #dc3545; /* Red */
+  color: #ffffff; /* White text */
+  border: none;
+  border-radius: 7px;
+  padding: 0.7rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.18s;
+}
+
+#rejectBtn:hover {
+  background-color: #c82333; /* Darker red on hover */
+}
+
 .logout-btn {
-  background: var(--accent-red);
-  color: #fff;
+  background-color: #000000; /* Black */
+  color: #ffffff; /* White text */
+  border: none;
+  border-radius: 7px;
+  padding: 0.7rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.18s;
 }
+
 .logout-btn:hover {
-  background: #dc2626;
+  background-color: #333333; /* Dark gray on hover */
 }
+
 .action-btns {
   display: flex;
   gap: 1rem;
