@@ -357,8 +357,6 @@ async function renderExpenses(currentUserId) {
 // ===== Regular and Adhoc Status Bucketing =======
 // ================================================
 const regularAmount = travelSum + convey + phone;
-
-// Normalize statuses
 const statusLower = (normalized || "").toLowerCase();
 const regularStatusLower = (regularStatus || "").toLowerCase();
 
@@ -383,14 +381,15 @@ if (statusLower === "approved" || statusLower === "finalapproved") {
 
 // ----- Adhoc summary bucket -----
 if (adhoc > 0) {
-  const managerDecision = adhocDecisionMap.get(adhocKey); // 'approved' | 'rejected' | undefined
+  const managerDecision = adhocDecisionMap.get(adhocKey);
+  const managerDecisionLower = (managerDecision || "").toLowerCase();
 
-  if (managerDecision === "approved") {
+  if (managerDecisionLower === "approved") {
     totalAdhocApproved += adhoc;
-  } else if (managerDecision === "rejected") {
+  } else if (managerDecisionLower === "rejected") {
     totalAdhocRejected += adhoc;
   }
-  // If undefined, do not count as approved or rejected
+  // If managerDecision is undefined, do not count it yet
 }
 
 
