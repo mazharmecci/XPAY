@@ -423,19 +423,19 @@ async function renderTable() {
        
 
 // --- Only reflect manager actions for Adhoc in summary
-function renderAccountantSummary({
+renderAccountantSummary({
   selectedMonth,
   selectedEmployee,
   totalApproved,
   totalRejected,
   totalPending,
-  totalAdvance: totalAdvanceReceived,,
+  totalAdvance: totalAdvanceReceived,
   totalSubmitted,
-  totalFinalApproved,
   totalAdhocSubmitted,
   totalAdhocApproved,
   totalAdhocRejected
-}) {
+});
+ {
   const summaryContainer = document.getElementById("accountantSummary");
   if (!summaryContainer) return;
 
