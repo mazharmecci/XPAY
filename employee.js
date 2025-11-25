@@ -297,12 +297,13 @@ async function renderExpenses(currentUserId) {
 
       totalAdhocSubmitted += adhoc;
 
-      const adhocKey = `${exp.date || ""}|${adhoc || 0}`;
+      const adhocAmount = Number(exp.adhocRequest) || 0;
+      const adhocKey = `${exp.date || ""}|${adhocAmount}`;
       const managerDecision = adhocDecisionMap.get(adhocKey);
       const regularStatus = exp.accountant_regular_status || "";
       let normalized = normalizeStatus(exp.status, regularStatus);
       
-      // ✅ Only override if manager explicitly approved or rejected
+      // ✅ Override only if manager explicitly acted
       if (managerDecision === "approved") {
         normalized = "FinalApproved";
       } else if (managerDecision === "rejected") {
@@ -310,23 +311,35 @@ async function renderExpenses(currentUserId) {
       } else if (exp.status === "approved") {
         normalized = "Approved"; // Accountant approved
       } else if (exp.status === "rejected") {
-        normalized = "Rejected"; // Accountant rejected
+        normalized = "RejectedByAccountant"; // Accountant rejected
       }
-
+      
       // 🔹 Badge logic with fallback
       let badge = "";
-      if (normalized === "FinalApproved") {
-        badge =
-          '<span class="badge final-approved">✅ Final Approved by Manager</span>';
-      } else if (normalized === "RejectedByManager") {
-        badge = '<span class="badge rejected">❌ Rejected by Manager</span>';
-      } else if (normalized === "MixedRejectedPending") {
-        badge =
-          '<span class="badge rejected">Regular Rejected</span> + ' +
-          '<span class="badge pending">Adhoc Pending</span>';
-      } else {
-        badge = getStatusBadge(exp.status, regularStatus);
+      switch (normalized) {
+        case "FinalApproved":
+          badge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
+          break;
+        case "RejectedByManager":
+          badge = '<span class="badge rejected">❌ Rejected by Manager</span>';
+          break;
+        case "RejectedByAccountant":
+          badge = '<span class="badge rejected">❌ Rejected by Accountant</span>';
+          break;
+        case "Approved":
+          badge = '<span class="badge approved">✅ Approved by Accountant</span>';
+          break;
+        case "MixedRejectedPending":
+          badge = '<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>';
+          break;
+        case "Pending":
+          badge = '<span class="badge pending">⏳ Pending</span>';
+          break;
+        default:
+          badge = '<span class="badge unknown">❔ Unknown</span>';
+          break;
       }
+
 
       // --- 🧾 Actually add rendered rows for each table ---
       tripInfoTable.innerHTML += renderTripInfoRow(
