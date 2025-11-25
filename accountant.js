@@ -426,7 +426,7 @@ summaryContainer.innerHTML = `
     </table>
   </div>
 `;
-
+}
 
 // 🧾 Advance cash table
 
