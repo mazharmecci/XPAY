@@ -274,7 +274,7 @@ function renderManagerSummary({
       <table class="summary-table">
         <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>    
         <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-        <tr><td>📌 Total Adhoc Requests submitted:</td><td class="amount-cell adhoc">${INR.format(totalAdhoc)}</td></tr>
+        <tr><td>📌 Total Adhoc Requests submitted:</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhoc)}</span></td></tr>
         <tr><td>🔷 Adhoc Requests approved by manager:</td><td class="amount-cell approved">${INR.format(totalAdhocApproved)}</td></tr>
         <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell rejected">${INR.format(totalAdhocRejected)}</td></tr>        
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
