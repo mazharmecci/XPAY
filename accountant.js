@@ -193,7 +193,6 @@ function getStatusBadge(status, regularStatus = "") {
 
 
 // --- Main renderTable with dual-status/tinting/summary logic ---
-
 async function renderTable() {
   try {
     const monthPicker = document.getElementById('monthPicker');
@@ -245,7 +244,7 @@ async function renderTable() {
     let totalAdhocApproved = 0;
     let totalAdhocRejected = 0;
 
-    // 🔹 Build adhocDecisionMap
+    // 🔹 Build adhocDecisionMap (manager approvals)
     const adhocDecisionMap = new Map();
     const adhocSnap = await getDocs(collection(db, "adhocRequests"));
     adhocSnap.forEach(docSnap => {
@@ -261,6 +260,7 @@ async function renderTable() {
     });
 
     for (const exp of filteredExpenses) {
+      // 🔹 Resolve employee name
       let employeeName = exp.userId || "-";
       if (exp.userId && !userCache[exp.userId]) {
         const userDoc = await getDoc(doc(db, "users", exp.userId));
@@ -272,6 +272,7 @@ async function renderTable() {
         employeeName = userCache[exp.userId];
       }
 
+      // 🔹 Calculate amounts
       let regularAmount = 0;
       ["fuel","fare","boarding","food","localConveyance","postCourier","misc","monthlyConveyance","monthlyPhone"]
         .forEach(key => { if (exp[key]) regularAmount += Number(exp[key]); });
@@ -280,6 +281,7 @@ async function renderTable() {
       totalSubmitted += (regularAmount + adhocAmount);
       totalAdhocSubmitted += adhocAmount;
 
+      // 🔹 Normalize status with manager override
       const regularStatus = exp.accountant_regular_status || "";
       const employeeKey = (employeeName || "").toLowerCase().trim();
       const adhocKey = `${exp.date || ""}|${adhocAmount}|${employeeKey}`;
@@ -301,90 +303,64 @@ async function renderTable() {
         normalized = "RejectedByAccountant";
       }
 
-      if (normalized === "Approved") {
+      // 🔹 Summary buckets
+      if (normalized === "Approved" || normalized === "FinalApproved") {
         totalApproved += regularAmount;
-      } else if (normalized === "FinalApproved") {
-        totalFinalApprovedRegular += regularAmount;
-        if (adhocAmount > 0) totalAdhocApproved += adhocAmount;
       } else if (normalized === "RejectedByAccountant" || normalized === "RejectedByManager") {
         totalRejected += regularAmount;
-        if (normalized === "RejectedByManager" && adhocAmount > 0) {
-          totalAdhocRejected += adhocAmount;
-        }
       } else {
         totalPending += regularAmount;
       }
 
-      const statusBadge = getStatusBadge(normalized, regularStatus);
-      const breakdownHTML = buildBreakdown(exp);
-
-      let rowStyle = "";
-      if (regularStatus.toLowerCase() === "rejected" && normalized === "Pending" && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#ffe6e6;"';
-      } else if (regularAmount > 0 && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#f9f9ff;"';
+      if (managerDecision === "approved" && adhocAmount > 0) {
+        totalAdhocApproved += adhocAmount;
+      } else if (managerDecision === "rejected" && adhocAmount > 0) {
+        totalAdhocRejected += adhocAmount;
       }
 
-summaryEl.innerHTML = `
-  <div class="expense-summary-block" style="
-      font-weight:500;
-      margin-top:1.2em;
-      background:#fafafa;
-      border:1px solid #e5e5e5;
-      border-radius:10px;
-      padding:1.2em 1em 1em 1em;
-      box-shadow:0 1px 3px rgba(0,0,0,0.05);
-      max-width:550px;
-      ">
-    <h4 style="margin-top:0; margin-bottom:1em; font-size:1.1em; color:#2176ae;">
-      🧾 Employee Expense Summary
-    </h4>
-    <table style="width:100%; border-collapse:collapse; font-size:1em;">
-      <tr>
-        <td style="color:#333;">🧾 <strong>Total expenses submitted by emp:</strong></td>
-        <td style="text-align:right; color:#222;">${INR.format(totalSubmitted)}</td>
-      </tr>
-      <tr>
-        <td style="color:#2e7d32;">✅ Accountant-eligible expenses:</td>
-        <td style="text-align:right; color:#2e7d32;">${INR.format(totalApproved + totalFinalApprovedRegular)}</td>
-      </tr>
-      <tr>
-        <td style="color:#b71c1c;">❌ Rejected by accountant (Regular only):</td>
-        <td style="text-align:right; color:#b71c1c;">${INR.format(totalRejected)}</td>
-      </tr>
-      <tr>
-        <td style="color:#ff9800;">⏳ Pending expenses to be reviewed:</td>
-        <td style="text-align:right; color:#ff9800;">${INR.format(totalPending)}</td>
-      </tr>
-      <tr>
-        <td style="color:#4e42c7;">💸 Advance cash received by emp:</td>
-        <td style="text-align:right; color:#4e42c7;">${INR.format(totalAdvanceReceived)}</td>
-      </tr>
-      <tr>
-        <td style="color:#2196f3;">📌 Adhoc Requests submitted (manager approval needed):</td>
-        <td style="text-align:right; color:#2196f3;">${INR.format(totalAdhocSubmitted)}</td>
-      </tr>
-      <tr>
-        <td style="color:#006400;">🔷 Adhoc Requests <strong>approved by manager</strong>:</td>
-        <td style="text-align:right; color:#006400;">${INR.format(totalAdhocApproved)}</td>
-      </tr>
-      <tr>
-        <td style="color:#e53935;">❌ Adhoc Requests <strong>rejected by manager</strong>:</td>
-        <td style="text-align:right; color:#e53935;">${INR.format(totalAdhocRejected)}</td>
-      </tr>
-      <tr style="background:#e8f5e9; font-weight:bold;">
-        <td style="border-top:2px solid #cfd8dc; color:#1976d2;">${netLabel || "Net Payable"}:</td>
-        <td style="border-top:2px solid #cfd8dc; text-align:right; color:#1976d2;">
-          ${INR.format(netReimbursementDue)}
-        </td>
-      </tr>
-    </table>
-  </div>
-`;
+      // 🔹 Badge logic
+      const statusBadge = getStatusBadge(normalized, regularStatus);
 
+      // 🔹 Auto-tint for dual-status
+      let rowStyle = "";
+      if (regularStatus.toLowerCase() === "rejected" && normalized === "Pending" && adhocAmount > 0) {
+        rowStyle = 'style="background-color:#ffe6e6;"'; // light red
+      } else if (regularAmount > 0 && adhocAmount > 0) {
+        rowStyle = 'style="background-color:#f9f9ff;"'; // light tint for mixed claims
+      }
 
-    // ✅ Merge FinalApproved regular into totalApproved
-    totalApproved += totalFinalApprovedRegular;
+      // 🔹 Render row
+      const breakdownHTML = buildBreakdown(exp);
+      tbody.innerHTML += `
+        <tr ${rowStyle}>
+          <td>${employeeName}</td>
+          <td>${exp.date || "-"}</td>
+          <td>${exp.workflowType || "-"}</td>
+          <td>
+            <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer;">▶</button>
+            <span style="margin-left:0.5em;">Click to view breakdown</span>
+            <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
+              ${breakdownHTML || '<em>No expense breakdown</em>'}
+            </div>
+          </td>
+          <td style="font-size:0.85em; color:#555;">
+            Regular: ₹${regularAmount} <br>
+            Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
+          </td>
+          <td>${statusBadge}</td>
+          ${
+            (regularAmount === 0 && adhocAmount > 0)
+              ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Manager only</td>`
+              : `<td>
+                   <input type="checkbox" class="action-checkbox" data-id="${exp.id}" 
+                     title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." />
+                 </td>
+                 <td>
+                   <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" />
+                 </td>`
+          }
+        </tr>`;
+    }
 
     // 🔹 Advance calculation
     let totalAdvanceReceived = 0;
@@ -447,7 +423,7 @@ summaryEl.innerHTML = `
     if (summaryEl) summaryEl.innerHTML = "";
   }
 }
-       
+        
 
 // --- Only reflect manager actions for Adhoc in summary
 function renderAccountantSummary({
@@ -458,12 +434,18 @@ function renderAccountantSummary({
   totalPending,
   totalAdvance,
   totalSubmitted,
+  totalFinalApproved,
   totalAdhocSubmitted,
   totalAdhocApproved,
   totalAdhocRejected
 }) {
-  const summaryEl = document.getElementById("accountantSummary");
-  if (!summaryEl) return; // ✅ this return is valid because it's inside a function
+  const summaryContainer = document.getElementById("accountantSummary");
+  if (!summaryContainer) return;
+
+  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
+    month: "long",
+    year: "numeric"
+  });
 
   const netReimbursementDue = (totalApproved + totalAdhocApproved) - totalAdvance;
   const netLabel = netReimbursementDue < 0
@@ -471,16 +453,61 @@ function renderAccountantSummary({
     : "🔶 Net payable to employee";
 
   summaryEl.innerHTML = `
-    <div style="font-weight:bold; margin-top:1em;">
-      🧾 Total expenses submitted by emp: ₹${INR.format(totalSubmitted)}<br>
-      ✅ Accountant-eligible expenses: ₹${INR.format(totalApproved)}<br>
-      ❌ Rejected by accountant (Regular only): ₹${INR.format(totalRejected)}<br>
-      ⏳ Pending expenses to be reviewed by accountant: ₹${INR.format(totalPending)}<br>
-      💸 Advance cash received by emp: ₹${INR.format(totalAdvance)}<br>
-      📌 Adhoc Requests submitted (manager approval needed): ₹${INR.format(totalAdhocSubmitted)}<br>
-      🔷 Adhoc Requests approved by manager: ₹${INR.format(totalAdhocApproved)}<br>
-      ❌ Adhoc Requests rejected by manager: ₹${INR.format(totalAdhocRejected)}<br>
-      ${netLabel}: ₹${INR.format(netReimbursementDue)}
+    <div class="expense-summary-block" style="
+      font-weight:500;
+      margin-top:1.2em;
+      background:#fafafa;
+      border:1px solid #e5e5e5;
+      border-radius:10px;
+      padding:1.2em 1em 1em 1em;
+      box-shadow:0 1px 3px rgba(0,0,0,0.05);
+      max-width:550px;
+    ">
+      <h4 style="margin-top:0; margin-bottom:1em; font-size:1.1em; color:#2176ae;">
+        🧾 Employee Expense Summary
+      </h4>
+      <table style="width:100%; border-collapse:collapse; font-size:1em;">
+        <tr>
+          <td style="color:#333;">🧾 <strong>Total expenses submitted by emp:</strong></td>
+          <td style="text-align:right; color:#222;">${INR.format(totalSubmitted)}</td>
+        </tr>
+        <tr>
+          <td style="color:#2e7d32;">✅ Accountant-eligible expenses:</td>
+          <td style="text-align:right; color:#2e7d32;">${INR.format(totalApproved)}</td>
+        </tr>
+        <tr>
+          <td style="color:#b71c1c;">❌ Rejected by accountant (Regular only):</td>
+          <td style="text-align:right; color:#b71c1c;">${INR.format(totalRejected)}</td>
+        </tr>
+        <tr>
+          <td style="color:#ff9800;">⏳ Pending expenses to be reviewed:</td>
+          <td style="text-align:right; color:#ff9800;">${INR.format(totalPending)}</td>
+        </tr>
+        <tr>
+          <td style="color:#4e42c7;">💸 Advance cash received by emp:</td>
+          <td style="text-align:right; color:#4e42c7;">${INR.format(totalAdvance)}</td>
+        </tr>
+        <tr>
+          <td style="color:#2196f3;">📌 Adhoc Requests submitted (manager approval needed):</td>
+          <td style="text-align:right; color:#2196f3;">${INR.format(totalAdhocSubmitted)}</td>
+        </tr>
+        <tr>
+          <td style="color:#006400;">🔷 Adhoc Requests <strong>approved by manager</strong>:</td>
+          <td style="text-align:right; color:#006400;">${INR.format(totalAdhocApproved)}</td>
+        </tr>
+        <tr>
+          <td style="color:#e53935;">❌ Adhoc Requests <strong>rejected by manager</strong>:</td>
+          <td style="text-align:right; color:#e53935;">${INR.format(totalAdhocRejected)}</td>
+        </tr>
+        <tr style="background:#e8f5e9;font-weight:bold;">
+          <td style="border-top:2px solid #cfd8dc; color:#1976d2;">
+            ${netLabel}
+          </td>
+          <td style="border-top:2px solid #cfd8dc; text-align:right; color:#1976d2;">
+            ${INR.format(netReimbursementDue)}
+          </td>
+        </tr>
+      </table>
     </div>
   `;
 }
