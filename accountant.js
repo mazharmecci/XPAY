@@ -247,6 +247,7 @@ async function renderExpenses(currentUserId) {
           totalAdhocRejected += amount;
         }
       }
+    });
 
     // 🔹 Fetch employee expenses for month
     const snapshot = await getDocs(collection(db, "expenses"));
@@ -259,6 +260,13 @@ async function renderExpenses(currentUserId) {
       }
     });
     records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    
+    // Additional code for rendering can continue here...
+
+  } catch (error) {
+    showToast(`Error rendering expenses: ${error.message}`, "error");
+  }
+}
 
     // 🔹 Totals
     let monthlyTotal = 0;
