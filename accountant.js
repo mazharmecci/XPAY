@@ -234,13 +234,19 @@ async function renderExpenses(currentUserId) {
       const status = (req.status || "").toLowerCase();
       const amount = Number(req.amount) || 0;
 
-      if (monthMatch && raisedBy === employeeKey && amount > 0) {
-        const key = `${dateStr}|${amount}`;
+      if (monthMatch && amount > 0) {
+        // 🔹 Canonicalize raisedBy for uniqueness
+        const raisedByKey = (req.raisedBy || "").toLowerCase().trim();
+        const key = `${dateStr}|${amount}|${raisedByKey}`;
+      
         adhocDecisionMap.set(key, status);
-        if (status === "approved") totalAdhocApproved += amount;
-        else if (status === "rejected") totalAdhocRejected += amount;
+      
+        if (status === "approved") {
+          totalAdhocApproved += amount;
+        } else if (status === "rejected") {
+          totalAdhocRejected += amount;
+        }
       }
-    });
 
     // 🔹 Fetch employee expenses for month
     const snapshot = await getDocs(collection(db, "expenses"));
@@ -286,15 +292,16 @@ async function renderExpenses(currentUserId) {
 
       totalAdhocSubmitted += adhoc;
 
-      const adhocKey = `${exp.date || ""}|${adhoc || 0}`;
-      const managerDecision = adhocDecisionMap.get(adhocKey);
-      let normalized = normalizeStatus(exp.status);
-
-      // 🔄 Override normalized status if manager decision exists
+      let normalized = normalizeStatus(exp.status, regularStatus);
+      
       if (managerDecision === "approved") {
         normalized = "FinalApproved";
       } else if (managerDecision === "rejected") {
         normalized = "RejectedByManager";
+      } else if (exp.status === "approved") {
+        normalized = "Approved";
+      } else if (exp.status === "rejected") {
+        normalized = "RejectedByAccountant";
       }
 
       // 🔹 Badge logic
