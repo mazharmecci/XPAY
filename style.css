@@ -1,11 +1,90 @@
 :root {
-  --biscuit-light: #f5e3c0;
-  --biscuit-mid: #ddad75;
-  --biscuit-dark: #a67845;
-  --text-dark: #4b3b2a;
-  --accent-blue: #3b82f6;
-  --accent-red: #ef4444;
+  --biscuit-light: #f6eedd;
+  --biscuit-mid: #f2d7aa;
+  --text-dark: #32404e;
 }
+
+/* Expense block/group styling */
+.expense-group {
+  margin-bottom: 2.2rem;
+  background: var(--biscuit-light);
+  border: 1px solid var(--biscuit-mid);
+  border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(221, 173, 117, 0.12);
+  padding: 1rem 1.2rem 1.2rem 1.2rem;
+}
+
+/* Group header styling */
+.expense-group-header {
+  font-size: 1.13rem;
+  font-weight: 700;
+  background: var(--biscuit-mid);
+  color: var(--text-dark);
+  border-radius: 7px;
+  margin-bottom: 0.8rem;
+  padding: 7px 17px;
+  box-shadow: 0 2px 8px rgba(245, 227, 192, 0.16);
+  letter-spacing: 0.01em;
+}
+
+/* Summary block styling */
+.expense-summary-block {
+  background: #faf9f4;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  padding: 1.2em 1.1em 1rem 1.1em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  max-width: 600px;
+  margin: 0 auto 2em auto;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+th, td {
+  padding: 8px 10px;
+  border: 1px solid #bbb;
+  font-size: 1em;
+  text-align: left;
+}
+th {
+  background: #f6eedd;
+  color: #615245;
+  font-weight: 600;
+}
+tr:nth-child(even) {
+  background: #f9f6ef;
+}
+tr:hover td {
+  background: #ece5d8;
+  transition: background 0.15s;
+}
+
+/* Responsive tweaks */
+@media (max-width: 640px) {
+  .expense-summary-block, .expense-group {
+    max-width: 98vw;
+    padding: 0.7em 0.4em 0.7em 0.4em;
+  }
+  table, th, td {
+    font-size: 0.91em;
+    padding: 6px 3px;
+  }
+}
+
+/* Utility for icons and quick notes */
+.note {
+  font-size: 0.97em;
+  color: #a48a59;
+  margin-top: 0.7em;
+  background: #f9f8ee;
+  border-radius: 5px;
+  padding: 0.5em 0.9em;
+}
+
 
 .section-gap {
   margin-top: 2em;
@@ -286,29 +365,6 @@ input[type="checkbox"] {
   margin-right: 0.5em;
   vertical-align: middle;
 }
-
-.expense-group {
-  margin-bottom: 2.2rem;
-  background: var(--biscuit-light);
-  border: 1px solid var(--biscuit-mid);
-  border-radius: 10px;
-  box-shadow: 0 1px 6px #ddad751f;
-  padding: 1rem 1.2rem 1.2rem 1.2rem;
-}
-
-.expense-group-header {
-  font-size: 1.13rem;
-  font-weight: 700;
-  background: var(--biscuit-mid);
-  color: var(--text-dark);
-  border-radius: 7px;
-  margin-bottom: 0.8rem;
-  padding: 7px 17px;
-  box-shadow: 0 2px 8px #f5e3c02a;
-  letter-spacing: 0.01em;
-}
-
-/* The tables inside .expense-group will auto-inherit your report-section table styles */
 
 
 /* Accountant main background and card styling: apply same as employee */
