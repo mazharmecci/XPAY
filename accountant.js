@@ -188,7 +188,7 @@ async function renderTable() {
       const adhocKey = `${exp.date || ""}|${adhocAmount}`;
       const managerDecision = adhocDecisionMap.get(adhocKey);
       let normalized = normalizeStatus(exp.status, regularStatus);
-
+      
       if (managerDecision === "approved") {
         normalized = "FinalApproved";
       } else if (managerDecision === "rejected") {
@@ -199,27 +199,31 @@ async function renderTable() {
         normalized = "RejectedByAccountant";
       }
 
-      // 🔹 Accountant summary buckets
+           // 🔹 Accountant summary buckets
       const statusLower = (normalized || "").toLowerCase();
+      
+      // 🔹 Regular claims bucket
       if (statusLower === "approved") {
         totalApproved += regularAmount;
-      } else if (statusLower === "rejectedbyaccountant") {
-        totalRejected += regularAmount;
-      } else if (statusLower === "mixedrejectedpending") {
+      } else if (
+        statusLower === "rejectedbyaccountant" ||
+        statusLower === "mixedrejectedpending"
+      ) {
         totalRejected += regularAmount;
       } else if (statusLower === "finalapproved") {
         totalFinalApprovedRegular += regularAmount;
-             if (adhocAmount > 0) {
-          totalAdhocApproved += adhocAmount;
-        }
       } else if (statusLower === "rejectedbymanager") {
         totalPending += regularAmount;
-        if (adhocAmount > 0) {
-          totalAdhocRejected += adhocAmount;
-        }
       } else if (statusLower === "pending") {
         totalPending += regularAmount;
       }
+      
+      // 🔹 Adhoc summary bucket — count only if manager explicitly acted
+      if (managerDecision === "approved" && adhocAmount > 0) {
+        totalAdhocApproved += adhocAmount;
+      } else if (managerDecision === "rejected" && adhocAmount > 0) {
+        totalAdhocRejected += adhocAmount;}
+
 
       // 🔹 Badge logic
       const statusBadge = getStatusBadge(normalized, regularStatus);
