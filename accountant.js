@@ -9,7 +9,7 @@ const INR = new Intl.NumberFormat("en-IN", {
   currency: "INR"
 });
 
-// 🔄 Status normalizer (now separates rejected by accountant and manager)
+// 🔄 Status normalizer
 function normalizeStatus(status, regularStatus = "") {
   const s = (status || "").toLowerCase();
   const r = (regularStatus || "").toLowerCase();
@@ -29,7 +29,6 @@ const FIELD_GROUPS = {
   "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc"],
   "📅 Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone", "adhocRequest"]
 };
-
 const FIELD_LABELS = {
   placeVisited: "Place Visited",
   fuel: "Fuel",
@@ -91,7 +90,7 @@ async function populateEmployeeFilter() {
   }
 }
 
-// 👤 Employee dropdown
+// 👤 Employee dropdown (regular/advance)
 async function populateEmployeeDropdown() {
   const dropdown = document.getElementById("employeeName");
   if (!dropdown) return;
@@ -112,7 +111,6 @@ async function populateEmployeeDropdown() {
   }
 }
 
-// 👤 Employee dropdown - For Advance table
 async function populateAdvanceEmployeeDropdown() {
   const dropdown = document.getElementById("advanceEmployee");
   if (!dropdown) return;
@@ -166,7 +164,7 @@ function buildBreakdown(exp) {
   }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
-// 🏷️ Status badge (dual status)
+// 🏷️ Status badge
 function getStatusBadge(status, regularStatus = "") {
   const s = (status || "").toLowerCase();
   const r = (regularStatus || "").toLowerCase();
@@ -182,7 +180,7 @@ function getStatusBadge(status, regularStatus = "") {
   return `<span class="badge unknown">Unknown</span>`;
 }
 
-// --- Main renderTable with dual-status/tinting/summary logic ---
+// --- Main renderTable with summary & dual status logic ---
 async function renderTable() {
   try {
     const monthPicker = document.getElementById('monthPicker');
@@ -256,17 +254,10 @@ async function renderTable() {
       totalSubmitted += (regularAmount + adhocAmount);
       totalAdhocSubmitted += adhocAmount;
 
-      // 🔄 Define regularStatus before using it
       const regularStatus = exp.accountant_regular_status || "";
-
-      // 🔄 Normalize dual status
       let normalized = normalizeStatus(exp.status, regularStatus);
 
-      // 🔄 Manager override (if you track manager decisions separately)
-      // Example: if you have adhocDecisionMap, apply it here
-      // const managerDecision = adhocDecisionMap.get(`${exp.date || ""}|${adhocAmount || 0}`);
-      // if (managerDecision === "approved") normalized = "FinalApproved";
-      // else if (managerDecision === "rejected") normalized = "RejectedByManager";
+      // --- (Manager decision override goes here if you track it) ---
 
       // 🔹 Accountant summary buckets
       if (normalized === "Approved") {
@@ -328,51 +319,7 @@ async function renderTable() {
         </tr>`;
     }
 
-    // 🔹 Render summary
-    renderAccountantSummary({
-      selectedMonth,
-      selectedEmployee,
-      totalApproved,
-      totalRejected,
-      totalPending,
-      totalAdvance: 0, // you can calculate advances separately
-      totalSubmitted,
-      totalFinalApproved: totalFinalApprovedRegular,
-      totalAdhocSubmitted,
-      totalAdhocApproved,
-      totalAdhocRejected
-    });
-
-    // 🔹 Toggle breakdown handlers
-    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        const breakdown = document.getElementById(`breakdown-${id}`);
-        if (!breakdown) return;
-        const isVisible = breakdown.style.display === 'block';
-        breakdown.style.display = isVisible ? 'none' : 'block';
-        btn.textContent = isVisible ? '▶' : '▼';
-      });
-    });
-
-  } catch (err) {
-    console.error("renderTable Fatal Error:", err);
-    const tbody = document.querySelector('#expenseTable tbody');
-    if (tbody) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="8" style="text-align:center; color:red; padding:1em;">
-            ❌ Error loading expenses. Check console for details.
-          </td>
-        </tr>`;
-    }
-    const summaryEl = document.getElementById("accountantSummary");
-    if (summaryEl) summaryEl.innerHTML = "";
-  }
-}
-
-
-    // Advance calculation & summary rendering
+    // --- Advance calculation & summary rendering ---
     let totalAdvanceReceived = 0;
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     advanceSnapshot.forEach(docSnap => {
@@ -383,7 +330,7 @@ async function renderTable() {
       const empFilter = selectedEmployee?.toLowerCase() || "";
       const empId = (adv.employeeId || "").toLowerCase();
       const empName = (adv.employeeName || "").toLowerCase();
-      const isEmpMatch =
+      const isEmpMatch = 
         !empFilter || empFilter === "all employees" ||
         empId === empFilter || empName === empFilter;
       if (isMonthMatch && isEmpMatch) {
