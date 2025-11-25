@@ -325,42 +325,37 @@ async function renderTable() {
         rowStyle = 'style="background-color:#f9f9ff;"';
       }
 
-tbody.innerHTML += `
-  <tr${rowStyle ? ` ${rowStyle}` : ""}>
-    <td>${employeeName}</td>
-    <td>${exp.date || "-"}</td>
-    <td>${exp.workflowType || "-"}</td>
-    <td>
-      <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer;">▶</button>
-      <span style="margin-left:0.5em;">Click to view breakdown</span>
-      <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
-        ${breakdownHTML || '<em>No expense breakdown</em>'}
-      </div>
-    </td>
-    <td style="font-size:0.85em; color:#555;">
-      Regular: ${INR.format(regularAmount)}<br>
-      Adhoc (Manager): <span style="color:#007bff;">${INR.format(adhocAmount)}</span>
-    </td>
-    <td>${statusBadge}</td>
-    ${
-      regularAmount === 0 && adhocAmount > 0
-        ? `
-          <td style="text-align:center; color:#007bff;">Adhoc request – Manager only</td>
-          <td></td>
-        `
-        : `
+      const breakdownHTML = buildBreakdown(exp);
+      tbody.innerHTML += `
+        <tr ${rowStyle}>
+          <td>${employeeName}</td>
+          <td>${exp.date || "-"}</td>
+          <td>${exp.workflowType || "-"}</td>
           <td>
-            <input type="checkbox" class="action-checkbox" data-id="${exp.id}"
-              title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." />
+            <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer;">▶</button>
+            <span style="margin-left:0.5em;">Click to view breakdown</span>
+            <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
+              ${breakdownHTML || '<em>No expense breakdown</em>'}
+            </div>
           </td>
-          <td>
-            <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" />
+          <td style="font-size:0.85em; color:#555;">
+            Regular: ₹${regularAmount} <br>
+            Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
           </td>
-        `
+          <td>${statusBadge}</td>
+          ${
+            (regularAmount === 0 && adhocAmount > 0)
+              ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Manager only</td>`
+              : `<td>
+                   <input type="checkbox" class="action-checkbox" data-id="${exp.id}" 
+                     title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." />
+                 </td>
+                 <td>
+                   <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" />
+                 </td>`
+          }
+        </tr>`;
     }
-  </tr>
-`;
-
 
     // ✅ Merge FinalApproved regular into totalApproved
     totalApproved += totalFinalApprovedRegular;
