@@ -4,6 +4,10 @@
   --text-dark: #32404e;
 }
 
+.welcome-banner {
+  color: #000000 !important;
+}
+
 /* Expense block/group styling */
 .expense-group {
   margin-bottom: 2.2rem;
