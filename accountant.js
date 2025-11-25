@@ -452,19 +452,23 @@ const netLabel = netReimbursementDue < 0
   ? "💰 Advance exceeds approved"
   : "🔶 Net payable to employee";
 
-summaryEl.innerHTML = `
-  <div style="font-weight:bold; margin-top:1em;">
-    🧾 Total expenses submitted by emp: ₹${INR.format(totalSubmitted)}<br>
-    ✅ Accountant-eligible expenses: ₹${INR.format(totalApproved + totalFinalApprovedRegular)}<br>
-    ❌ Rejected by accountant (Regular only): ₹${INR.format(totalRejected)}<br>
-    ⏳ Pending expenses to be reviewed by accountant: ₹${INR.format(totalPending)}<br>
-    💸 Advance cash received by emp: ₹${INR.format(totalAdvanceReceived)}<br>
-    📌 Adhoc Requests submitted (manager approval needed): ₹${INR.format(totalAdhocSubmitted)}<br>
-    🔷 Adhoc Requests approved by manager: ₹${INR.format(totalAdhocApproved)}<br>
-    ❌ Adhoc Requests rejected by manager: ₹${INR.format(totalAdhocRejected)}<br>
-    ${netLabel}: ₹${INR.format(netReimbursementDue)}
-  </div>
-`;
+  summaryContainer.innerHTML = `
+    <div class="summary-block">
+      <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
+      <table class="summary-table">
+        <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>    
+        <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr><td>📌 Total Adhoc Requests submitted:</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhoc)}</span></td></tr>
+        <tr><td>🔷 Adhoc Requests approved by manager:</td><td class="amount-cell approved">${INR.format(totalAdhocApproved)}</td></tr>
+        <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell rejected">${INR.format(totalAdhocRejected)}</td></tr>        
+        <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
+      </table>
+      ${netPayable < 0 ? `
+        <div class="note">
+          Note: Negative value means advance exceeds approved reimbursements. No payout expected until approval.
+        </div>` : ""}
+    </div>
+  `;
 }
 
 // 🧾 Advance cash table
