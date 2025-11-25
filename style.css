@@ -191,6 +191,24 @@ button:hover {
   background: #fff;
 }
 
+
+.responsive-table th,
+.responsive-table td {
+  padding: 0.75em;
+  border-bottom: 1px solid #ddd;
+  vertical-align: top;
+}
+
+.responsive-table th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.expense-table-wrapper {
+  overflow-x: auto;
+  margin-top: 1em;
+}
+
 /* Responsive tweaks */
 @media (max-width: 600px) {
   .form-wrapper {
