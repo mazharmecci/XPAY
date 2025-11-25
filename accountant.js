@@ -412,17 +412,17 @@ renderAccountantSummary({
   totalAdhocRejected
 });
 
-// --- Breakdown toggles ---
-document.querySelectorAll('.toggle-breakdown').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const id = btn.dataset.id;
-    const breakdown = document.getElementById(`breakdown-${id}`);
-    if (!breakdown) return;
-    const isVisible = breakdown.style.display === 'block';
-    breakdown.style.display = isVisible ? 'none' : 'block';
-    btn.textContent = isVisible ? '▶' : '▼';
-  });
-});
+    // --- Breakdown toggles ---
+    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const breakdown = document.getElementById(`breakdown-${id}`);
+        if (!breakdown) return;
+        const isVisible = breakdown.style.display === 'block';
+        breakdown.style.display = isVisible ? 'none' : 'block';
+        btn.textContent = isVisible ? '▶' : '▼';
+      });
+    });
 
   } catch (err) {
     console.error("renderTable Fatal Error:", err);
@@ -433,7 +433,7 @@ document.querySelectorAll('.toggle-breakdown').forEach(btn => {
     const summaryEl = document.getElementById("accountantSummary");
     if (summaryEl) summaryEl.innerHTML = "";
   }
-}
+} // <-- Only this closing brace!
 
   const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
     month: "long",
