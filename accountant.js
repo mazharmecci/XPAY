@@ -236,33 +236,41 @@ async function renderTable() {
       totalSubmitted += regularAmount + adhocAmount;
       totalAdhocSubmitted += adhocAmount;
 
-const regularStatus = exp.accountant_regular_status || "";
-let normalized = normalizeStatus(exp.status, regularStatus);
+      // 🔹 Normalize status with manager override
+      const regularStatus = exp.accountant_regular_status || "";
+      const adhocKey = `${exp.date || ""}|${adhocAmount}`;
+      const managerDecision = adhocDecisionMap.get(adhocKey);
+      let normalized = normalizeStatus(exp.status, regularStatus);
+
+      if (managerDecision === "approved") {
+        normalized = "FinalApproved";
+      } else if (managerDecision === "rejected") {
+        normalized = "RejectedByManager";
+      } else if (exp.status === "approved") {
+        normalized = "Approved";
+      } else if (exp.status === "rejected") {
+        normalized = "RejectedByAccountant";
+      }
 
       // 🔹 Accountant summary buckets
-      if (normalized === "Approved") {
-        // Accountant approved regular
+      const statusLower = (normalized || "").toLowerCase();
+      if (statusLower === "approved") {
         totalApproved += regularAmount;
-      } else if (normalized === "RejectedByAccountant") {
-        // Accountant rejected regular
+      } else if (statusLower === "rejectedbyaccountant") {
         totalRejected += regularAmount;
-      } else if (normalized === "MixedRejectedPending") {
-        // Accountant rejected regular, manager hasn't acted on Adhoc
+      } else if (statusLower === "mixedrejectedpending") {
         totalRejected += regularAmount;
-      } else if (normalized === "FinalApproved") {
-        // Manager approved Adhoc, regular already approved
+      } else if (statusLower === "finalapproved") {
         totalFinalApprovedRegular += regularAmount;
         if (adhocAmount > 0) {
           totalAdhocApproved += adhocAmount;
         }
-      } else if (normalized === "RejectedByManager") {
-        // Manager rejected Adhoc, regular still pending
+      } else if (statusLower === "rejectedbymanager") {
         totalPending += regularAmount;
         if (adhocAmount > 0) {
           totalAdhocRejected += adhocAmount;
         }
-      } else if (normalized === "Pending") {
-        // Regular still pending, Adhoc undecided
+      } else if (statusLower === "pending") {
         totalPending += regularAmount;
       }
 
@@ -371,7 +379,6 @@ function renderAccountantSummary({
     year: "numeric"
   });
 
-  const netPayable = totalApproved + totalAdhocApproved - totalAdvance;
   const netLabel = netPayable < 0
     ? "💰 Advance exceeds approved"
     : "🟩 Net payable to employee";
@@ -380,19 +387,43 @@ function renderAccountantSummary({
     <div class="summary-block">
       <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
       <table class="summary-table">
-        <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
-        <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td></tr>
-        <tr><td>❌ Rejected by accountant (Regular only):</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>     
-        <tr><td>💸 Advance cash received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-        <tr><td>📌 Adhoc Requests submitted (manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhocSubmitted)}</span></td></tr>
-        <tr><td>🔷 Adhoc Requests approved by manager:</td><td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td></tr>
-        <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td></tr>
-        <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
+        <tr>
+          <td>🧾 Total expenses submitted by emp:</td>
+          <td class="amount-cell">${INR.format(totalSubmitted)}</td>
+        </tr>
+        <tr>
+          <td>✅ Accountant-eligible expenses:</td>
+          <td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td>
+        </tr>
+        <tr>
+          <td>❌ Rejected by accountant (Regular only):</td>
+          <td class="amount-cell">${INR.format(totalRejected)}</td>
+        </tr>
+        <tr>
+          <td>💸 Advance cash received by emp:</td>
+          <td class="amount-cell">${INR.format(totalAdvance)}</td>
+        </tr>
+        <tr>
+          <td>📌 Adhoc Requests submitted (manager approval needed):</td>
+          <td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhocSubmitted)}</span></td>
+        </tr>
+        <tr>
+          <td>🔷 Adhoc Requests approved by manager:</td>
+          <td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td>
+        </tr>
+        <tr>
+          <td>❌ Adhoc Requests rejected by manager:</td>
+          <td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td>
+        </tr>
+        <tr class="net-row">
+          <td>${netLabel}:</td>
+          <td class="amount-cell">${INR.format(netPayable)}</td>
+        </tr>
       </table>
     </div>
   `;
 }
-    
+  
 // 🧾 Advance cash table
 
 function formatDateDDMMYYYY(dateStr) {
