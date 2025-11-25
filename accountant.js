@@ -64,6 +64,28 @@ function logoutUser() {
     });
 }
 
+// 🔎 Fetch expenses helper
+async function fetchExpenses(selectedMonth, selectedEmployee) {
+  const snapshot = await getDocs(collection(db, "expenses"));
+  const records = [];
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const dateStr = typeof data.date === 'string' ? data.date : '';
+    const matchesMonth = dateStr.slice(0, 7) === selectedMonth;
+    const matchesEmployee =
+      !selectedEmployee ||
+      selectedEmployee === "" ||
+      selectedEmployee === "All Employees" ||
+      data.userId === selectedEmployee;
+    if (matchesMonth && matchesEmployee) {
+      records.push({ ...data, id: docSnap.id });
+    }
+  });
+  records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  return records;
+}
+
+
 // 🧾 Breakdown builder
 function buildBreakdown(exp) {
   return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
