@@ -358,32 +358,36 @@ async function renderExpenses(currentUserId) {
       // ================================================
       const regularAmount = travelSum + convey + phone;
       const statusLower = (normalized || "").toLowerCase();
+      const regularStatusLower = (regularStatus || "").toLowerCase();
+      const normalizedLower = statusLower; // reuse for clarity
+      
       const isRegularRejected =
         statusLower === "rejected" ||
         statusLower === "rejectedbymanager" ||
         statusLower === "mixedrejectedpending";
-
-      // Regular claims bucket
+      
+      // ✅ Regular claims bucket
       if (statusLower === "approved" || statusLower === "finalapproved") {
         totalApproved += regularAmount;
       } else if (isRegularRejected) {
         totalRejected += regularAmount;
       } else {
-        totalPending += regularAmount;
+        const isAdhocOnlyPending = statusLower === "pending" && regularStatusLower === "rejected";
+        if (!isAdhocOnlyPending && regularStatusLower !== "rejected") {
+          totalPending += regularAmount;
+        }
       }
-
-      // Adhoc summary bucket
-      const isAdhocRejected = isRegularRejected; // Using already defined
-      const isAdhocApproved = statusLower === "finalapproved";
-
+      
+      // ✅ Adhoc fallback logic — only if manager decision is missing
       if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-        if (isAdhocApproved) {
+        const isAdhocStillPending = statusLower === "pending" && regularStatusLower === "rejected";
+      
+        if (statusLower === "finalapproved") {
           totalAdhocApproved += adhoc;
-        } else if (isAdhocRejected) {
+        } else if (!isAdhocStillPending) {
           totalAdhocRejected += adhoc;
         }
       }
-    });
 
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
