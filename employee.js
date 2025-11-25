@@ -66,12 +66,19 @@ function logoutUser() {
 }
 
 // 🏷️ Status badge
-function getStatusBadge(status) {
-  const s = normalizeStatus(status);
-  if (s === 'Approved') return `<span style="color:green;">✅ Approved by Accountant</span>`;
-  if (s === 'FinalApproved') return `<span style="color:#6CBDE9;">☑️ Final Approved by Manager</span>`; // 🔶 blue
-  if (s === 'Rejected') return `<span style="color:red;">❌ Rejected</span>`;
-  return `<span style="color:orange;">⏳ Pending</span>`;
+function getStatusBadge(status, regularStatus = "") {
+  const s = (status || "").toLowerCase();
+  const r = (regularStatus || "").toLowerCase();
+
+  if (r === "rejected" && s === "pending") {
+    return `<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>`;
+  }
+  if (s === "approved") return `<span class="badge approved">✅ Approved by Accountant</span>`;
+  if (s === "finalapproved") return `<span class="badge final-approved">☑️ Final Approved by Manager</span>`;
+  if (s === "rejected") return `<span class="badge rejected">❌ Rejected by Accountant</span>`;
+  if (s === "rejectedbymanager") return `<span class="badge rejected">❌ Rejected by Manager</span>`;
+  if (s === "pending") return `<span class="badge pending">⏳ Pending</span>`;
+  return `<span class="badge unknown">❔ Unknown</span>`;
 }
 
 // 🧾 Build Expense Data
