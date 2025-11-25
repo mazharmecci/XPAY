@@ -49,18 +49,18 @@
         </span> – contains both Regular (accountant‑eligible) and Adhoc (manager‑only) expenses
       </div>
 
-      <div class="expense-table-wrapper" style="overflow-x:auto;">
-        <table id="expenseTable" class="responsive-table">
-          <thead>
+      <div class="expense-table-wrapper" style="overflow-x: auto; margin-top: 1em;">
+        <table id="expenseTable" class="responsive-table" style="width: 100%; border-collapse: collapse;">
+          <thead style="background-color: #f0f0f0;">
             <tr>
-              <th>Employee</th>
-              <th>Claim Date</th>
-              <th>Type</th>
-              <th>Place/Details & Breakdown</th>
-              <th>Total Amount</th>
-              <th>Status</th>
-              <th>Action</th>
-              <th>Comment</th>
+              <th style="padding: 0.75em; text-align: left;">Employee</th>
+              <th style="padding: 0.75em; text-align: left;">Claim Date</th>
+              <th style="padding: 0.75em; text-align: left;">Type</th>
+              <th style="padding: 0.75em; text-align: left;">Place/Details & Breakdown</th>
+              <th style="padding: 0.75em; text-align: left;">Total Amount</th>
+              <th style="padding: 0.75em; text-align: left;">Status</th>
+              <th style="padding: 0.75em; text-align: left;">Action</th>
+              <th style="padding: 0.75em; text-align: left;">Comment</th>
             </tr>
           </thead>
           <tbody>
@@ -68,8 +68,9 @@
           </tbody>
         </table>
       </div>
+      
+      <div id="accountantSummary" style="margin-top: 2em;"></div>
 
- <div id="accountantSummary"></div>
 
           <div id="toast" class="toast"></div>
     
