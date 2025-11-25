@@ -1,25 +1,17 @@
-// ========================
-// 🔥 Firebase Imports & Core Utilities
-// ========================
+// 🔥 Firebase Imports
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-import {
-  getDoc, getDocs, addDoc, query, setDoc, where,
-  orderBy, limit, serverTimestamp, collection, updateDoc, doc
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getDoc, getDocs, addDoc, query, setDoc, where, orderBy, limit, serverTimestamp, collection, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// ========================
-// 💰 Currency Formatter
-// ========================
-const INR = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
+// 💰 Currency formatter
+const INR = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR"
+});
 
-// ========================
-// 🔄 Status Normalization Logic
-// ========================
-function normalizeStatus(status, regularStatus = "") {
+// 🔄 Status normalizer (now separates rejected by accountant and manager)
+function normalizeStatus(status) {
   const s = (status || "").toLowerCase();
-  const r = (regularStatus || "").toLowerCase();
-  if (r === "rejected" && s === "pending") return "MixedRejectedPending";
   if (s === "approved") return "Approved";
   if (s === "finalapproved") return "FinalApproved";
   if (s === "rejected") return "RejectedByAccountant";
@@ -28,52 +20,116 @@ function normalizeStatus(status, regularStatus = "") {
   return "Unknown";
 }
 
-// ========================
-// 🗝️ Canonical Field Keys and Label Groups
-// ========================
-const REGULAR_KEYS = [
-  "fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc",
-  "monthlyConveyance", "monthlyPhone"
-];
+// 🧩 Field Labels and Grouping
 const FIELD_GROUPS = {
   "🧭 Trip Info": ["placeVisited"],
-  "🚗 Travel Costs": REGULAR_KEYS,
+  "🚗 Travel Costs": ["fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc"],
   "📅 Monthly Claims": ["advanceCash", "monthlyConveyance", "monthlyPhone", "adhocRequest"]
 };
+
 const FIELD_LABELS = {
-  placeVisited: "Place Visited", fuel: "Fuel", fare: "Fare", boarding: "Boarding", food: "Food",
-  localConveyance: "Local Conveyance", postCourier: "Post Courier", misc: "Misc",
-  advanceCash: "Advance Cash", monthlyConveyance: "Monthly Conveyance",
-  monthlyPhone: "Monthly Phone", adhocRequest: "Adhoc Request"
+  placeVisited: "Place Visited",
+  fuel: "Fuel",
+  fare: "Fare",
+  boarding: "Boarding",
+  food: "Food",
+  localConveyance: "Local Conveyance",
+  postCourier: "Post Courier",
+  misc: "Misc",
+  advanceCash: "Advance Cash",
+  monthlyConveyance: "Monthly Conveyance",
+  monthlyPhone: "Monthly Phone",
+  adhocRequest: "Adhoc Request"
 };
 
-// ========================
-// 🍞 Toast Notification Helper
-// ========================
+// 🍞 Toast Notification
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
   if (!toast) return;
   toast.textContent = message;
   toast.className = `toast ${type}`;
   toast.style.display = 'block';
-  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+  setTimeout(() => (toast.style.display = 'none'), 3000);
 }
 
-// ========================
-// 🚪 Logout Utility
-// ========================
+// 🚪 Logout
 function logoutUser() {
   signOut(auth)
-    .then(() => { window.location.href = "login.html"; })
+    .then(() => (window.location.href = "login.html"))
     .catch(err => {
       showToast("Logout failed", "error");
       console.error(err);
     });
 }
 
-// ========================
-// 📊 Fetch & Filter Expenses (Employee/Accountant)
-// ========================
+// 👤 Employee Filter
+async function populateEmployeeFilter() {
+  const empSel = document.getElementById("employeeFilter");
+  if (!empSel) return;
+  empSel.innerHTML = `<option value="">All Employees</option>`;
+  try {
+    const usersSnap = await getDocs(collection(db, "users"));
+    const userList = [];
+    usersSnap.forEach(docSnap => {
+      const dat = docSnap.data();
+      if (dat.role && dat.role.toLowerCase() === "employee") {
+        userList.push({ id: docSnap.id, name: dat.name || docSnap.id });
+      }
+    });
+    userList.sort((a, b) => a.name.localeCompare(b.name));
+    userList.forEach(user => {
+      const opt = document.createElement("option");
+      opt.value = user.id;
+      opt.textContent = user.name;
+      empSel.appendChild(opt);
+    });
+  } catch {
+    showToast("Error loading employees.", "error");
+  }
+}
+
+// 👤 Employee dropdown
+async function populateEmployeeDropdown() {
+  const dropdown = document.getElementById("employeeName");
+  if (!dropdown) return;
+
+  try {
+    const querySnapshot = await getDocs(collection(db, "users"));
+    querySnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.role?.toLowerCase() === "employee") {
+        const option = document.createElement("option");
+        option.value = data.name;
+        option.textContent = data.name;
+        dropdown.appendChild(option);
+      }
+    });
+  } catch (err) {
+    console.error("Error loading employee names:", err);
+  }
+}
+
+// 👤 Employee dropdown - For Advance table
+async function populateAdvanceEmployeeDropdown() {
+  const dropdown = document.getElementById("advanceEmployee");
+  if (!dropdown) return;
+
+  const seenNames = new Set();
+  const querySnapshot = await getDocs(collection(db, "users"));
+  querySnapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const name = data.name?.trim();
+    if (data.role?.toLowerCase() === "employee" && name && !seenNames.has(name)) {
+      seenNames.add(name);
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      dropdown.appendChild(option);
+    }
+  });
+}
+
+// 🔎 Fetch expenses
 async function fetchExpenses(selectedMonth, selectedEmployee) {
   const snapshot = await getDocs(collection(db, "expenses"));
   const records = [];
@@ -94,9 +150,7 @@ async function fetchExpenses(selectedMonth, selectedEmployee) {
   return records;
 }
 
-// ========================
-// 🧾 Breakdown Builder for Expense Details
-// ========================
+// 🧾 Breakdown builder
 function buildBreakdown(exp) {
   return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
     const items = keys.map(key => {
@@ -105,86 +159,79 @@ function buildBreakdown(exp) {
       if (key === "adhocRequest" && value > 0) return `<span style="color:#007bff;"><strong>${FIELD_LABELS[key]}: ₹${value}</strong></span>`;
       return value > 0 ? `${FIELD_LABELS[key]}: ₹${value}` : '';
     }).filter(Boolean);
-    return items.length
-      ? `<strong>${groupName}</strong><br>${items.join(', ')}`
-      : '';
+    return items.length ? `<strong>${groupName}</strong><br>${items.join(', ')}` : '';
   }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
-// ========================
-// 🏷️ Status Badge Helper
-// ========================
-function getStatusBadge(normalized) {
-  switch (normalized) {
-    case "FinalApproved":
-      return '<span class="badge final-approved">✅ Final Approved by Manager</span>';
-    case "RejectedByManager":
-      return '<span class="badge rejected">❌ Rejected by Manager</span>';
-    case "RejectedByAccountant":
-      return '<span class="badge rejected">❌ Rejected by Accountant</span>';
-    case "Approved":
-      return '<span class="badge approved">✅ Approved by Accountant</span>';
-    case "MixedRejectedPending":
-      return '<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>';
-    case "Pending":
-      return '<span class="badge pending">⏳ Pending</span>';
-    default:
-      return '<span class="badge unknown">❔ Unknown</span>';
+// 🏷️ Status badge (dual status)
+function getStatusBadge(status, regularStatus = "") {
+  const s = (status || "").toLowerCase();
+  const r = (regularStatus || "").toLowerCase();
+
+  if (r === "rejected" && s === "pending") {
+    return `<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>`;
   }
+  if (s === "approved") return `<span class="badge approved">Accountant Approved</span>`;
+  if (s === "finalapproved") return `<span class="badge final-approved">Final Approved</span>`;
+  if (s === "rejected") return `<span class="badge rejected">Rejected by Accountant</span>`;
+  if (s === "rejectedbymanager") return `<span class="badge rejected">Rejected by Manager</span>`;
+  if (s === "pending") return `<span class="badge pending">Pending</span>`;
+  return `<span class="badge unknown">Unknown</span>`;
 }
 
-// ========================
-// 📋 Main Table Rendering & Summary Buckets (renderTable)
-// ========================
+// --- Main renderTable with dual-status/tinting/summary logic ---
 async function renderTable() {
   try {
-    // --- Filters & core pulls ---
-    const selectedMonth = document.getElementById('monthPicker')?.value || new Date().toISOString().slice(0, 7);
-    const selectedEmployee = document.getElementById('employeeFilter')?.value || "";
+    const monthPicker = document.getElementById('monthPicker');
+    const empSel = document.getElementById('employeeFilter');
+    const selectedMonth = monthPicker?.value || new Date().toISOString().slice(0, 7);
+    const selectedEmployee = empSel?.value || "";
+
     const expenses = await fetchExpenses(selectedMonth, selectedEmployee);
 
-    // --- Remove "advance only" rows ---
     const filteredExpenses = expenses.filter(exp => {
       const advance = Number(exp.advanceCash) || 0;
-      const allOthers = REGULAR_KEYS.concat(["adhocRequest"])
-        .reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
+      const allOthers =
+        (Number(exp.fuel) || 0) +
+        (Number(exp.fare) || 0) +
+        (Number(exp.boarding) || 0) +
+        (Number(exp.food) || 0) +
+        (Number(exp.localConveyance) || 0) +
+        (Number(exp.postCourier) || 0) +
+        (Number(exp.monthlyConveyance) || 0) +
+        (Number(exp.monthlyPhone) || 0) +
+        (Number(exp.adhocRequest) || 0) +
+        (Number(exp.misc) || 0);
       return !(advance > 0 && allOthers === 0);
     });
 
-    // --- Prepare Table ---
     const tbody = document.querySelector('#expenseTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     if (filteredExpenses.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 1em; color: #888;">📭 No expenses found for selection.</td></tr>`;
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; padding: 1em; color: #888;">
+            📭 No expenses found for selection.
+          </td>
+        </tr>`;
       const summaryEl = document.getElementById("accountantSummary");
       if (summaryEl) summaryEl.innerHTML = "";
       return;
     }
 
-    // --- Manager Adhoc Decision Map ---
-    const adhocDecisionMap = new Map();
-    const adhocSnap = await getDocs(collection(db, "adhocRequests"));
-    adhocSnap.forEach(docSnap => {
-      const req = docSnap.data();
-      const dateStr = typeof req.date === "string" ? req.date : "";
-      const status = (req.status || "").toLowerCase();
-      const amount = Number(req.amount) || 0;
-      const raisedBy = (req.raisedBy || "").toLowerCase().trim();
-      const key = `${dateStr}|${amount}|${raisedBy}`;
-      adhocDecisionMap.set(key, status);
-    });
-
-    // --- Summary Buckets Setup ---
-    let totalApproved = 0, totalRejected = 0, totalPending = 0;
-    let totalSubmitted = 0, totalFinalApprovedRegular = 0;
-    let totalAdhocSubmitted = 0, totalAdhocApproved = 0, totalAdhocRejected = 0;
     const userCache = {};
+    let totalApproved = 0;
+    let totalRejected = 0;
+    let totalPending = 0;
+    let totalSubmitted = 0;
+    let totalFinalApprovedRegular = 0;
+    let totalAdhocSubmitted = 0;
+    let totalAdhocApproved = 0;
+    let totalAdhocRejected = 0;
 
-    // --- Main Expense Table Rows + Buckets ---
     for (const exp of filteredExpenses) {
-      // Employee name resolution & cache
       let employeeName = exp.userId || "-";
       if (exp.userId && !userCache[exp.userId]) {
         const userDoc = await getDoc(doc(db, "users", exp.userId));
@@ -192,54 +239,52 @@ async function renderTable() {
           employeeName = userDoc.data().name || employeeName;
           userCache[exp.userId] = employeeName;
         }
-      } else if (userCache[exp.userId]) {
+      } else if (exp.userId && userCache[exp.userId]) {
         employeeName = userCache[exp.userId];
       }
 
-      // Amounts
-      const regularAmount = REGULAR_KEYS.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
+      let regularAmount = 0;
+      ["fuel","fare","boarding","food","localConveyance","postCourier","misc","monthlyConveyance","monthlyPhone"]
+        .forEach(key => { if (exp[key]) regularAmount += Number(exp[key]); });
+
       const adhocAmount = Number(exp.adhocRequest) || 0;
-      totalSubmitted += regularAmount + adhocAmount;
+
+      totalSubmitted += (regularAmount + adhocAmount);
+
+      // For summaries, only track Manager status, not accountant, for Adhoc.
       totalAdhocSubmitted += adhocAmount;
+      const normalized = normalizeStatus(exp.status);
+      const regularStatus = (exp.accountant_regular_status || "").toLowerCase();
 
-      // Status and approvals
-      const regularStatus = exp.accountant_regular_status || "";
-      const employeeKey = (exp.userId || "").toLowerCase().trim();
-      const adhocKey = `${exp.date || ""}|${adhocAmount}|${employeeKey}`;
-      let managerDecision = adhocDecisionMap.get(adhocKey);
-
-      let normalized = normalizeStatus(exp.status, regularStatus);
-      if (managerDecision === "approved") {
-        normalized = "FinalApproved";
-      } else if (managerDecision === "rejected") {
-        normalized = "RejectedByManager";
-      }
-
-      // Buckets—accountant, manager, mixed
-      if (normalized === "Approved") {
+      // Only regular amounts for accountant summary buckets
+      if (normalized === "approved") {
         totalApproved += regularAmount;
-      } else if (normalized === "RejectedByAccountant" || normalized === "MixedRejectedPending") {
+      } else if (normalized === "rejectedbyaccountant") {
         totalRejected += regularAmount;
-      } else if (normalized === "FinalApproved") {
+      } else if (normalized === "finalapproved") {
         totalFinalApprovedRegular += regularAmount;
-      } else if (normalized === "RejectedByManager") {
-        totalPending += regularAmount;
-      } else if (normalized === "Pending") {
+        // Adhoc Approved by Manager only
+        if (adhocAmount > 0) totalAdhocApproved += adhocAmount;
+      } else if (normalized === "rejectedbymanager") {
+        totalPending += regularAmount; // Adhoc rejected, regular could be approved/pending depending on setup
+        if (adhocAmount > 0) totalAdhocRejected += adhocAmount;
+      } else {
         totalPending += regularAmount;
       }
 
-      // Adhoc summary—ONLY manager action
-      if (managerDecision === "approved" && adhocAmount > 0) {
-        totalAdhocApproved += adhocAmount;
-      } else if (managerDecision === "rejected" && adhocAmount > 0) {
-        totalAdhocRejected += adhocAmount;
-      }
-
-      // Render table row
-      const statusBadge = getStatusBadge(normalized);
       const breakdownHTML = buildBreakdown(exp);
+      const statusBadge = getStatusBadge(exp.status, regularStatus);
+
+      // Auto-tint for dual-status: Accountant rejects regular, Adhoc is still pending
+      let rowStyle = "";
+      if (regularStatus === "rejected" && normalized === "pending" && adhocAmount > 0) {
+        rowStyle = 'style="background-color:#ffe6e6;"'; // light red
+      } else if (regularAmount > 0 && adhocAmount > 0) {
+        rowStyle = 'style="background-color:#f9f9ff;"';
+      }
+
       tbody.innerHTML += `
-        <tr>
+        <tr ${rowStyle}>
           <td>${employeeName}</td>
           <td>${exp.date || "-"}</td>
           <td>${exp.workflowType || "-"}</td>
@@ -251,35 +296,43 @@ async function renderTable() {
             </div>
           </td>
           <td style="font-size:0.85em; color:#555;">
-            Regular: ${INR.format(regularAmount)} <br>
-            Adhoc (Manager): <span style="color:#007bff;">${INR.format(adhocAmount)}</span>
+            Regular: ₹${regularAmount} <br>
+            Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
           </td>
           <td>${statusBadge}</td>
           ${
             (regularAmount === 0 && adhocAmount > 0)
               ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Manager only</td>`
-              : `<td><input type="checkbox" class="action-checkbox" data-id="${exp.id}" title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." /></td>
-                 <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" /></td>`
+              : `<td>
+                   <input type="checkbox" class="action-checkbox" data-id="${exp.id}" 
+                     title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." />
+                 </td>
+                 <td>
+                   <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" />
+                 </td>`
           }
         </tr>`;
     }
 
-    // --- Advance cash calculation & summary block ---
+    // Advance calculation & summary rendering
     let totalAdvanceReceived = 0;
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     advanceSnapshot.forEach(docSnap => {
       const adv = docSnap.data();
-      const advMonth = (typeof adv.date === "string" ? adv.date : "").slice(0, 7);
+      const advDate = typeof adv.date === "string" ? adv.date : "";
+      const advMonth = advDate.slice(0, 7);
+      const isMonthMatch = advMonth === selectedMonth;
       const empFilter = selectedEmployee?.toLowerCase() || "";
       const empId = (adv.employeeId || "").toLowerCase();
       const empName = (adv.employeeName || "").toLowerCase();
-      const isEmpMatch = !empFilter || empFilter === "all employees" || empId === empFilter || empName === empFilter;
-      if (advMonth === selectedMonth && isEmpMatch) {
+      const isEmpMatch =
+        !empFilter || empFilter === "all employees" ||
+        empId === empFilter || empName === empFilter;
+      if (isMonthMatch && isEmpMatch) {
         totalAdvanceReceived += Number(adv.advanceCash) || 0;
       }
     });
 
-    // --- Render summary block ---
     renderAccountantSummary({
       selectedMonth,
       selectedEmployee,
@@ -294,7 +347,6 @@ async function renderTable() {
       totalAdhocRejected
     });
 
-    // --- Table breakdown toggles ---
     document.querySelectorAll('.toggle-breakdown').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -307,25 +359,34 @@ async function renderTable() {
     });
 
   } catch (err) {
-    // --- Error Handling Block ---
     console.error("renderTable Fatal Error:", err);
     const tbody = document.querySelector('#expenseTable tbody');
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red; padding:1em;">❌ Error loading expenses. Check console for details.</td></tr>`;
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color:red; padding:1em;">
+            ❌ Error loading expenses. Check console for details.
+          </td>
+        </tr>`;
     }
     const summaryEl = document.getElementById("accountantSummary");
     if (summaryEl) summaryEl.innerHTML = "";
   }
 }
 
-// ========================
-// 📋 Accountant Summary Renderer
-// ========================
+// --- Only reflect manager actions for Adhoc in summary
 function renderAccountantSummary({
-  selectedMonth, selectedEmployee,
-  totalApproved, totalRejected, totalPending,
-  totalAdvance, totalSubmitted, totalFinalApproved,
-  totalAdhocSubmitted, totalAdhocApproved, totalAdhocRejected
+  selectedMonth,
+  selectedEmployee,
+  totalApproved,
+  totalRejected,
+  totalPending,
+  totalAdvance,
+  totalSubmitted,
+  totalFinalApproved,
+  totalAdhocSubmitted,
+  totalAdhocApproved,
+  totalAdhocRejected
 }) {
   const summaryContainer = document.getElementById("accountantSummary");
   if (!summaryContainer) return;
@@ -334,10 +395,11 @@ function renderAccountantSummary({
     month: "long",
     year: "numeric"
   });
-  const netPayable = totalApproved + totalAdhocApproved - totalAdvance;
+
+  const netPayable = (totalFinalApproved + totalAdhocApproved) - totalAdvance;
   const netLabel = netPayable < 0
     ? "💰 Advance exceeds approved"
-    : "🟩 Net payable to employee";
+    : "🔶 Net payable to employee";
 
   summaryContainer.innerHTML = `
     <div class="summary-block">
@@ -346,8 +408,9 @@ function renderAccountantSummary({
         <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
         <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td></tr>
         <tr><td>❌ Rejected by accountant (Regular only):</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>⏳ Pending expenses to be reviewed by accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
         <tr><td>💸 Advance cash received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-        <tr><td>📌 Adhoc Requests submitted (manager approval needed):</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhocSubmitted)}</span></td></tr>
+        <tr><td>📌 Adhoc Requests submitted (manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhocSubmitted)}</span></td></tr>
         <tr><td>🔷 Adhoc Requests approved by manager:</td><td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td></tr>
         <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td></tr>
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
