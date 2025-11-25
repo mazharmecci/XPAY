@@ -10,8 +10,11 @@ const INR = new Intl.NumberFormat("en-IN", {
 });
 
 // 🔄 Status normalizer (now separates rejected by accountant and manager)
-function normalizeStatus(status) {
+function normalizeStatus(status, regularStatus = "") {
   const s = (status || "").toLowerCase();
+  const r = (regularStatus || "").toLowerCase();
+
+  if (r === "rejected" && s === "pending") return "MixedRejectedPending";
   if (s === "approved") return "Approved";
   if (s === "finalapproved") return "FinalApproved";
   if (s === "rejected") return "RejectedByAccountant";
@@ -253,20 +256,18 @@ async function renderTable() {
 
       // For summaries, only track Manager status, not accountant, for Adhoc.
       totalAdhocSubmitted += adhocAmount;
-      const normalized = normalizeStatus(exp.status);
-      const regularStatus = (exp.accountant_regular_status || "").toLowerCase();
+      const normalized = normalizeStatus(exp.status, regularStatus);
 
       // Only regular amounts for accountant summary buckets
-      if (normalized === "approved") {
+      if (normalized === "Approved") {
         totalApproved += regularAmount;
-      } else if (normalized === "rejectedbyaccountant") {
+      } else if (normalized === "RejectedByAccountant" || normalized === "MixedRejectedPending") {
         totalRejected += regularAmount;
-      } else if (normalized === "finalapproved") {
+      } else if (normalized === "FinalApproved") {
         totalFinalApprovedRegular += regularAmount;
-        // Adhoc Approved by Manager only
         if (adhocAmount > 0) totalAdhocApproved += adhocAmount;
-      } else if (normalized === "rejectedbymanager") {
-        totalPending += regularAmount; // Adhoc rejected, regular could be approved/pending depending on setup
+      } else if (normalized === "RejectedByManager") {
+        totalPending += regularAmount;
         if (adhocAmount > 0) totalAdhocRejected += adhocAmount;
       } else {
         totalPending += regularAmount;
