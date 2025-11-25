@@ -353,44 +353,45 @@ async function renderExpenses(currentUserId) {
         badge
       );
 
-      // ================================================
-      // ===== Regular and Adhoc Status Bucketing =======
-      // ================================================
-      const regularAmount = travelSum + convey + phone;
-      
-      // Normalize statuses once
-      const statusLower = (normalized || "").toLowerCase();
-      const regularStatusLower = (regularStatus || "").toLowerCase();
-      
-      // ----- Regular claims bucket (accountant scope) -----
-      const isOverallRejected =
-        statusLower === "rejected" ||
-        statusLower === "rejectedbymanager" ||
-        statusLower === "mixedrejectedpending";
-      const isAdhocOnlyPending = statusLower === "pending" && regularStatusLower === "rejected";
-      
-      if (statusLower === "approved" || statusLower === "finalapproved") {
-        totalApproved += regularAmount;
-      } else if (isOverallRejected || regularStatusLower === "rejected") {
-        totalRejected += regularAmount;
-      } else {
-        // Only count as pending if regular hasn't been rejected
-        if (!isAdhocOnlyPending && regularStatusLower !== "rejected") {
-          totalPending += regularAmount;
-        }
-      }
-      
-      // ----- Adhoc summary bucket (manager scope only) -----
-      // Count Adhoc approved/rejected ONLY when manager has explicitly decided
-      if (adhoc > 0) {
-        const managerDecision = adhocDecisionMap.get(adhocKey); // 'approved' | 'rejected' | undefined
-        if (managerDecision === "approved") {
-          totalAdhocApproved += adhoc;
-        } else if (managerDecision === "rejected") {
-          totalAdhocRejected += adhoc;
-        }
-        // If no explicit manager decision, do not add to approved/rejected (keeps both at 0)
-      }
+// ================================================
+// ===== Regular and Adhoc Status Bucketing =======
+// ================================================
+const regularAmount = travelSum + convey + phone;
+
+// Normalize statuses
+const statusLower = (normalized || "").toLowerCase();
+const regularStatusLower = (regularStatus || "").toLowerCase();
+
+// ----- Regular claims bucket -----
+const isOverallRejected =
+  statusLower === "rejected" ||
+  statusLower === "rejectedbymanager" ||
+  statusLower === "mixedrejectedpending";
+
+const isAdhocOnlyPending =
+  statusLower === "pending" && regularStatusLower === "rejected";
+
+if (statusLower === "approved" || statusLower === "finalapproved") {
+  totalApproved += regularAmount;
+} else if (isOverallRejected || regularStatusLower === "rejected") {
+  totalRejected += regularAmount;
+} else {
+  if (!isAdhocOnlyPending && regularStatusLower !== "rejected") {
+    totalPending += regularAmount;
+  }
+}
+
+// ----- Adhoc summary bucket -----
+if (adhoc > 0) {
+  const managerDecision = adhocDecisionMap.get(adhocKey); // 'approved' | 'rejected' | undefined
+
+  if (managerDecision === "approved") {
+    totalAdhocApproved += adhoc;
+  } else if (managerDecision === "rejected") {
+    totalAdhocRejected += adhoc;
+  }
+  // If undefined, do not count as approved or rejected
+}
 
 
     // 🔹 Advance cash
