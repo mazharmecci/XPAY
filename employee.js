@@ -332,36 +332,42 @@ async function renderExpenses(currentUserId) {
   
 // 🔢 Accountant buckets for regular claims
 const regularAmount = travelSum + convey + phone;
-const isRegularRejected = (regularStatus || "").toLowerCase() === "rejected";
-const isAdhocOnlyPending = normalized === "pending" && isRegularRejected;
+const statusLower = (normalized || "").toLowerCase();
+const isRegularRejected = (
+    statusLower === "rejected" ||
+    statusLower === "rejectedbymanager" ||
+    statusLower === "mixedrejectedpending"
+);
 
-if (normalized === "approved" || normalized === "finalapproved") {
+if (statusLower === "approved" || statusLower === "finalapproved") {
   totalApproved += regularAmount;
-} else if (
-  normalized === "rejected" ||
-  normalized === "rejectedbymanager" ||
-  normalized === "mixedrejectedpending"
-) {
+} else if (isRegularRejected) {
   totalRejected += regularAmount;
 } else {
-  // ✅ Only count as pending if regular is not rejected
-  if (!isRegularRejected && !isAdhocOnlyPending) {
-    totalPending += regularAmount;
-  }
+  totalPending += regularAmount;
 }
 
+
 // 🔄 Fallback Adhoc summary logic
+const statusLower = (normalized || "").toLowerCase();
+const isAdhocRejected =
+  statusLower === "rejected" ||
+  statusLower === "rejectedbymanager" ||
+  statusLower === "mixedrejectedpending";
+const isAdhocApproved = statusLower === "finalapproved";
+
 if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-  if (normalized === "finalapproved") {
+  if (isAdhocApproved) {
     totalAdhocApproved += adhoc;
-  } else if (
-    normalized === "rejected" ||
-    normalized === "rejectedbymanager" ||
-    normalized === "mixedrejectedpending"
-  ) {
+  } else if (isAdhocRejected) {
     totalAdhocRejected += adhoc;
   }
+  // If you want to show pending Adhoc requests, you can add:
+  // else if (statusLower === "pending") {
+  //   totalAdhocPending += adhoc;
+  // }
 }
+
       
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
