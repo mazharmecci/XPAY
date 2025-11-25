@@ -331,35 +331,39 @@ async function renderExpenses(currentUserId) {
   );
 
 
-      // 🔢 Accountant buckets for regular claims
-      const regularAmount = travelSum + convey + phone;
-      if (normalized === "Approved") {
-        totalApproved += regularAmount;
-      } else if (normalized === "FinalApproved") {
-        totalApproved += regularAmount;
-      } else if (
-        normalized === "Rejected" ||
-        normalized === "RejectedByManager" ||
-        normalized === "MixedRejectedPending"
-      ) {
-        totalRejected += regularAmount;
-      } else {
-        totalPending += regularAmount;
-      }
-
-      // 🔄 Fallback Adhoc summary logic
-      if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-        if (normalized === "FinalApproved") totalAdhocApproved += adhoc;
-        else if (
-          normalized === "Rejected" ||
-          normalized === "RejectedByManager" ||
-          normalized === "MixedRejectedPending"
-        ) {
-          totalAdhocRejected += adhoc;
-        }
-      }
-    });
-    
+  // 🔢 Accountant buckets for regular claims
+  const regularAmount = travelSum + convey + phone;
+  const isRegularRejected = (regularStatus || "").toLowerCase() === "rejected";
+  
+  if (normalized === "Approved" || normalized === "FinalApproved") {
+    totalApproved += regularAmount;
+  } else if (
+    normalized === "Rejected" ||
+    normalized === "RejectedByManager" ||
+    normalized === "MixedRejectedPending"
+  ) {
+    totalRejected += regularAmount;
+  } else {
+    // ✅ Only count as pending if regular is not rejected
+    const isAdhocOnlyPending = normalized === "Pending" && isRegularRejected;
+    if (!isRegularRejected && !isAdhocOnlyPending) {
+      totalPending += regularAmount;
+    }
+  }
+  
+  // 🔄 Fallback Adhoc summary logic
+  if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
+    if (normalized === "FinalApproved") {
+      totalAdhocApproved += adhoc;
+    } else if (
+      normalized === "Rejected" ||
+      normalized === "RejectedByManager" ||
+      normalized === "MixedRejectedPending"
+    ) {
+      totalAdhocRejected += adhoc;
+    }
+  }
+      
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     const advanceRecords = [];
