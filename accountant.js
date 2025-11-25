@@ -345,12 +345,12 @@ async function renderTable() {
     renderAccountantSummary({
       selectedMonth,
       selectedEmployee,
-      totalApproved,
+      totalApproved, // ✅ regular approved by accountant
       totalRejected,
       totalPending,
-      totalAdvance: totalAdvanceReceived,
+      totalAdvance: totalAdvanceReceived, // ✅ advance cash
       totalSubmitted,
-      totalFinalApproved: totalFinalApprovedRegular,
+      totalFinalApproved: totalFinalApprovedRegular, // optional
       totalAdhocSubmitted,
       totalAdhocApproved,
       totalAdhocRejected
