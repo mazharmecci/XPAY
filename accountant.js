@@ -64,93 +64,6 @@ function logoutUser() {
     });
 }
 
-// 👤 Employee Filter
-async function populateEmployeeFilter() {
-  const empSel = document.getElementById("employeeFilter");
-  if (!empSel) return;
-  empSel.innerHTML = `<option value="">All Employees</option>`;
-  try {
-    const usersSnap = await getDocs(collection(db, "users"));
-    const userList = [];
-    usersSnap.forEach(docSnap => {
-      const dat = docSnap.data();
-      if (dat.role && dat.role.toLowerCase() === "employee") {
-        userList.push({ id: docSnap.id, name: dat.name || docSnap.id });
-      }
-    });
-    userList.sort((a, b) => a.name.localeCompare(b.name));
-    userList.forEach(user => {
-      const opt = document.createElement("option");
-      opt.value = user.id;
-      opt.textContent = user.name;
-      empSel.appendChild(opt);
-    });
-  } catch {
-    showToast("Error loading employees.", "error");
-  }
-}
-
-// 👤 Employee dropdown (regular/advance)
-async function populateEmployeeDropdown() {
-  const dropdown = document.getElementById("employeeName");
-  if (!dropdown) return;
-
-  try {
-    const querySnapshot = await getDocs(collection(db, "users"));
-    querySnapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      if (data.role?.toLowerCase() === "employee") {
-        const option = document.createElement("option");
-        option.value = data.name;
-        option.textContent = data.name;
-        dropdown.appendChild(option);
-      }
-    });
-  } catch (err) {
-    console.error("Error loading employee names:", err);
-  }
-}
-
-async function populateAdvanceEmployeeDropdown() {
-  const dropdown = document.getElementById("advanceEmployee");
-  if (!dropdown) return;
-
-  const seenNames = new Set();
-  const querySnapshot = await getDocs(collection(db, "users"));
-  querySnapshot.forEach(docSnap => {
-    const data = docSnap.data();
-    const name = data.name?.trim();
-    if (data.role?.toLowerCase() === "employee" && name && !seenNames.has(name)) {
-      seenNames.add(name);
-      const option = document.createElement("option");
-      option.value = name;
-      option.textContent = name;
-      dropdown.appendChild(option);
-    }
-  });
-}
-
-// 🔎 Fetch expenses
-async function fetchExpenses(selectedMonth, selectedEmployee) {
-  const snapshot = await getDocs(collection(db, "expenses"));
-  const records = [];
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
-    const dateStr = typeof data.date === 'string' ? data.date : '';
-    const matchesMonth = dateStr.slice(0, 7) === selectedMonth;
-    const matchesEmployee =
-      !selectedEmployee ||
-      selectedEmployee === "" ||
-      selectedEmployee === "All Employees" ||
-      data.userId === selectedEmployee;
-    if (matchesMonth && matchesEmployee) {
-      records.push({ ...data, id: docSnap.id });
-    }
-  });
-  records.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  return records;
-}
-
 // 🧾 Breakdown builder
 function buildBreakdown(exp) {
   return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
@@ -215,6 +128,18 @@ async function renderTable() {
     let totalSubmitted = 0, totalFinalApprovedRegular = 0;
     let totalAdhocSubmitted = 0, totalAdhocApproved = 0, totalAdhocRejected = 0;
 
+    // 🔹 Build adhocDecisionMap
+    const adhocDecisionMap = new Map();
+    const adhocSnap = await getDocs(collection(db, "adhocRequests"));
+    adhocSnap.forEach(docSnap => {
+      const req = docSnap.data();
+      const dateStr = typeof req.date === "string" ? req.date : "";
+      const status = (req.status || "").toLowerCase();
+      const amount = Number(req.amount) || 0;
+      const key = `${dateStr}|${amount}`;
+      adhocDecisionMap.set(key, status);
+    });
+
     for (const exp of filteredExpenses) {
       // 🔹 Resolve employee name
       let employeeName = exp.userId || "-";
@@ -262,7 +187,7 @@ async function renderTable() {
         totalRejected += regularAmount;
       } else if (statusLower === "finalapproved") {
         totalFinalApprovedRegular += regularAmount;
-        if (adhocAmount > 0) {
+             if (adhocAmount > 0) {
           totalAdhocApproved += adhocAmount;
         }
       } else if (statusLower === "rejectedbymanager") {
@@ -379,6 +304,8 @@ function renderAccountantSummary({
     year: "numeric"
   });
 
+  // ✅ Net payable calculation added
+  const netPayable = totalApproved + totalAdhocApproved - totalAdvance;
   const netLabel = netPayable < 0
     ? "💰 Advance exceeds approved"
     : "🟩 Net payable to employee";
@@ -387,43 +314,19 @@ function renderAccountantSummary({
     <div class="summary-block">
       <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
       <table class="summary-table">
-        <tr>
-          <td>🧾 Total expenses submitted by emp:</td>
-          <td class="amount-cell">${INR.format(totalSubmitted)}</td>
-        </tr>
-        <tr>
-          <td>✅ Accountant-eligible expenses:</td>
-          <td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td>
-        </tr>
-        <tr>
-          <td>❌ Rejected by accountant (Regular only):</td>
-          <td class="amount-cell">${INR.format(totalRejected)}</td>
-        </tr>
-        <tr>
-          <td>💸 Advance cash received by emp:</td>
-          <td class="amount-cell">${INR.format(totalAdvance)}</td>
-        </tr>
-        <tr>
-          <td>📌 Adhoc Requests submitted (manager approval needed):</td>
-          <td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhocSubmitted)}</span></td>
-        </tr>
-        <tr>
-          <td>🔷 Adhoc Requests approved by manager:</td>
-          <td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td>
-        </tr>
-        <tr>
-          <td>❌ Adhoc Requests rejected by manager:</td>
-          <td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td>
-        </tr>
-        <tr class="net-row">
-          <td>${netLabel}:</td>
-          <td class="amount-cell">${INR.format(netPayable)}</td>
-        </tr>
+        <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
+        <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td></tr>
+        <tr><td>❌ Rejected by accountant (Regular only):</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
+        <tr><td>💸 Advance cash received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
+        <tr><td>📌 Adhoc Requests submitted (manager approval needed):</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhocSubmitted)}</span></td></tr>
+        <tr><td>🔷 Adhoc Requests approved by manager:</td><td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td></tr>
+        <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td></tr>
+        <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
       </table>
     </div>
   `;
 }
-  
+
 // 🧾 Advance cash table
 
 function formatDateDDMMYYYY(dateStr) {
