@@ -1,3 +1,113 @@
+/* Login Panel css */
+
+.landing-wrapper {
+  background: #ffffffcc;
+  max-width: 380px;
+  width: 94vw;
+  margin: 4vh auto 2vh auto;
+  border-radius: 20px;
+  box-shadow: 0 6px 32px rgba(0, 85, 215, 0.13);
+  text-align: center;
+  padding: 2.6rem 1.7rem 1.2rem 1.7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-wrapper .landing-logo {
+  width: 74px;
+  margin-bottom: 1.7rem;
+  filter: drop-shadow(0 5px 16px #49bff999);
+}
+
+.landing-wrapper .role-btn {
+  display: block;
+  width: 93%;
+  margin: 0.8rem auto;
+  padding: 0.92rem 0;
+  font-size: 1.11rem;
+  font-weight: bold;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,85,215,0.10);
+  transition: background 0.18s, transform 0.16s;
+  letter-spacing: 0.03em;
+}
+
+.landing-wrapper .employee-btn {
+  background: linear-gradient(90deg, #14c1de 70%, #0099ff 100%);
+}
+.landing-wrapper .employee-btn:hover {
+  background: linear-gradient(90deg, #21adca 70%, #0077ad 100%);
+  transform: translateY(-2px) scale(1.03);
+}
+.landing-wrapper .accountant-btn {
+  background: linear-gradient(90deg, #6866fa 70%, #374cfa 100%);
+}
+.landing-wrapper .accountant-btn:hover {
+  background: linear-gradient(90deg, #4a53b4 70%, #2c36b2 100%);
+  transform: translateY(-2px) scale(1.03);
+}
+.landing-wrapper .manager-btn {
+  background: linear-gradient(90deg, #32d296 70%, #24975d 100%);
+}
+.landing-wrapper .manager-btn:hover {
+  background: linear-gradient(90deg, #24975d 70%, #127240 100%);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.landing-wrapper .site-footer {
+  width: 100%;
+  background: transparent;
+  color: #333;
+  font-size: 0.95rem;
+  margin: 2.8rem 0 0 0;
+  padding: 0.7rem 0;
+  border-top: 1.5px solid #b8eaff;
+}
+
+.landing-wrapper .footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.landing-wrapper .footer-logo {
+  height: 38px;
+  margin-bottom: 0.3rem;
+  filter: drop-shadow(0 2px 6px #b8eaff99);
+}
+
+.landing-wrapper .footer-brand p {
+  margin: 0.3em 0;
+  color: #16577c;
+  font-size: 1em;
+  font-weight: 500;
+}
+
+.landing-wrapper .footer-legal p {
+  margin: 0.7em 0 0 0;
+  color: #7ca2ad;
+  font-size: 0.97em;
+}
+
+@media (max-width: 480px) {
+  .landing-wrapper {
+    padding: 1.3rem 0.4rem;
+    max-width: 98vw;
+  }
+  .landing-wrapper .role-btn {
+    font-size: 0.98rem;
+    padding: 0.85rem 0;
+  }
+}
+
+
+
+/* Js file css start from here */
+
 :root {
   --biscuit-light: #f6eedd;
   --biscuit-mid: #f2d7aa;
