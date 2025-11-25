@@ -279,6 +279,8 @@ async function renderExpenses(currentUserId) {
     records.forEach((exp, index) => {
       const sn = index + 1;
       const date = exp.date || "-";
+    
+      // 🔹 Breakdown fields
       const fuel = safeAmount(exp.fuel);
       const fare = safeAmount(exp.fare);
       const boarding = safeAmount(exp.boarding);
@@ -288,21 +290,22 @@ async function renderExpenses(currentUserId) {
       const misc = safeAmount(exp.misc);
       const travelSum = fuel + fare + boarding + food + local + postCourier + misc;
       travelTotal += travelSum;
-
+    
       const convey = safeAmount(exp.monthlyConveyance);
       const phone = safeAmount(exp.monthlyPhone);
       const adhoc = safeAmount(exp.adhocRequest);
       const monthlySum = convey + phone + adhoc;
       monthlyTotal += monthlySum;
-
+    
       totalAdhocSubmitted += adhoc;
-
+    
+      // 🔹 Status normalization
       const adhocAmount = Number(exp.adhocRequest) || 0;
       const adhocKey = `${exp.date || ""}|${adhocAmount}`;
       const managerDecision = adhocDecisionMap.get(adhocKey);
       const regularStatus = exp.accountant_regular_status || "";
       let normalized = normalizeStatus(exp.status, regularStatus);
-      
+    
       // ✅ Override only if manager explicitly acted
       if (managerDecision === "approved") {
         normalized = "FinalApproved";
@@ -313,7 +316,35 @@ async function renderExpenses(currentUserId) {
       } else if (exp.status === "rejected") {
         normalized = "RejectedByAccountant"; // Accountant rejected
       }
-      
+    
+      // ================================================
+      // ===== Regular and Adhoc Status Bucketing =======
+      // ================================================
+      const regularAmount = travelSum + convey + phone;
+      const statusLower = (normalized || "").toLowerCase();
+      const isRegularRejected =
+        statusLower === "rejected" ||
+        statusLower === "rejectedbymanager" ||
+        statusLower === "mixedrejectedpending";
+    
+      // 🔹 Regular claims bucket
+      if (statusLower === "approved" || statusLower === "finalapproved") {
+        totalApproved += regularAmount;
+      } else if (isRegularRejected) {
+        totalRejected += regularAmount;
+      } else {
+        totalPending += regularAmount;
+      }
+    
+      // 🔹 Adhoc summary bucket — count only if manager explicitly acted
+      if (managerDecision === "approved" && adhoc > 0) {
+        totalAdhocApproved += adhoc;
+      } else if (managerDecision === "rejected" && adhoc > 0) {
+        totalAdhocRejected += adhoc;
+      }
+    });
+
+    
       // 🔹 Badge logic with fallback
       let badge = "";
       switch (normalized) {
@@ -369,38 +400,6 @@ async function renderExpenses(currentUserId) {
         adhoc,
         badge
       );
-
-   // ================================================
-      // ===== Regular and Adhoc Status Bucketing =======
-      // ================================================
-      const regularAmount = travelSum + convey + phone;
-      const statusLower = (normalized || "").toLowerCase();
-      const isRegularRejected =
-        statusLower === "rejected" ||
-        statusLower === "rejectedbymanager" ||
-        statusLower === "mixedrejectedpending";
-
-      // Regular claims bucket
-      if (statusLower === "approved" || statusLower === "finalapproved") {
-        totalApproved += regularAmount;
-      } else if (isRegularRejected) {
-        totalRejected += regularAmount;
-      } else {
-        totalPending += regularAmount;
-      }
-
-      // Adhoc summary bucket
-      const isAdhocRejected = isRegularRejected; // Using already defined
-      const isAdhocApproved = statusLower === "finalapproved";
-
-      if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-        if (isAdhocApproved) {
-          totalAdhocApproved += adhoc;
-        } else if (isAdhocRejected) {
-          totalAdhocRejected += adhoc;
-        }
-      }
-    });
 
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
