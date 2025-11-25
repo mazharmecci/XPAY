@@ -193,6 +193,7 @@ function getStatusBadge(status, regularStatus = "") {
 
 
 // --- Main renderTable with dual-status/tinting/summary logic ---
+
 async function renderTable() {
   try {
     const monthPicker = document.getElementById('monthPicker');
@@ -244,7 +245,7 @@ async function renderTable() {
     let totalAdhocApproved = 0;
     let totalAdhocRejected = 0;
 
-    // 🔹 Build adhocDecisionMap (manager approvals)
+    // 🔹 Build adhocDecisionMap
     const adhocDecisionMap = new Map();
     const adhocSnap = await getDocs(collection(db, "adhocRequests"));
     adhocSnap.forEach(docSnap => {
@@ -260,7 +261,6 @@ async function renderTable() {
     });
 
     for (const exp of filteredExpenses) {
-      // 🔹 Resolve employee name
       let employeeName = exp.userId || "-";
       if (exp.userId && !userCache[exp.userId]) {
         const userDoc = await getDoc(doc(db, "users", exp.userId));
@@ -272,7 +272,6 @@ async function renderTable() {
         employeeName = userCache[exp.userId];
       }
 
-      // 🔹 Calculate amounts
       let regularAmount = 0;
       ["fuel","fare","boarding","food","localConveyance","postCourier","misc","monthlyConveyance","monthlyPhone"]
         .forEach(key => { if (exp[key]) regularAmount += Number(exp[key]); });
@@ -281,7 +280,6 @@ async function renderTable() {
       totalSubmitted += (regularAmount + adhocAmount);
       totalAdhocSubmitted += adhocAmount;
 
-      // 🔹 Normalize status with manager override
       const regularStatus = exp.accountant_regular_status || "";
       const employeeKey = (employeeName || "").toLowerCase().trim();
       const adhocKey = `${exp.date || ""}|${adhocAmount}|${employeeKey}`;
@@ -303,34 +301,30 @@ async function renderTable() {
         normalized = "RejectedByAccountant";
       }
 
-      // 🔹 Summary buckets
-      if (normalized === "Approved" || normalized === "FinalApproved") {
+      if (normalized === "Approved") {
         totalApproved += regularAmount;
+      } else if (normalized === "FinalApproved") {
+        totalFinalApprovedRegular += regularAmount;
+        if (adhocAmount > 0) totalAdhocApproved += adhocAmount;
       } else if (normalized === "RejectedByAccountant" || normalized === "RejectedByManager") {
         totalRejected += regularAmount;
+        if (normalized === "RejectedByManager" && adhocAmount > 0) {
+          totalAdhocRejected += adhocAmount;
+        }
       } else {
         totalPending += regularAmount;
       }
 
-      if (managerDecision === "approved" && adhocAmount > 0) {
-        totalAdhocApproved += adhocAmount;
-      } else if (managerDecision === "rejected" && adhocAmount > 0) {
-        totalAdhocRejected += adhocAmount;
-      }
-
-      // 🔹 Badge logic
       const statusBadge = getStatusBadge(normalized, regularStatus);
+      const breakdownHTML = buildBreakdown(exp);
 
-      // 🔹 Auto-tint for dual-status
       let rowStyle = "";
       if (regularStatus.toLowerCase() === "rejected" && normalized === "Pending" && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#ffe6e6;"'; // light red
+        rowStyle = 'style="background-color:#ffe6e6;"';
       } else if (regularAmount > 0 && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#f9f9ff;"'; // light tint for mixed claims
+        rowStyle = 'style="background-color:#f9f9ff;"';
       }
 
-      // 🔹 Render row
-      const breakdownHTML = buildBreakdown(exp);
       tbody.innerHTML += `
         <tr ${rowStyle}>
           <td>${employeeName}</td>
@@ -361,6 +355,9 @@ async function renderTable() {
           }
         </tr>`;
     }
+
+    // ✅ Merge FinalApproved regular into totalApproved
+    totalApproved += totalFinalApprovedRegular;
 
     // 🔹 Advance calculation
     let totalAdvanceReceived = 0;
@@ -423,7 +420,7 @@ async function renderTable() {
     if (summaryEl) summaryEl.innerHTML = "";
   }
 }
-        
+       
 
 // --- Only reflect manager actions for Adhoc in summary
 function renderAccountantSummary({
