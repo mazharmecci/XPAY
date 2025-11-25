@@ -357,37 +357,41 @@ async function renderExpenses(currentUserId) {
       // ===== Regular and Adhoc Status Bucketing =======
       // ================================================
       const regularAmount = travelSum + convey + phone;
+      
+      // Normalize statuses once
       const statusLower = (normalized || "").toLowerCase();
       const regularStatusLower = (regularStatus || "").toLowerCase();
-      const normalizedLower = statusLower; // reuse for clarity
       
-      const isRegularRejected =
+      // ----- Regular claims bucket (accountant scope) -----
+      const isOverallRejected =
         statusLower === "rejected" ||
         statusLower === "rejectedbymanager" ||
         statusLower === "mixedrejectedpending";
+      const isAdhocOnlyPending = statusLower === "pending" && regularStatusLower === "rejected";
       
-      // ✅ Regular claims bucket
       if (statusLower === "approved" || statusLower === "finalapproved") {
         totalApproved += regularAmount;
-      } else if (isRegularRejected) {
+      } else if (isOverallRejected || regularStatusLower === "rejected") {
         totalRejected += regularAmount;
       } else {
-        const isAdhocOnlyPending = statusLower === "pending" && regularStatusLower === "rejected";
+        // Only count as pending if regular hasn't been rejected
         if (!isAdhocOnlyPending && regularStatusLower !== "rejected") {
           totalPending += regularAmount;
         }
       }
       
-      // ✅ Adhoc fallback logic — only if manager decision is missing
-      if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-        const isAdhocStillPending = statusLower === "pending" && regularStatusLower === "rejected";
-      
-        if (statusLower === "finalapproved") {
+      // ----- Adhoc summary bucket (manager scope only) -----
+      // Count Adhoc approved/rejected ONLY when manager has explicitly decided
+      if (adhoc > 0) {
+        const managerDecision = adhocDecisionMap.get(adhocKey); // 'approved' | 'rejected' | undefined
+        if (managerDecision === "approved") {
           totalAdhocApproved += adhoc;
-        } else if (!isAdhocStillPending) {
+        } else if (managerDecision === "rejected") {
           totalAdhocRejected += adhoc;
         }
+        // If no explicit manager decision, do not add to approved/rejected (keeps both at 0)
       }
+
 
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
