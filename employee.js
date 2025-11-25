@@ -289,7 +289,7 @@ records.forEach((exp, index) => {
   const adhocKey = `${exp.date || ""}|${adhoc || 0}`;
   const managerDecision = adhocDecisionMap.get(adhocKey);
   const regularStatus = exp.accountant_regular_status || "";
-  let normalized = normalizeStatus(exp.status, regularStatus);
+  let normalized = normalizeStatus(exp.status); // Only pass one argument (your function signature)
 
   // 🔄 Override normalized status if manager decision exists
   if (managerDecision === "approved") {
@@ -307,44 +307,43 @@ records.forEach((exp, index) => {
   } else if (normalized === "MixedRejectedPending") {
     badge = '<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>';
   } else {
-    badge = getStatusBadge(exp.status, regularStatus);
+    badge = getStatusBadge(exp.status);
+  }
+
+  // --- 🧾 Actually add rendered rows for each table ---
+  tripInfoTable.innerHTML += renderTripInfoRow(
+    sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge
+  );
+
+  travelCostTable.innerHTML += renderTravelCostRow(
+    sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge
+  );
+
+  monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(
+    sn, date, convey, phone, adhoc, badge
+  );
+
+  // 🔢 Accountant buckets for regular claims
+  const regularAmount = travelSum + convey + phone;
+  if (normalized === "Approved") {
+    totalApproved += regularAmount;
+  } else if (normalized === "FinalApproved") {
+    totalApproved += regularAmount;
+  } else if (normalized === "Rejected" || normalized === "RejectedByManager" || normalized === "MixedRejectedPending") {
+    totalRejected += regularAmount;
+  } else {
+    totalPending += regularAmount;
+  }
+
+  // 🔄 Fallback Adhoc summary logic
+  if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
+    if (normalized === "FinalApproved") totalAdhocApproved += adhoc;
+    else if (normalized === "Rejected" || normalized === "RejectedByManager" || normalized === "MixedRejectedPending") {
+      totalAdhocRejected += adhoc;
+    }
   }
 });
-  
-    // 🧾 Render rows
-    tripInfoTable.innerHTML += renderTripInfoRow(
-      sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge
-    );
-  
-    travelCostTable.innerHTML += renderTravelCostRow(
-      sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge
-    );
-  
-    monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(
-      sn, date, convey, phone, adhoc, badge
-    );
-  
-    // 🔢 Accountant buckets for regular claims
-    const regularAmount = travelSum + convey + phone;
-    if (normalized === "Approved") {
-      totalApproved += regularAmount;
-    } else if (normalized === "FinalApproved") {
-      totalApproved += regularAmount;
-    } else if (normalized === "Rejected" || normalized === "RejectedByManager" || normalized === "MixedRejectedPending") {
-      totalRejected += regularAmount;
-    } else {
-      totalPending += regularAmount;
-    }
-  
-    // 🔄 Fallback Adhoc summary logic
-    if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-      if (normalized === "FinalApproved") totalAdhocApproved += adhoc;
-      else if (normalized === "Rejected" || normalized === "RejectedByManager" || normalized === "MixedRejectedPending") {
-        totalAdhocRejected += adhoc;
-      }
-    }
-  });
-
+    
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     const advanceRecords = [];
