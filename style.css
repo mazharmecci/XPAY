@@ -1220,3 +1220,63 @@ span[style*="orange"] {
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+
+/* Bank Table format */
+
+.confirmation-table {
+  width: 100%;
+  margin-top: 1em;
+  border-collapse: collapse;
+  background: #fcfcfc;
+  box-shadow: 0 2px 7px rgba(0,85,215,0.07);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.confirmation-table th {
+  background: #f0f8ff;
+  text-align: left;
+  padding: 0.85em 1em;
+  color: #23425c;
+  font-weight: 600;
+  border-bottom: 1px solid #e1eef7;
+}
+
+.confirmation-table td {
+  padding: 0.85em 1em;
+  color: #215177;
+  background: #f8faff;
+  border-bottom: 1px solid #e1eef7;
+  font-size: 1.04em;
+}
+
+.confirmation-table tr:last-child td {
+  border-bottom: none;
+}
+
+.reimb-btn {
+  background: #4e8a4a; /* Default green */
+  color: #fff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+  font-weight: 500;
+  font-size: 1em;
+}
+.reimb-btn.not-reimbursed {
+  background: #c0392b; /* Red for "No" */
+}
+.reimb-status {
+  margin-left: 10px;
+  font-weight: 600;
+}
+.reimb-status.reimbursed {
+  color: #2e7d32;
+}
+.reimb-status.not-reimbursed {
+  color: #b71c1c;
+}
+
