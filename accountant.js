@@ -325,19 +325,63 @@ async function renderTable() {
         rowStyle = 'style="background-color:#f9f9ff;"';
       }
 
-      summaryEl.innerHTML = `
-        <div style="font-weight:bold; margin-top:1em;">
-          🧾 Total expenses submitted by emp: ${INR.format(totalSubmitted)}<br>
-          ✅ Accountant-eligible expenses: ${INR.format(totalApproved + totalFinalApprovedRegular)}<br>
-          ❌ Rejected by accountant (Regular only): ${INR.format(totalRejected)}<br>
-          ⏳ Pending expenses to be reviewed by accountant: ${INR.format(totalPending)}<br>
-          💸 Advance cash received by emp: ${INR.format(totalAdvanceReceived)}<br>
-          📌 Adhoc Requests submitted (manager approval needed): ${INR.format(totalAdhocSubmitted)}<br>
-          🔷 Adhoc Requests approved by manager: ${INR.format(totalAdhocApproved)}<br>
-          ❌ Adhoc Requests rejected by manager: ${INR.format(totalAdhocRejected)}<br>
-          ${netLabel}: ${INR.format(netReimbursementDue)}
-        </div>
-      `;
+summaryEl.innerHTML = `
+  <div class="expense-summary-block" style="
+      font-weight:500;
+      margin-top:1.2em;
+      background:#fafafa;
+      border:1px solid #e5e5e5;
+      border-radius:10px;
+      padding:1.2em 1em 1em 1em;
+      box-shadow:0 1px 3px rgba(0,0,0,0.05);
+      max-width:550px;
+      ">
+    <h4 style="margin-top:0; margin-bottom:1em; font-size:1.1em; color:#2176ae;">
+      🧾 Employee Expense Summary
+    </h4>
+    <table style="width:100%; border-collapse:collapse; font-size:1em;">
+      <tr>
+        <td style="color:#333;">🧾 <strong>Total expenses submitted by emp:</strong></td>
+        <td style="text-align:right; color:#222;">${INR.format(totalSubmitted)}</td>
+      </tr>
+      <tr>
+        <td style="color:#2e7d32;">✅ Accountant-eligible expenses:</td>
+        <td style="text-align:right; color:#2e7d32;">${INR.format(totalApproved + totalFinalApprovedRegular)}</td>
+      </tr>
+      <tr>
+        <td style="color:#b71c1c;">❌ Rejected by accountant (Regular only):</td>
+        <td style="text-align:right; color:#b71c1c;">${INR.format(totalRejected)}</td>
+      </tr>
+      <tr>
+        <td style="color:#ff9800;">⏳ Pending expenses to be reviewed:</td>
+        <td style="text-align:right; color:#ff9800;">${INR.format(totalPending)}</td>
+      </tr>
+      <tr>
+        <td style="color:#4e42c7;">💸 Advance cash received by emp:</td>
+        <td style="text-align:right; color:#4e42c7;">${INR.format(totalAdvanceReceived)}</td>
+      </tr>
+      <tr>
+        <td style="color:#2196f3;">📌 Adhoc Requests submitted (manager approval needed):</td>
+        <td style="text-align:right; color:#2196f3;">${INR.format(totalAdhocSubmitted)}</td>
+      </tr>
+      <tr>
+        <td style="color:#006400;">🔷 Adhoc Requests <strong>approved by manager</strong>:</td>
+        <td style="text-align:right; color:#006400;">${INR.format(totalAdhocApproved)}</td>
+      </tr>
+      <tr>
+        <td style="color:#e53935;">❌ Adhoc Requests <strong>rejected by manager</strong>:</td>
+        <td style="text-align:right; color:#e53935;">${INR.format(totalAdhocRejected)}</td>
+      </tr>
+      <tr style="background:#e8f5e9; font-weight:bold;">
+        <td style="border-top:2px solid #cfd8dc; color:#1976d2;">${netLabel || "Net Payable"}:</td>
+        <td style="border-top:2px solid #cfd8dc; text-align:right; color:#1976d2;">
+          ${INR.format(netReimbursementDue)}
+        </td>
+      </tr>
+    </table>
+  </div>
+`;
+
 
     // ✅ Merge FinalApproved regular into totalApproved
     totalApproved += totalFinalApprovedRegular;
