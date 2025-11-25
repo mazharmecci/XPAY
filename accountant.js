@@ -444,7 +444,7 @@ function renderAccountantSummary({
     year: "numeric"
   });
 
-const netReimbursementDue = (totalApproved + totalFinalApprovedRegular + totalAdhocApproved) - totalAdvanceReceived;
+const netReimbursementDue = (totalApproved + totalAdhocApproved) - totalAdvanceReceived;
 const netLabel = netReimbursementDue < 0
   ? "💰 Advance exceeds approved"
   : "🔶 Net payable to employee";
