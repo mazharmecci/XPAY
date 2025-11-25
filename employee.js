@@ -288,28 +288,31 @@ records.forEach((exp, index) => {
 
   const adhocKey = `${exp.date || ""}|${adhoc || 0}`;
   const managerDecision = adhocDecisionMap.get(adhocKey);
+  const regularStatus = (exp.accountant_regular_status || "").toLowerCase();
   
-    // 🔄 Normalize dual status
-    let normalized = normalizeStatus(exp.status, exp.accountant_regular_status || "");
+  // 🔄 Normalize dual status using both status and accountant_regular_status
+  const regularStatus = exp.accountant_regular_status || "";
+  let normalized = normalizeStatus(exp.status, regularStatus);
   
-    // 🔄 Override normalized status if manager decision exists
-    if (managerDecision === "approved") {
-      normalized = "FinalApproved";
-    } else if (managerDecision === "rejected") {
-      normalized = "RejectedByManager";
-    }
+  // 🔄 Override normalized status if manager decision exists
+  if (managerDecision === "approved") {
+    normalized = "FinalApproved";
+  } else if (managerDecision === "rejected") {
+    normalized = "RejectedByManager";
+  }
   
-    // 🔹 Badge logic with fallback
-    let badge = "";
-    if (normalized === "FinalApproved") {
-      badge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
-    } else if (normalized === "RejectedByManager") {
-      badge = '<span class="badge rejected">❌ Rejected by Manager</span>';
-    } else if (normalized === "MixedRejectedPending") {
-      badge = '<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>';
-    } else {
-      badge = getStatusBadge(exp.status, exp.accountant_regular_status || "");
-    }
+  // 🔹 Badge logic with fallback
+  let badge = "";
+  if (normalized === "FinalApproved") {
+    badge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
+  } else if (normalized === "RejectedByManager") {
+    badge = '<span class="badge rejected">❌ Rejected by Manager</span>';
+  } else if (normalized === "MixedRejectedPending") {
+    badge = '<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>';
+  } else {
+    badge = getStatusBadge(exp.status, regularStatus);
+  }
+
   
     // 🧾 Render rows
     tripInfoTable.innerHTML += renderTripInfoRow(
