@@ -235,6 +235,7 @@ async function renderTable() {
     let totalAdhocRejected = 0;
 
     for (const exp of filteredExpenses) {
+      // 🔹 Resolve employee name
       let employeeName = exp.userId || "-";
       if (exp.userId && !userCache[exp.userId]) {
         const userDoc = await getDoc(doc(db, "users", exp.userId));
@@ -246,19 +247,28 @@ async function renderTable() {
         employeeName = userCache[exp.userId];
       }
 
+      // 🔹 Calculate amounts
       let regularAmount = 0;
       ["fuel","fare","boarding","food","localConveyance","postCourier","misc","monthlyConveyance","monthlyPhone"]
         .forEach(key => { if (exp[key]) regularAmount += Number(exp[key]); });
 
       const adhocAmount = Number(exp.adhocRequest) || 0;
-
       totalSubmitted += (regularAmount + adhocAmount);
-
-      // For summaries, only track Manager status, not accountant, for Adhoc.
       totalAdhocSubmitted += adhocAmount;
-      const normalized = normalizeStatus(exp.status, regularStatus);
 
-      // Only regular amounts for accountant summary buckets
+      // 🔄 Define regularStatus before using it
+      const regularStatus = exp.accountant_regular_status || "";
+
+      // 🔄 Normalize dual status
+      let normalized = normalizeStatus(exp.status, regularStatus);
+
+      // 🔄 Manager override (if you track manager decisions separately)
+      // Example: if you have adhocDecisionMap, apply it here
+      // const managerDecision = adhocDecisionMap.get(`${exp.date || ""}|${adhocAmount || 0}`);
+      // if (managerDecision === "approved") normalized = "FinalApproved";
+      // else if (managerDecision === "rejected") normalized = "RejectedByManager";
+
+      // 🔹 Accountant summary buckets
       if (normalized === "Approved") {
         totalApproved += regularAmount;
       } else if (normalized === "RejectedByAccountant" || normalized === "MixedRejectedPending") {
@@ -273,19 +283,22 @@ async function renderTable() {
         totalPending += regularAmount;
       }
 
-      const breakdownHTML = buildBreakdown(exp);
-      const statusBadge = getStatusBadge(exp.status, regularStatus);
-
-      // Auto-tint for dual-status: Accountant rejects regular, Adhoc is still pending
-      let rowStyle = "";
-      if (regularStatus === "rejected" && normalized === "pending" && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#ffe6e6;"'; // light red
-      } else if (regularAmount > 0 && adhocAmount > 0) {
-        rowStyle = 'style="background-color:#f9f9ff;"';
+      // 🔹 Badge logic with fallback
+      let statusBadge = "";
+      if (normalized === "FinalApproved") {
+        statusBadge = '<span class="badge final-approved">✅ Final Approved by Manager</span>';
+      } else if (normalized === "RejectedByManager") {
+        statusBadge = '<span class="badge rejected">❌ Rejected by Manager</span>';
+      } else if (normalized === "MixedRejectedPending") {
+        statusBadge = '<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>';
+      } else {
+        statusBadge = getStatusBadge(exp.status, regularStatus);
       }
 
+      // 🔹 Render row
+      const breakdownHTML = buildBreakdown(exp);
       tbody.innerHTML += `
-        <tr ${rowStyle}>
+        <tr>
           <td>${employeeName}</td>
           <td>${exp.date || "-"}</td>
           <td>${exp.workflowType || "-"}</td>
@@ -314,6 +327,50 @@ async function renderTable() {
           }
         </tr>`;
     }
+
+    // 🔹 Render summary
+    renderAccountantSummary({
+      selectedMonth,
+      selectedEmployee,
+      totalApproved,
+      totalRejected,
+      totalPending,
+      totalAdvance: 0, // you can calculate advances separately
+      totalSubmitted,
+      totalFinalApproved: totalFinalApprovedRegular,
+      totalAdhocSubmitted,
+      totalAdhocApproved,
+      totalAdhocRejected
+    });
+
+    // 🔹 Toggle breakdown handlers
+    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const breakdown = document.getElementById(`breakdown-${id}`);
+        if (!breakdown) return;
+        const isVisible = breakdown.style.display === 'block';
+        breakdown.style.display = isVisible ? 'none' : 'block';
+        btn.textContent = isVisible ? '▶' : '▼';
+      });
+    });
+
+  } catch (err) {
+    console.error("renderTable Fatal Error:", err);
+    const tbody = document.querySelector('#expenseTable tbody');
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color:red; padding:1em;">
+            ❌ Error loading expenses. Check console for details.
+          </td>
+        </tr>`;
+    }
+    const summaryEl = document.getElementById("accountantSummary");
+    if (summaryEl) summaryEl.innerHTML = "";
+  }
+}
+
 
     // Advance calculation & summary rendering
     let totalAdvanceReceived = 0;
