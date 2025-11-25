@@ -155,22 +155,35 @@ function buildBreakdown(exp) {
 // ✅ Row renderer
 function renderExpenseRow(exp, employeeName, regularAmount, adhocAmount) {
   const status = (exp.status || "").toLowerCase();
+  const regularStatus = (exp.regularStatus || "").toLowerCase(); // if available
   let badgeHtml = "";
+
+  const isMixedRejectedPending = regularStatus === "rejected" && status === "pending";
+  const isRegularApprovedAdhocRejected = regularStatus === "approved" && status === "rejectedbymanager";
+
   if (status === "finalapproved") {
     badgeHtml = `<span class="badge final-approved">✅ Final Approved by Manager</span>`;
+  } else if (isRegularApprovedAdhocRejected) {
+    badgeHtml = `<span class="badge approved">✅ Regular Approved</span> + <span class="badge rejected">❌ Adhoc Rejected</span>`;
   } else if (status === "rejectedbymanager") {
     badgeHtml = `<span class="badge rejected">❌ Rejected by Manager</span>`;
   } else if (status === "approved") {
     badgeHtml = `<span class="badge approved">✅ Accountant Approved</span>`;
   } else if (status === "rejected") {
-    badgeHtml = `<span class="badge rejected">❌ Rejected</span>`;
+    badgeHtml = `<span class="badge rejected">❌ Rejected by Accountant</span>`;
+  } else if (isMixedRejectedPending) {
+    badgeHtml = `<span class="badge rejected">Regular Rejected</span> + <span class="badge pending">Adhoc Pending</span>`;
   } else {
     badgeHtml = `<span class="badge pending">⏳ Pending</span>`;
   }
 
   const isMixed = regularAmount > 0 && adhocAmount > 0;
   const isAdhocOnly = regularAmount === 0 && adhocAmount > 0;
-  const rowStyle = isMixed ? 'style="background-color:#f9f9ff;"' : (isAdhocOnly ? 'style="background-color:#eef7ff;"' : '');
+  const rowStyle = isMixed
+    ? 'style="background-color:#f9f9ff;"'
+    : isAdhocOnly
+    ? 'style="background-color:#eef7ff;"'
+    : '';
 
   return `
     <tr ${rowStyle}>
@@ -199,6 +212,7 @@ function renderExpenseRow(exp, employeeName, regularAmount, adhocAmount) {
     </tr>
   `;
 }
+
 
 // ✅ Advance cash aggregation
 async function calculateAdvanceCash(selectedMonth, selectedEmployee) {
