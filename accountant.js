@@ -180,7 +180,192 @@ function getStatusBadge(status, regularStatus = "") {
 }
 
 // --- Main renderTable with dual-status/tinting/summary logic ---
-async function renderTable()
+async function renderTable() {
+  try {
+    const selectedMonth = document.getElementById('monthPicker')?.value || new Date().toISOString().slice(0, 7);
+    const selectedEmployee = document.getElementById('employeeFilter')?.value || "";
+
+    const expenses = await fetchExpenses(selectedMonth, selectedEmployee);
+
+    const filteredExpenses = expenses.filter(exp => {
+      const advance = Number(exp.advanceCash) || 0;
+      const allOthers = ["fuel","fare","boarding","food","localConveyance","postCourier","misc","monthlyConveyance","monthlyPhone","adhocRequest"]
+        .reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
+      return !(advance > 0 && allOthers === 0);
+    });
+
+    const tbody = document.querySelector('#expenseTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (filteredExpenses.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 1em; color: #888;">📭 No expenses found for selection.</td></tr>`;
+      const summaryEl = document.getElementById("accountantSummary");
+      if (summaryEl) summaryEl.innerHTML = "";
+      return;
+    }
+
+    const userCache = {};
+    let totalApproved = 0, totalRejected = 0, totalPending = 0;
+    let totalSubmitted = 0, totalFinalApprovedRegular = 0;
+    let totalAdhocSubmitted = 0, totalAdhocApproved = 0, totalAdhocRejected = 0;
+
+    // 🔹 Build adhocDecisionMap with raisedBy included
+    const adhocDecisionMap = new Map();
+    const adhocSnap = await getDocs(collection(db, "adhocRequests"));
+    adhocSnap.forEach(docSnap => {
+      const req = docSnap.data();
+      const dateStr = typeof req.date === "string" ? req.date : "";
+      const status = (req.status || "").toLowerCase();
+      const amount = Number(req.amount) || 0;
+      const raisedBy = (req.raisedBy || "").toLowerCase().trim();
+      const key = `${dateStr}|${amount}|${raisedBy}`;
+      adhocDecisionMap.set(key, status);
+    });
+
+    for (const exp of filteredExpenses) {
+      // 🔹 Resolve employee name
+      let employeeName = exp.userId || "-";
+      if (exp.userId && !userCache[exp.userId]) {
+        const userDoc = await getDoc(doc(db, "users", exp.userId));
+        if (userDoc.exists()) {
+          employeeName = userDoc.data().name || employeeName;
+          userCache[exp.userId] = employeeName;
+        }
+      } else if (userCache[exp.userId]) {
+        employeeName = userCache[exp.userId];
+      }
+
+      // 🔹 Calculate amounts
+      const regularAmount = ["fuel","fare","boarding","food","localConveyance","postCourier","misc","monthlyConveyance","monthlyPhone"]
+        .reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
+      const adhocAmount = Number(exp.adhocRequest) || 0;
+
+      totalSubmitted += regularAmount + adhocAmount;
+      totalAdhocSubmitted += adhocAmount;
+
+      // 🔹 Normalize status with manager override
+      const regularStatus = exp.accountant_regular_status || "";
+      const employeeKey = (employeeName || "").toLowerCase().trim();
+      const adhocKey = `${exp.date || ""}|${adhocAmount}|${employeeKey}`;
+      let managerDecision = adhocDecisionMap.get(adhocKey);
+
+      if (!managerDecision && exp.status === "FinalApproved") {
+        managerDecision = "approved";
+      }
+
+      let normalized = normalizeStatus(exp.status, regularStatus);
+      if (managerDecision === "approved") {
+        normalized = "FinalApproved";
+      } else if (managerDecision === "rejected") {
+        normalized = "RejectedByManager";
+      } else if (exp.status === "approved") {
+        normalized = "Approved";
+      } else if (exp.status === "rejected") {
+        normalized = "RejectedByAccountant";
+      }
+
+      // 🔹 Accountant summary buckets
+      const statusLower = (normalized || "").toLowerCase();
+      if (statusLower === "approved") {
+        totalApproved += regularAmount;
+      } else if (
+        statusLower === "rejectedbyaccountant" ||
+        statusLower === "mixedrejectedpending"
+      ) {
+        totalRejected += regularAmount;
+      } else if (statusLower === "finalapproved") {
+        totalFinalApprovedRegular += regularAmount;
+      } else if (statusLower === "rejectedbymanager") {
+        totalPending += regularAmount;
+      } else if (statusLower === "pending") {
+        totalPending += regularAmount;
+      }
+
+      // 🔹 Adhoc summary bucket — count only if manager explicitly acted
+      if (managerDecision === "approved" && adhocAmount > 0) {
+        totalAdhocApproved += adhocAmount;
+      } else if (managerDecision === "rejected" && adhocAmount > 0) {
+        totalAdhocRejected += adhocAmount;
+      }
+
+      // 🔹 Badge logic
+      const statusBadge = getStatusBadge(normalized, regularStatus);
+      const breakdownHTML = buildBreakdown(exp);
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${employeeName}</td>
+          <td>${exp.date || "-"}</td>
+          <td>${exp.workflowType || "-"}</td>
+          <td>
+            <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer;">▶</button>
+            <span style="margin-left:0.5em;">Click to view breakdown</span>
+            <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
+              ${breakdownHTML || '<em>No expense breakdown</em>'}
+            </div>
+          </td>
+          <td style="font-size:0.85em; color:#555;">
+            Regular: ₹${regularAmount} <br>
+            Adhoc (Manager): <span style="color:#007bff;">₹${adhocAmount}</span>
+          </td>
+          <td>${statusBadge}</td>
+          ${
+            (regularAmount === 0 && adhocAmount > 0)
+              ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Manager only</td>`
+              : `<td><input type="checkbox" class="action-checkbox" data-id="${exp.id}" title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." /></td>
+                 <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" /></td>`
+          }
+        </tr>`;
+    }
+
+    // 🔹 Advance cash calculation
+    let totalAdvanceReceived = 0;
+    const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
+    advanceSnapshot.forEach(docSnap => {
+      const adv = docSnap.data();
+      const advMonth = (typeof adv.date === "string" ? adv.date : "").slice(0, 7);
+      const empFilter = selectedEmployee?.toLowerCase() || "";
+      const empId = (adv.employeeId || "").toLowerCase();
+      const empName = (adv.employeeName || "").toLowerCase();
+      const isEmpMatch = !empFilter || empFilter === "all employees" || empId === empFilter || empName === empFilter;
+      if (advMonth === selectedMonth && isEmpMatch) {
+        totalAdvanceReceived += Number(adv.advanceCash) || 0;
+      }
+    });
+
+    // 🔹 Render summary
+    renderAccountantSummary({
+      selectedMonth,
+      selectedEmployee,
+      totalApproved,
+      totalRejected,
+      totalPending,
+      totalAdvance: totalAdvanceReceived,
+      totalSubmitted,
+      totalFinalApproved: totalFinalApprovedRegular,
+      totalAdhocSubmitted,
+      totalAdhocApproved,
+      totalAdhocRejected
+    });
+
+    // 🔹 Breakdown toggles
+    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const breakdown = document.getElementById(`breakdown-${id}`);
+        if (!breakdown) return;
+        const isVisible = breakdown.style.display === 'block';
+        breakdown.style.display = isVisible ? 'none' : 'block';
+        btn.textContent = isVisible ? '▶' : '▼';
+      });
+    });
+
+  } catch (err) {
+    console.error("renderTable Fatal Error:", err);
+    const tbody = document.querySelector('#expenseTable tbody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red; padding:      
 
 // --- Only reflect manager actions for Adhoc in summary
 function renderAccountantSummary({
@@ -225,7 +410,6 @@ function renderAccountantSummary({
       </table>
     </div>
   `;
-}
 }
 
 // 🧾 Advance cash table
