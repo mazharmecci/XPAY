@@ -358,40 +358,32 @@ async function renderExpenses(currentUserId) {
 // ================================================
 const regularAmount = travelSum + convey + phone;
 const statusLower = (normalized || "").toLowerCase();
-const regularStatusLower = (regularStatus || "").toLowerCase();
-
-// ----- Regular claims bucket -----
-const isOverallRejected =
+const isRegularRejected =
   statusLower === "rejected" ||
   statusLower === "rejectedbymanager" ||
   statusLower === "mixedrejectedpending";
 
-const isAdhocOnlyPending =
-  statusLower === "pending" && regularStatusLower === "rejected";
-
+// ----- Regular claims bucket -----
 if (statusLower === "approved" || statusLower === "finalapproved") {
   totalApproved += regularAmount;
-} else if (isOverallRejected || regularStatusLower === "rejected") {
+} else if (isRegularRejected) {
   totalRejected += regularAmount;
 } else {
-  if (!isAdhocOnlyPending && regularStatusLower !== "rejected") {
-    totalPending += regularAmount;
-  }
+  totalPending += regularAmount;
 }
 
-// ----- Adhoc summary bucket -----
-if (adhoc > 0) {
-  const managerDecision = adhocDecisionMap.get(adhocKey);
-  const managerDecisionLower = (managerDecision || "").toLowerCase();
+// ----- Adhoc summary bucket (manager explicit only) -----
+const isAdhocApproved = statusLower === "finalapproved";
+const managerDecision = adhocDecisionMap.get(adhocKey); // 'approved' | 'rejected' | undefined
 
-  if (managerDecisionLower === "approved") {
+if (adhoc > 0) {
+  if (managerDecision === "approved") {
     totalAdhocApproved += adhoc;
-  } else if (managerDecisionLower === "rejected") {
+  } else if (managerDecision === "rejected") {
     totalAdhocRejected += adhoc;
   }
-  // If managerDecision is undefined, do not count it yet
+  // ✅ If managerDecision is undefined, keep both at 0 (don’t mark rejected yet)
 }
-
 
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
