@@ -439,11 +439,12 @@ function renderAccountantSummary({
   totalAdhocApproved,
   totalAdhocRejected
 }) {
-  const summaryContainer = document.getElementById("accountantSummary");
-  if (!summaryContainer) return;
+  
+  const summaryEl = document.getElementById("accountantSummary");
+  if (!summaryEl) return; // ✅ this return is valid because it's inside a function
 
-  const netPayable = (totalApproved + totalAdhocApproved) - totalAdvance;
-  const netLabel = netPayable < 0
+  const netReimbursementDue = (totalApproved + totalAdhocApproved) - totalAdvance;
+  const netLabel = netReimbursementDue < 0
     ? "💰 Advance exceeds approved"
     : "🔶 Net payable to employee";
 
