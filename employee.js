@@ -297,7 +297,7 @@ async function renderExpenses(currentUserId) {
     records.forEach((exp, index) => {
       const sn = index + 1;
       const date = exp.date || "-";
-    
+
       // 🔹 Breakdown fields
       const fuel = safeAmount(exp.fuel);
       const fare = safeAmount(exp.fare);
@@ -308,22 +308,22 @@ async function renderExpenses(currentUserId) {
       const misc = safeAmount(exp.misc);
       const travelSum = fuel + fare + boarding + food + local + postCourier + misc;
       travelTotal += travelSum;
-    
+
       const convey = safeAmount(exp.monthlyConveyance);
       const phone = safeAmount(exp.monthlyPhone);
       const adhoc = safeAmount(exp.adhocRequest);
       const monthlySum = convey + phone + adhoc;
       monthlyTotal += monthlySum;
-    
+
       totalAdhocSubmitted += adhoc;
-    
+
       // 🔹 Status normalization
       const adhocAmount = Number(exp.adhocRequest) || 0;
       const adhocKey = `${exp.date || ""}|${adhocAmount}`;
       const managerDecision = adhocDecisionMap.get(adhocKey);
       const regularStatus = exp.accountant_regular_status || "";
       let normalized = normalizeStatus(exp.status, regularStatus);
-    
+
       // ✅ Override only if manager explicitly acted
       if (managerDecision === "approved") {
         normalized = "FinalApproved";
@@ -334,17 +334,17 @@ async function renderExpenses(currentUserId) {
       } else if (exp.status === "rejected") {
         normalized = "RejectedByAccountant"; // Accountant rejected
       }
-    
+
       // ================================================
       // ===== Regular and Adhoc Status Bucketing =======
       // ================================================
       const regularAmount = travelSum + convey + phone;
       const statusLower = (normalized || "").toLowerCase();
       const isRegularRejected =
-        statusLower === "rejected" ||
+        statusLower === "rejectedbyaccountant" ||
         statusLower === "rejectedbymanager" ||
         statusLower === "mixedrejectedpending";
-    
+
       // 🔹 Regular claims bucket
       if (statusLower === "approved" || statusLower === "finalapproved") {
         totalApproved += regularAmount;
@@ -353,17 +353,15 @@ async function renderExpenses(currentUserId) {
       } else {
         totalPending += regularAmount;
       }
-    
+
       // 🔹 Adhoc summary bucket — count only if manager explicitly acted
       if (managerDecision === "approved" && adhoc > 0) {
         totalAdhocApproved += adhoc;
       } else if (managerDecision === "rejected" && adhoc > 0) {
         totalAdhocRejected += adhoc;
       }
-    });
 
-    
-      // 🔹 Badge logic with fallback
+      // 🔹 Badge logic (moved inside loop)
       let badge = "";
       switch (normalized) {
         case "FinalApproved":
@@ -389,35 +387,11 @@ async function renderExpenses(currentUserId) {
           break;
       }
 
-
       // --- 🧾 Actually add rendered rows for each table ---
-      tripInfoTable.innerHTML += renderTripInfoRow(
-        sn,
-        date,
-        exp.workflowType || "-",
-        exp.placeVisited || "-",
-        badge
-      );
-      travelCostTable.innerHTML += renderTravelCostRow(
-        sn,
-        date,
-        fuel,
-        fare,
-        boarding,
-        food,
-        local,
-        postCourier,
-        misc,
-        badge
-      );
-      monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(
-        sn,
-        date,
-        convey,
-        phone,
-        adhoc,
-        badge
-      );
+      tripInfoTable.innerHTML += renderTripInfoRow(sn, date, exp.workflowType || "-", exp.placeVisited || "-", badge);
+      travelCostTable.innerHTML += renderTravelCostRow(sn, date, fuel, fare, boarding, food, local, postCourier, misc, badge);
+      monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(sn, date, convey, phone, adhoc, badge);
+    });
 
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
@@ -460,7 +434,7 @@ async function renderExpenses(currentUserId) {
         <td colspan="5" style="text-align:right;">❌ Rejected by Accountant:</td>
         <td>${INR.format(totalRejected)}</td>
       </tr>
-     <tr style="font-weight:bold; background:#e6f7ff;">
+      <tr style="font-weight:bold; background:#e6f7ff;">
         <td colspan="5" style="text-align:right;">💸 Advance Cash Received (${selectedMonth}):</td>
         <td>${INR.format(totalAdvanceReceived)}</td>
       </tr>
@@ -486,6 +460,7 @@ async function renderExpenses(currentUserId) {
     showToast("Failed to load employee expenses.", "error");
   }
 }
+      
 
 // --- Bank Reimbursement Status Block (Employee View) ---
 // 🔹 Helper: Get latest bank status for employee/month
