@@ -260,13 +260,6 @@ async function renderExpenses(currentUserId) {
       }
     });
     records.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-    
-    // Additional code for rendering can continue here...
-
-  } catch (error) {
-    showToast(`Error rendering expenses: ${error.message}`, "error");
-  }
-}
 
     // 🔹 Totals
     let monthlyTotal = 0;
