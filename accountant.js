@@ -1,4 +1,6 @@
-// 🔥 Firebase Imports
+// ========================
+// 🔥 Firebase Imports & Core Utilities
+// ========================
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import {
@@ -6,10 +8,14 @@ import {
   orderBy, limit, serverTimestamp, collection, updateDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-// 💰 Currency formatter, consistent across all dashboards
+// ========================
+// 💰 Currency Formatter
+// ========================
 const INR = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" });
 
-// --- Status normalizer (in sync with manager summary logic)
+// ========================
+// 🔄 Status Normalization Logic
+// ========================
 function normalizeStatus(status, regularStatus = "") {
   const s = (status || "").toLowerCase();
   const r = (regularStatus || "").toLowerCase();
@@ -22,13 +28,13 @@ function normalizeStatus(status, regularStatus = "") {
   return "Unknown";
 }
 
-// --- Canonical field keys, labels, and groups
+// ========================
+// 🗝️ Canonical Field Keys and Label Groups
+// ========================
 const REGULAR_KEYS = [
   "fuel", "fare", "boarding", "food", "localConveyance", "postCourier", "misc",
   "monthlyConveyance", "monthlyPhone"
 ];
-
-// You can use REGULAR_KEYS for summary logic
 const FIELD_GROUPS = {
   "🧭 Trip Info": ["placeVisited"],
   "🚗 Travel Costs": REGULAR_KEYS,
@@ -41,7 +47,9 @@ const FIELD_LABELS = {
   monthlyPhone: "Monthly Phone", adhocRequest: "Adhoc Request"
 };
 
-// --- Toast notification helper
+// ========================
+// 🍞 Toast Notification Helper
+// ========================
 function showToast(message, type = 'success') {
   const toast = document.getElementById('toast');
   if (!toast) return;
@@ -51,7 +59,9 @@ function showToast(message, type = 'success') {
   setTimeout(() => { toast.style.display = 'none'; }, 3000);
 }
 
-// --- Logout utility, for user session management
+// ========================
+// 🚪 Logout Utility
+// ========================
 function logoutUser() {
   signOut(auth)
     .then(() => { window.location.href = "login.html"; })
@@ -61,7 +71,9 @@ function logoutUser() {
     });
 }
 
-// --- Fetch expenses for employee/accountant view, properly filtered
+// ========================
+// 📊 Fetch & Filter Expenses (Employee/Accountant)
+// ========================
 async function fetchExpenses(selectedMonth, selectedEmployee) {
   const snapshot = await getDocs(collection(db, "expenses"));
   const records = [];
@@ -82,7 +94,9 @@ async function fetchExpenses(selectedMonth, selectedEmployee) {
   return records;
 }
 
-// --- Breakdown builder for displaying grouped expense details
+// ========================
+// 🧾 Breakdown Builder for Expense Details
+// ========================
 function buildBreakdown(exp) {
   return Object.entries(FIELD_GROUPS).map(([groupName, keys]) => {
     const items = keys.map(key => {
@@ -97,9 +111,9 @@ function buildBreakdown(exp) {
   }).filter(Boolean).join('<br><br>') || `<em>No expense breakdown</em>`;
 }
 
-
-
-// 🏷️ Status badge helper (no change needed; already correct)
+// ========================
+// 🏷️ Status Badge Helper
+// ========================
 function getStatusBadge(normalized) {
   switch (normalized) {
     case "FinalApproved":
@@ -119,14 +133,17 @@ function getStatusBadge(normalized) {
   }
 }
 
-// --- Main renderTable with summary & dual status logic ---
+// ========================
+// 📋 Main Table Rendering & Summary Buckets (renderTable)
+// ========================
 async function renderTable() {
   try {
+    // --- Filters & core pulls ---
     const selectedMonth = document.getElementById('monthPicker')?.value || new Date().toISOString().slice(0, 7);
     const selectedEmployee = document.getElementById('employeeFilter')?.value || "";
-
     const expenses = await fetchExpenses(selectedMonth, selectedEmployee);
 
+    // --- Remove "advance only" rows ---
     const filteredExpenses = expenses.filter(exp => {
       const advance = Number(exp.advanceCash) || 0;
       const allOthers = REGULAR_KEYS.concat(["adhocRequest"])
@@ -134,6 +151,7 @@ async function renderTable() {
       return !(advance > 0 && allOthers === 0);
     });
 
+    // --- Prepare Table ---
     const tbody = document.querySelector('#expenseTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -145,7 +163,7 @@ async function renderTable() {
       return;
     }
 
-    // --- Adhoc decision map from manager ---
+    // --- Manager Adhoc Decision Map ---
     const adhocDecisionMap = new Map();
     const adhocSnap = await getDocs(collection(db, "adhocRequests"));
     adhocSnap.forEach(docSnap => {
@@ -158,14 +176,15 @@ async function renderTable() {
       adhocDecisionMap.set(key, status);
     });
 
-    // --- Summary buckets ---
+    // --- Summary Buckets Setup ---
     let totalApproved = 0, totalRejected = 0, totalPending = 0;
     let totalSubmitted = 0, totalFinalApprovedRegular = 0;
     let totalAdhocSubmitted = 0, totalAdhocApproved = 0, totalAdhocRejected = 0;
     const userCache = {};
 
+    // --- Main Expense Table Rows + Buckets ---
     for (const exp of filteredExpenses) {
-      // Employee name resolution
+      // Employee name resolution & cache
       let employeeName = exp.userId || "-";
       if (exp.userId && !userCache[exp.userId]) {
         const userDoc = await getDoc(doc(db, "users", exp.userId));
@@ -180,11 +199,10 @@ async function renderTable() {
       // Amounts
       const regularAmount = REGULAR_KEYS.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
       const adhocAmount = Number(exp.adhocRequest) || 0;
-
       totalSubmitted += regularAmount + adhocAmount;
       totalAdhocSubmitted += adhocAmount;
 
-      // Status mapping
+      // Status and approvals
       const regularStatus = exp.accountant_regular_status || "";
       const employeeKey = (exp.userId || "").toLowerCase().trim();
       const adhocKey = `${exp.date || ""}|${adhocAmount}|${employeeKey}`;
@@ -197,7 +215,7 @@ async function renderTable() {
         normalized = "RejectedByManager";
       }
 
-      // Regular claim buckets (sync with manager)
+      // Buckets—accountant, manager, mixed
       if (normalized === "Approved") {
         totalApproved += regularAmount;
       } else if (normalized === "RejectedByAccountant" || normalized === "MixedRejectedPending") {
@@ -210,17 +228,16 @@ async function renderTable() {
         totalPending += regularAmount;
       }
 
-      // Adhoc buckets: ONLY manager acts!
+      // Adhoc summary—ONLY manager action
       if (managerDecision === "approved" && adhocAmount > 0) {
         totalAdhocApproved += adhocAmount;
       } else if (managerDecision === "rejected" && adhocAmount > 0) {
         totalAdhocRejected += adhocAmount;
       }
 
-      // Badge and row rendering
+      // Render table row
       const statusBadge = getStatusBadge(normalized);
       const breakdownHTML = buildBreakdown(exp);
-
       tbody.innerHTML += `
         <tr>
           <td>${employeeName}</td>
@@ -247,7 +264,7 @@ async function renderTable() {
         </tr>`;
     }
 
-    // --- Advance cash calculation ---
+    // --- Advance cash calculation & summary block ---
     let totalAdvanceReceived = 0;
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     advanceSnapshot.forEach(docSnap => {
@@ -262,7 +279,7 @@ async function renderTable() {
       }
     });
 
-    // --- Render summary
+    // --- Render summary block ---
     renderAccountantSummary({
       selectedMonth,
       selectedEmployee,
@@ -277,7 +294,7 @@ async function renderTable() {
       totalAdhocRejected
     });
 
-    // --- Breakdown toggles
+    // --- Table breakdown toggles ---
     document.querySelectorAll('.toggle-breakdown').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -290,6 +307,7 @@ async function renderTable() {
     });
 
   } catch (err) {
+    // --- Error Handling Block ---
     console.error("renderTable Fatal Error:", err);
     const tbody = document.querySelector('#expenseTable tbody');
     if (tbody) {
@@ -300,147 +318,22 @@ async function renderTable() {
   }
 }
 
-// --- Accountant summary buckets & row rendering in main loop ---
-for (const exp of filteredExpenses) {
-  // --- Employee name resolution (cached) ---
-  let employeeName = exp.userId || "-";
-  if (exp.userId && !userCache[exp.userId]) {
-    const userDoc = await getDoc(doc(db, "users", exp.userId));
-    if (userDoc.exists()) {
-      employeeName = userDoc.data().name || employeeName;
-      userCache[exp.userId] = employeeName;
-    }
-  } else if (userCache[exp.userId]) {
-    employeeName = userCache[exp.userId];
-  }
-
-  // --- Amounts ---
-  const regularAmount = REGULAR_KEYS.reduce((sum, key) => sum + (Number(exp[key]) || 0), 0);
-  const adhocAmount = Number(exp.adhocRequest) || 0;
-  totalSubmitted += regularAmount + adhocAmount;
-  totalAdhocSubmitted += adhocAmount;
-
-  // --- Adhoc manager decision ---
-  const regularStatus = exp.accountant_regular_status || "";
-  const employeeKey = (exp.userId || "").toLowerCase().trim();
-  const adhocKey = `${exp.date || ""}|${adhocAmount}|${employeeKey}`;
-  const managerDecision = adhocDecisionMap.get(adhocKey);
-
-  let normalized = normalizeStatus(exp.status, regularStatus);
-  if (managerDecision === "approved") {
-    normalized = "FinalApproved";
-  } else if (managerDecision === "rejected") {
-    normalized = "RejectedByManager";
-  }
-
-  // --- Accountant buckets ---
-  if (normalized === "Approved") {
-    totalApproved += regularAmount;
-  } else if (normalized === "RejectedByAccountant" || normalized === "MixedRejectedPending") {
-    totalRejected += regularAmount;
-  } else if (normalized === "FinalApproved") {
-    totalFinalApprovedRegular += regularAmount;
-  } else if (normalized === "RejectedByManager") {
-    totalPending += regularAmount;
-  } else if (normalized === "Pending") {
-    totalPending += regularAmount;
-  }
-
-  // --- Adhoc summary: only if manager explicitly acted ---
-  if (managerDecision === "approved" && adhocAmount > 0) {
-    totalAdhocApproved += adhocAmount;
-  } else if (managerDecision === "rejected" && adhocAmount > 0) {
-    totalAdhocRejected += adhocAmount;
-  }
-
-  // --- Row rendering ---
-  const statusBadge = getStatusBadge(normalized);
-  const breakdownHTML = buildBreakdown(exp);
-  tbody.innerHTML += `
-    <tr>
-      <td>${employeeName}</td>
-      <td>${exp.date || "-"}</td>
-      <td>${exp.workflowType || "-"}</td>
-      <td>
-        <button class="toggle-breakdown" data-id="${exp.id}" style="border:none; background:none; cursor:pointer;">▶</button>
-        <span style="margin-left:0.5em;">Click to view breakdown</span>
-        <div id="breakdown-${exp.id}" style="display:none; margin-top:0.5em; padding:0.5em; background:#f5f5f5; border-left:3px solid #2196F3; border-radius:4px;">
-          ${breakdownHTML || '<em>No expense breakdown</em>'}
-        </div>
-      </td>
-      <td style="font-size:0.85em; color:#555;">
-        Regular: ${INR.format(regularAmount)} <br>
-        Adhoc (Manager): <span style="color:#007bff;">${INR.format(adhocAmount)}</span>
-      </td>
-      <td>${statusBadge}</td>
-      ${
-        (regularAmount === 0 && adhocAmount > 0)
-          ? `<td colspan="2" style="text-align:center; color:#007bff;">Adhoc request – Manager only</td>`
-          : `<td><input type="checkbox" class="action-checkbox" data-id="${exp.id}" title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." /></td>
-             <td><input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" /></td>`
-      }
-    </tr>`;
-}
-
- // --- Advance cash calculation ---
-let totalAdvanceReceived = 0;
-const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
-advanceSnapshot.forEach(docSnap => {
-  const adv = docSnap.data();
-  const advMonth = (typeof adv.date === "string" ? adv.date : "").slice(0, 7);
-  const empFilter = selectedEmployee?.toLowerCase() || "";
-  const empId = (adv.employeeId || "").toLowerCase();
-  const empName = (adv.employeeName || "").toLowerCase();
-  const isEmpMatch = !empFilter || empFilter === "all employees" || empId === empFilter || empName === empFilter;
-  if (advMonth === selectedMonth && isEmpMatch) {
-    totalAdvanceReceived += Number(adv.advanceCash) || 0;
-  }
-});
-
-// --- Render summary ---
-renderAccountantSummary({
-  selectedMonth,
-  selectedEmployee,
-  totalApproved,
-  totalRejected,
-  totalPending,
-  totalAdvance: totalAdvanceReceived,
-  totalSubmitted,
-  totalFinalApproved: totalFinalApprovedRegular,
-  totalAdhocSubmitted,
-  totalAdhocApproved,
-  totalAdhocRejected
-});
-
-    // --- Breakdown toggles ---
-    document.querySelectorAll('.toggle-breakdown').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
-        const breakdown = document.getElementById(`breakdown-${id}`);
-        if (!breakdown) return;
-        const isVisible = breakdown.style.display === 'block';
-        breakdown.style.display = isVisible ? 'none' : 'block';
-        btn.textContent = isVisible ? '▶' : '▼';
-      });
-    });
-
-  } catch (err) {
-    console.error("renderTable Fatal Error:", err);
-    const tbody = document.querySelector('#expenseTable tbody');
-    if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red; padding:1em;">❌ Error loading expenses. Check console for details.</td></tr>`;
-    }
-    const summaryEl = document.getElementById("accountantSummary");
-    if (summaryEl) summaryEl.innerHTML = "";
-  }
-} // <-- Only this closing brace!
+// ========================
+// 📋 Accountant Summary Renderer
+// ========================
+function renderAccountantSummary({
+  selectedMonth, selectedEmployee,
+  totalApproved, totalRejected, totalPending,
+  totalAdvance, totalSubmitted, totalFinalApproved,
+  totalAdhocSubmitted, totalAdhocApproved, totalAdhocRejected
+}) {
+  const summaryContainer = document.getElementById("accountantSummary");
+  if (!summaryContainer) return;
 
   const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
     month: "long",
     year: "numeric"
   });
-
-  // ✅ Net payable calculation added
   const netPayable = totalApproved + totalAdhocApproved - totalAdvance;
   const netLabel = netPayable < 0
     ? "💰 Advance exceeds approved"
@@ -462,6 +355,33 @@ renderAccountantSummary({
     </div>
   `;
 }
+
+// ========================
+// 🧾 Advance Cash Table & Utilities
+// ========================
+function formatDateDDMMYYYY(dateStr) { ... }
+async function renderAdvanceCashTable() { ... }
+async function recordAdvanceCash(e) { ... }
+
+// ========================
+// ✅ Bulk Approve/Reject Buttons: Accountant Only
+// ========================
+async function approveSelected() { ... }
+async function rejectSelected() { ... }
+
+// ========================
+// 📥 CSV Export & Helpers
+// ========================
+function downloadApprovedCSV() { ... }
+function escapeCSV(val) { ... }
+function sanitize(val) { ... }
+
+// ========================
+// 🏦 Bank Reimbursement Workflow & UI
+// ========================
+async function getLatestBankStatus(employeeUid, selectedMonth) { ... }
+async function initBankWorkflow(employeeUid, employeeName, isAccountantView) { ... }
+
 
 // 🧾 Advance cash table
 
