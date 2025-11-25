@@ -333,15 +333,17 @@ async function renderExpenses(currentUserId) {
 
   // 🔢 Accountant buckets for regular claims
   const regularAmount = travelSum + convey + phone;
-  const isRegularRejected = (regularStatus || "").toLowerCase() === "rejected";
-  const isAdhocOnlyPending = normalized === "pending" && isRegularRejected;
+  const regularStatusLower = (regularStatus || "").toLowerCase();
+  const normalizedLower = (normalized || "").toLowerCase();
+  const isRegularRejected = regularStatusLower === "rejected";
+  const isAdhocOnlyPending = normalizedLower === "pending" && isRegularRejected;
   
-  if (normalized === "approved" || normalized === "finalapproved") {
+  if (normalizedLower === "approved" || normalizedLower === "finalapproved") {
     totalApproved += regularAmount;
   } else if (
-    normalized === "rejected" ||
-    normalized === "rejectedbymanager" ||
-    normalized === "mixedrejectedpending"
+    normalizedLower === "rejected" ||
+    normalizedLower === "rejectedbymanager" ||
+    normalizedLower === "mixedrejectedpending"
   ) {
     totalRejected += regularAmount;
   } else {
@@ -353,16 +355,17 @@ async function renderExpenses(currentUserId) {
   
   // 🔄 Fallback Adhoc summary logic
   if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-    if (normalized === "finalapproved") {
+    if (normalizedLower === "finalapproved") {
       totalAdhocApproved += adhoc;
     } else if (
-      normalized === "rejected" ||
-      normalized === "rejectedbymanager" ||
-      normalized === "mixedrejectedpending"
+      normalizedLower === "rejected" ||
+      normalizedLower === "rejectedbymanager" ||
+      normalizedLower === "mixedrejectedpending"
     ) {
       totalAdhocRejected += adhoc;
     }
   }
+
       
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
