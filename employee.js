@@ -329,8 +329,7 @@ async function renderExpenses(currentUserId) {
   monthlyClaimsTable.innerHTML += renderMonthlyClaimsRow(
     sn, date, convey, phone, adhoc, badge
   );
-
-
+  
   // 🔢 Accountant buckets for regular claims
   const regularAmount = travelSum + convey + phone;
   const regularStatusLower = (regularStatus || "").toLowerCase();
