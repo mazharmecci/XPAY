@@ -429,7 +429,7 @@ function renderAccountantSummary({
   totalApproved,
   totalRejected,
   totalPending,
-  totalAdvance,
+  totalAdvance: totalAdvanceReceived,,
   totalSubmitted,
   totalFinalApproved,
   totalAdhocSubmitted,
