@@ -439,16 +439,18 @@ function renderAccountantSummary({
   totalAdhocApproved,
   totalAdhocRejected
 }) {
-  
-  const summaryEl = document.getElementById("accountantSummary");
-  if (!summaryEl) return; // ✅ this return is valid because it's inside a function
+  const summaryContainer = document.getElementById("accountantSummary");
+  if (!summaryContainer) return;
 
-  const netReimbursementDue = (totalApproved + totalAdhocApproved) - totalAdvance;
-  const netLabel = netReimbursementDue < 0
+  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
+    month: "long",
+    year: "numeric"
+  });
+
+  const netPayable = (totalApproved + totalAdhocApproved) - totalAdvance;
+  const netLabel = netPayable < 0
     ? "💰 Advance exceeds approved"
     : "🔶 Net payable to employee";
-
-  const monthLabel = selectedMonth || new Date().toISOString().slice(0, 7);
 
   summaryContainer.innerHTML = `
     <div class="summary-block">
