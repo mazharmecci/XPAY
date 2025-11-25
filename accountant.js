@@ -447,27 +447,24 @@ function renderAccountantSummary({
     year: "numeric"
   });
 
-  const netPayable = (totalFinalApproved + totalAdhocApproved) - totalAdvance;
-  const netLabel = netPayable < 0
-    ? "💰 Advance exceeds approved"
-    : "🔶 Net payable to employee";
+const netReimbursementDue = (totalApproved + totalFinalApprovedRegular + totalAdhocApproved) - totalAdvanceReceived;
+const netLabel = netReimbursementDue < 0
+  ? "💰 Advance exceeds approved"
+  : "🔶 Net payable to employee";
 
-  summaryContainer.innerHTML = `
-    <div class="summary-block">
-      <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
-      <table class="summary-table">
-        <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>
-        <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell">${INR.format(totalApproved + totalPending + totalRejected)}</td></tr>
-        <tr><td>❌ Rejected by accountant (Regular only):</td><td class="amount-cell">${INR.format(totalRejected)}</td></tr>
-        <tr><td>⏳ Pending expenses to be reviewed by accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
-        <tr><td>💸 Advance cash received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-        <tr><td>📌 Adhoc Requests submitted (manager approval needed):</td><td class="amount-cell"><span style="color:#007bff; font-weight:bold;">${INR.format(totalAdhocSubmitted)}</span></td></tr>
-        <tr><td>🔷 Adhoc Requests approved by manager:</td><td class="amount-cell"><span style="color:green; font-weight:bold;">${INR.format(totalAdhocApproved)}</span></td></tr>
-        <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell"><span style="color:red; font-weight:bold;">${INR.format(totalAdhocRejected)}</span></td></tr>
-        <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
-      </table>
-    </div>
-  `;
+summaryEl.innerHTML = `
+  <div style="font-weight:bold; margin-top:1em;">
+    🧾 Total expenses submitted by emp: ₹${INR.format(totalSubmitted)}<br>
+    ✅ Accountant-eligible expenses: ₹${INR.format(totalApproved + totalFinalApprovedRegular)}<br>
+    ❌ Rejected by accountant (Regular only): ₹${INR.format(totalRejected)}<br>
+    ⏳ Pending expenses to be reviewed by accountant: ₹${INR.format(totalPending)}<br>
+    💸 Advance cash received by emp: ₹${INR.format(totalAdvanceReceived)}<br>
+    📌 Adhoc Requests submitted (manager approval needed): ₹${INR.format(totalAdhocSubmitted)}<br>
+    🔷 Adhoc Requests approved by manager: ₹${INR.format(totalAdhocApproved)}<br>
+    ❌ Adhoc Requests rejected by manager: ₹${INR.format(totalAdhocRejected)}<br>
+    ${netLabel}: ₹${INR.format(netReimbursementDue)}
+  </div>
+`;
 }
 
 // 🧾 Advance cash table
