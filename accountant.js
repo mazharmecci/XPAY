@@ -389,8 +389,7 @@ async function renderTable() {
       totalRejected,
       totalPending,
       totalAdvance: totalAdvanceReceived,
-      totalSubmitted,
-      totalFinalApproved,
+      totalSubmitted,      
       totalAdhocSubmitted,
       totalAdhocApproved,
       totalAdhocRejected
