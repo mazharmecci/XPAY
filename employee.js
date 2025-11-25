@@ -20,6 +20,8 @@ function normalizeStatus(status) {
   if (s === "approved") return "Approved";
   if (s === "finalapproved" || s === "final approved") return "FinalApproved";
   if (s === "rejected") return "Rejected";
+  if (s === "rejectedbymanager" || s === "rejected by manager") return "RejectedByManager";
+  if (s === "mixedrejectedpending" || s === "mixed rejected pending") return "MixedRejectedPending";
   return "Pending";
 }
 
