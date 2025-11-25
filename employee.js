@@ -15,18 +15,36 @@ function getVal(id, numeric = false) {
 const INR = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 const isoNow = () => new Date().toISOString();
 
-// Normalizes all possible workflow statuses for claim bucketing
-function normalizeStatus(status, regularStatus) {
+// 🔄 Status normalizer for claim bucketing
+function normalizeStatus(status, regularStatus = "") {
   const s = (status || "").toLowerCase();
   const r = (regularStatus || "").toLowerCase();
 
+  // Accountant approved
   if (s === "approved" || r === "approved") return "Approved";
-  if (s === "finalapproved" || s === "final approved" || r === "finalapproved" || r === "final approved") return "FinalApproved";
-  if (s === "rejected" || r === "rejected") return "Rejected";
-  if (s === "rejectedbymanager" || s === "rejected by manager" || r === "rejectedbymanager" || r === "rejected by manager") return "RejectedByManager";
-  if (s === "mixedrejectedpending" || s === "mixed rejected pending" || r === "mixedrejectedpending" || r === "mixed rejected pending") return "MixedRejectedPending";
+
+  // Manager gave final approval (adhoc approved)
+  if (s === "finalapproved" || s === "final approved" || r === "finalapproved" || r === "final approved") {
+    return "FinalApproved";
+  }
+
+  // Accountant rejected
+  if (s === "rejected" || r === "rejected") return "RejectedByAccountant";
+
+  // Manager rejected adhoc
+  if (s === "rejectedbymanager" || s === "rejected by manager" || r === "rejectedbymanager" || r === "rejected by manager") {
+    return "RejectedByManager";
+  }
+
+  // Mixed case: accountant rejected regular, adhoc still pending
+  if (s === "mixedrejectedpending" || s === "mixed rejected pending" || r === "mixedrejectedpending" || r === "mixed rejected pending") {
+    return "MixedRejectedPending";
+  }
+
+  // Default fallback
   return "Pending";
 }
+
 
 // ✅ Canonical list of regular (accountant-eligible) fields
 const REGULAR_KEYS = [
