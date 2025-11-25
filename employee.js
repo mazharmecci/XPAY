@@ -372,19 +372,6 @@ async function renderExpenses(currentUserId) {
         totalPending += regularAmount;
       }
 
-      // Adhoc summary bucket
-      const isAdhocRejected = isRegularRejected; // Using already defined
-      const isAdhocApproved = statusLower === "finalapproved";
-
-      if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-        if (isAdhocApproved) {
-          totalAdhocApproved += adhoc;
-        } else if (isAdhocRejected) {
-          totalAdhocRejected += adhoc;
-        }
-      }
-    });
-
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
     const advanceRecords = [];
