@@ -356,33 +356,6 @@ function renderAccountantSummary({
   `;
 }
 
-// ========================
-// 🧾 Advance Cash Table & Utilities
-// ========================
-function formatDateDDMMYYYY(dateStr) { ... }
-async function renderAdvanceCashTable() { ... }
-async function recordAdvanceCash(e) { ... }
-
-// ========================
-// ✅ Bulk Approve/Reject Buttons: Accountant Only
-// ========================
-async function approveSelected() { ... }
-async function rejectSelected() { ... }
-
-// ========================
-// 📥 CSV Export & Helpers
-// ========================
-function downloadApprovedCSV() { ... }
-function escapeCSV(val) { ... }
-function sanitize(val) { ... }
-
-// ========================
-// 🏦 Bank Reimbursement Workflow & UI
-// ========================
-async function getLatestBankStatus(employeeUid, selectedMonth) { ... }
-async function initBankWorkflow(employeeUid, employeeName, isAccountantView) { ... }
-
-
 // 🧾 Advance cash table
 
 function formatDateDDMMYYYY(dateStr) {
