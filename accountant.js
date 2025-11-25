@@ -390,7 +390,7 @@ async function renderTable() {
       totalPending,
       totalAdvance: totalAdvanceReceived,
       totalSubmitted,
-      totalFinalApproved: totalFinalApprovedRegular,
+      totalFinalApproved,
       totalAdhocSubmitted,
       totalAdhocApproved,
       totalAdhocRejected
@@ -434,7 +434,6 @@ function renderAccountantSummary({
   totalPending,
   totalAdvance,
   totalSubmitted,
-  totalFinalApproved,
   totalAdhocSubmitted,
   totalAdhocApproved,
   totalAdhocRejected
@@ -442,23 +441,23 @@ function renderAccountantSummary({
   const summaryContainer = document.getElementById("accountantSummary");
   if (!summaryContainer) return;
 
-  const monthLabel = new Date(`${selectedMonth}-01`).toLocaleString("default", {
-    month: "long",
-    year: "numeric"
-  });
+  const netPayable = (totalApproved + totalAdhocApproved) - totalAdvance;
+  const netLabel = netPayable < 0
+    ? "💰 Advance exceeds approved"
+    : "🔶 Net payable to employee";
 
-const netReimbursementDue = (totalApproved + totalFinalApprovedRegular + totalAdhocApproved) - totalAdvanceReceived;
-const netLabel = netReimbursementDue < 0
-  ? "💰 Advance exceeds approved"
-  : "🔶 Net payable to employee";
+  const monthLabel = selectedMonth || new Date().toISOString().slice(0, 7);
 
   summaryContainer.innerHTML = `
     <div class="summary-block">
       <h4>📋 Summary for ${selectedEmployee || "All Employees"} – ${monthLabel}</h4>
       <table class="summary-table">
         <tr><td>🧾 Total expenses submitted by emp:</td><td class="amount-cell">${INR.format(totalSubmitted)}</td></tr>    
+        <tr><td>✅ Accountant-eligible expenses:</td><td class="amount-cell approved">${INR.format(totalApproved)}</td></tr>
+        <tr><td>❌ Rejected by accountant (Regular only):</td><td class="amount-cell rejected">${INR.format(totalRejected)}</td></tr>
+        <tr><td>⏳ Pending expenses to be reviewed by accountant:</td><td class="amount-cell">${INR.format(totalPending)}</td></tr>
         <tr><td>💸 Advance Cash Received by emp:</td><td class="amount-cell">${INR.format(totalAdvance)}</td></tr>
-        <tr><td>📌 Total Adhoc Requests submitted:</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhoc)}</span></td></tr>
+        <tr><td>📌 Total Adhoc Requests submitted:</td><td class="amount-cell"><span style="color:#007bff;">${INR.format(totalAdhocSubmitted)}</span></td></tr>
         <tr><td>🔷 Adhoc Requests approved by manager:</td><td class="amount-cell approved">${INR.format(totalAdhocApproved)}</td></tr>
         <tr><td>❌ Adhoc Requests rejected by manager:</td><td class="amount-cell rejected">${INR.format(totalAdhocRejected)}</td></tr>        
         <tr class="net-row"><td>${netLabel}:</td><td class="amount-cell">${INR.format(netPayable)}</td></tr>
@@ -470,6 +469,7 @@ const netLabel = netReimbursementDue < 0
     </div>
   `;
 }
+
 
 // 🧾 Advance cash table
 
