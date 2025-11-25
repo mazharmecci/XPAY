@@ -396,6 +396,7 @@ async function renderTable() {
       totalAdhocRejected
     });
 
+
     // 🔹 Breakdown toggles
     document.querySelectorAll('.toggle-breakdown').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -469,7 +470,6 @@ function renderAccountantSummary({
     </div>
   `;
 }
-
 
 // 🧾 Advance cash table
 
