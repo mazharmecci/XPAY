@@ -330,44 +330,37 @@ async function renderExpenses(currentUserId) {
     sn, date, convey, phone, adhoc, badge
   );
   
-// 🔢 Accountant buckets for regular claims
-const regularAmount = travelSum + convey + phone;
-const statusLower = (normalized || "").toLowerCase();
-const isRegularRejected = (
-    statusLower === "rejected" ||
-    statusLower === "rejectedbymanager" ||
-    statusLower === "mixedrejectedpending"
-);
-
-if (statusLower === "approved" || statusLower === "finalapproved") {
-  totalApproved += regularAmount;
-} else if (isRegularRejected) {
-  totalRejected += regularAmount;
-} else {
-  totalPending += regularAmount;
-}
-
-
-// 🔄 Fallback Adhoc summary logic
-const statusLower = (normalized || "").toLowerCase();
-const isAdhocRejected =
-  statusLower === "rejected" ||
-  statusLower === "rejectedbymanager" ||
-  statusLower === "mixedrejectedpending";
-const isAdhocApproved = statusLower === "finalapproved";
-
-if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
-  if (isAdhocApproved) {
-    totalAdhocApproved += adhoc;
-  } else if (isAdhocRejected) {
-    totalAdhocRejected += adhoc;
-  }
-  // If you want to show pending Adhoc requests, you can add:
-  // else if (statusLower === "pending") {
-  //   totalAdhocPending += adhoc;
-  // }
-}
-
+    // 🔢 Accountant buckets for regular claims
+    const regularAmount = travelSum + convey + phone;
+    const statusLower = (normalized || "").toLowerCase();
+    const isRegularRejected =
+        statusLower === "rejected" ||
+        statusLower === "rejectedbymanager" ||
+        statusLower === "mixedrejectedpending";
+    
+    if (statusLower === "approved" || statusLower === "finalapproved") {
+      totalApproved += regularAmount;
+    } else if (isRegularRejected) {
+      totalRejected += regularAmount;
+    } else {
+      totalPending += regularAmount;
+    }
+    
+    // 🔄 Fallback Adhoc summary logic
+    const isAdhocRejected = isRegularRejected; // Adhoc uses same status normalization here
+    const isAdhocApproved = statusLower === "finalapproved";
+    
+    if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
+      if (isAdhocApproved) {
+        totalAdhocApproved += adhoc;
+      } else if (isAdhocRejected) {
+        totalAdhocRejected += adhoc;
+      }
+      // If you want to track pending:
+      // else if (statusLower === "pending") {
+      //   totalAdhocPending += adhoc;
+      // }
+    }
       
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
