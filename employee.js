@@ -353,37 +353,37 @@ async function renderExpenses(currentUserId) {
         badge
       );
 
-// ================================================
-// ===== Regular and Adhoc Status Bucketing =======
-// ================================================
-const regularAmount = travelSum + convey + phone;
-const statusLower = (normalized || "").toLowerCase();
-const isRegularRejected =
-  statusLower === "rejected" ||
-  statusLower === "rejectedbymanager" ||
-  statusLower === "mixedrejectedpending";
+   // ================================================
+      // ===== Regular and Adhoc Status Bucketing =======
+      // ================================================
+      const regularAmount = travelSum + convey + phone;
+      const statusLower = (normalized || "").toLowerCase();
+      const isRegularRejected =
+        statusLower === "rejected" ||
+        statusLower === "rejectedbymanager" ||
+        statusLower === "mixedrejectedpending";
 
-// ----- Regular claims bucket -----
-if (statusLower === "approved" || statusLower === "finalapproved") {
-  totalApproved += regularAmount;
-} else if (isRegularRejected) {
-  totalRejected += regularAmount;
-} else {
-  totalPending += regularAmount;
-}
+      // Regular claims bucket
+      if (statusLower === "approved" || statusLower === "finalapproved") {
+        totalApproved += regularAmount;
+      } else if (isRegularRejected) {
+        totalRejected += regularAmount;
+      } else {
+        totalPending += regularAmount;
+      }
 
-// ----- Adhoc summary bucket (manager explicit only) -----
-const isAdhocApproved = statusLower === "finalapproved";
-const managerDecision = adhocDecisionMap.get(adhocKey); // 'approved' | 'rejected' | undefined
+      // Adhoc summary bucket
+      const isAdhocRejected = isRegularRejected; // Using already defined
+      const isAdhocApproved = statusLower === "finalapproved";
 
-if (adhoc > 0) {
-  if (managerDecision === "approved") {
-    totalAdhocApproved += adhoc;
-  } else if (managerDecision === "rejected") {
-    totalAdhocRejected += adhoc;
-  }
-  // ✅ If managerDecision is undefined, keep both at 0 (don’t mark rejected yet)
-}
+      if (!adhocDecisionMap.has(adhocKey) && adhoc > 0) {
+        if (isAdhocApproved) {
+          totalAdhocApproved += adhoc;
+        } else if (isAdhocRejected) {
+          totalAdhocRejected += adhoc;
+        }
+      }
+    });
 
     // 🔹 Advance cash
     const advanceSnapshot = await getDocs(collection(db, "advanceCash"));
