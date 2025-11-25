@@ -326,7 +326,7 @@ async function renderTable() {
       }
 
 tbody.innerHTML += `
-  <tr ${rowStyle}>
+  <tr${rowStyle ? ` ${rowStyle}` : ""}>
     <td>${employeeName}</td>
     <td>${exp.date || "-"}</td>
     <td>${exp.workflowType || "-"}</td>
@@ -343,18 +343,20 @@ tbody.innerHTML += `
     </td>
     <td>${statusBadge}</td>
     ${
-      (regularAmount === 0 && adhocAmount > 0)
-        // Pure Adhoc: show 'Manager only' and empty comment cell
-        ? `<td style="text-align:center; color:#007bff;">Adhoc request – Manager only</td>
-           <td></td>`
-        // Regular present: show checkbox and comment box
-        : `<td>
-             <input type="checkbox" class="action-checkbox" data-id="${exp.id}"
-               title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." />
-           </td>
-           <td>
-             <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" />
-           </td>`
+      regularAmount === 0 && adhocAmount > 0
+        ? `
+          <td style="text-align:center; color:#007bff;">Adhoc request – Manager only</td>
+          <td></td>
+        `
+        : `
+          <td>
+            <input type="checkbox" class="action-checkbox" data-id="${exp.id}"
+              title="Only regular expenses will be approved/rejected. Adhoc portion is manager-only." />
+          </td>
+          <td>
+            <input type="text" class="comment-box" data-id="${exp.id}" placeholder="Comment (optional)" />
+          </td>
+        `
     }
   </tr>
 `;
