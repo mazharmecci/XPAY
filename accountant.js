@@ -768,32 +768,31 @@ async function initBankWorkflow(employeeUid, employeeName, isAccountantView) {
   const isReimbursed = await getLatestBankStatus(employeeUid, selectedMonth);
 
   const html = `
-    <div style="margin-bottom:6px; font-weight:500;">
+    <div style="margin-bottom:8px; font-weight:500;">
       Employee: <span style="color:#2196F3;">${employeeName}</span>
       | Month: <span style="color:#2196F3;">${selectedMonth}</span>
     </div>
-    <table class="confirmation-table" style="margin-top:1em; width:100%; border-collapse:collapse;">
+    <table class="confirmation-table">
       <thead>
-        <tr style="background:#f0f8ff;">
-          <th style="text-align:left; padding:8px;">💳 Bank Amount Reimbursed</th>
-          <th style="text-align:left; padding:8px;">Status</th>
+        <tr>
+          <th>💳 Bank Amount Reimbursed</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td style="padding:8px;">Final reimbursement credited to employee account</td>
-          <td style="padding:8px;">
+          <td>Final reimbursement credited to employee account</td>
+          <td>
             ${
               isAccountantView
-                ? `<button class="reimb-btn" data-emp="${employeeUid}" data-month="${selectedMonth}" 
-                      style="background:${isReimbursed ? '#4CAF50' : '#f44336'};color:#fff;border:none;
-                             padding:7px 16px;border-radius:4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
-                    ${isReimbursed ? "Yes" : "No"}
-                 </button>
-                 <span style="margin-left:10px; font-weight:600; color:${isReimbursed ? 'green' : 'red'};">
-                   ${isReimbursed ? "Reimbursed" : "Not Reimbursed"}
-                 </span>`
-                : `<span style="font-weight:bold; color:${isReimbursed ? "green" : "red"};">
+                ? `<button class="reimb-btn${isReimbursed ? '' : ' not-reimbursed'}"
+                           data-emp="${employeeUid}" data-month="${selectedMonth}">
+                      ${isReimbursed ? "Yes" : "No"}
+                   </button>
+                   <span class="reimb-status${isReimbursed ? ' reimbursed' : ' not-reimbursed'}">
+                     ${isReimbursed ? "Reimbursed" : "Not Reimbursed"}
+                   </span>`
+                : `<span class="reimb-status${isReimbursed ? ' reimbursed' : ' not-reimbursed'}">
                      ${isReimbursed ? "Yes" : "No"}
                    </span>`
             }
