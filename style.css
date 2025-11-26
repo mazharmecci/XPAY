@@ -559,12 +559,6 @@ button:hover {
   gap: 2rem;
 }
 
-.site-footer .footer-brand,
-.site-footer .footer-legal {
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
 .site-footer .footer-logo {
   width: 48px;
   height: 48px;
@@ -836,10 +830,17 @@ input[type="checkbox"] {
   height: 40px;
   margin-bottom: 0.7rem;
 }
+
 .footer-legal {
   font-size: 0.87rem;
-  color: #ddb783;
+  color: black !important; /* Ensures black text */
   margin-top: 0.5rem;
+}
+
+/* Remove .site-footer .footer-legal override for font-size if not needed */
+.site-footer .footer-brand {
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 /* Responsive tweaks for mobile */
