@@ -429,6 +429,62 @@ async function getLatestBankStatus(userId, selectedMonth) {
   return null; // no record found
 }
 
+// --- Bank Reimbursement Status Block (To show employee name in the table) ---
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    showToast("You must be logged in.", "error");
+    setTimeout(() => (window.location.href = "login.html"), 1500);
+    return;
+  }
+
+  const currentUserId = user.uid;
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", currentUserId));
+    const role = (userDoc.exists() ? userDoc.data().role : "").toLowerCase();
+
+    if (role !== "employee") {
+      alert("Access denied. Employee role required.");
+      window.location.href = "login.html";
+      return;
+    }
+
+    // 🔹 Retrieve employee name (don't lowercase for display, but trim)
+    const employeeName = userDoc.exists()
+      ? (userDoc.data().name || "").trim()
+      : "";
+
+    // 🔹 Get initial month
+    const monthPicker = document.getElementById("monthPicker");
+    const getSelectedMonth = () =>
+      monthPicker?.value || new Date().toISOString().slice(0, 7);
+
+    const selectedMonth = getSelectedMonth();
+
+    // 🔹 Expense form logic (if present)
+    const form = document.getElementById("expenseForm");
+    if (form) form.onsubmit = createSubmitExpense(currentUserId);
+
+    // 🔹 Render expenses + bank status on load
+    await renderExpenses(currentUserId);
+    await showEmployeeReimbursementStatus(currentUserId, selectedMonth, employeeName);
+
+    // 🔹 Update both when month changes (single listener)
+    if (monthPicker) {
+      monthPicker.addEventListener("change", async () => {
+        const updatedMonth = getSelectedMonth();
+        await renderExpenses(currentUserId);
+        await showEmployeeReimbursementStatus(currentUserId, updatedMonth, employeeName);
+      });
+    }
+  } catch (err) {
+    console.error("❌ Error loading user/role:", err);
+    showToast("Failed to load user profile.", "error");
+  }
+});
+
+
 // --- Bank Reimbursement Status Block (Employee View) ---
 async function showEmployeeReimbursementStatus(userId, selectedMonth, employeeName) {
   const statusDiv = document.getElementById("employeeReimbursementStatus");
