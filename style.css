@@ -1272,10 +1272,18 @@ span[style*="orange"] {
   margin-left: 10px;
   font-weight: 600;
 }
+
 .reimb-status.reimbursed {
-  color: #2e7d32;
+  color: green;
+  font-weight: bold;
 }
 .reimb-status.not-reimbursed {
-  color: #b71c1c;
+  color: red;
+  font-weight: bold;
 }
+.reimb-status.not-confirmed {
+  color: orange;
+  font-weight: bold;
+}
+/* .confirmation-table etc. should already exist */
 
