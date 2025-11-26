@@ -430,42 +430,48 @@ async function getLatestBankStatus(userId, selectedMonth) {
 }
 
 // --- Bank Reimbursement Status Block (Employee View) ---
-async function showEmployeeReimbursementStatus(userId, selectedMonth) {
+async function showEmployeeReimbursementStatus(userId, selectedMonth, employeeName) {
   const statusDiv = document.getElementById("employeeReimbursementStatus");
   if (!statusDiv) return;
 
-  let statusHtml = "";
+  let html = "";
   try {
     const isReimbursed = await getLatestBankStatus(userId, selectedMonth);
 
-    if (isReimbursed === true) {
-      statusHtml = `
-        <div style="margin-bottom:6px; font-weight:500;">
-          Bank Reimbursement Status for <span style="color:#2196F3;">${selectedMonth}</span>:
-          <span style="font-weight:bold; color:green; margin-left:8px;">Credited ✅</span>
-        </div>
-      `;
-    } else if (isReimbursed === false) {
-      statusHtml = `
-        <div style="margin-bottom:6px; font-weight:500;">
-          Bank Reimbursement Status for <span style="color:#2196F3;">${selectedMonth}</span>:
-          <span style="font-weight:bold; color:red; margin-left:8px;">Pending ⏳</span>
-        </div>
-      `;
-    } else {
-      statusHtml = `
-        <div style="margin-bottom:6px; font-weight:500;">
-          Bank Reimbursement Status for <span style="color:#2196F3;">${selectedMonth}</span>:
-          <span style="font-weight:bold; color:orange; margin-left:8px;">Not Confirmed</span>
-        </div>
-      `;
-    }
+    html = `
+      <div style="margin-bottom:8px; font-weight:500;">
+        Employee: <span style="color:#2196F3;">${employeeName}</span>
+        | Month: <span style="color:#2196F3;">${selectedMonth}</span>
+      </div>
+      <table class="confirmation-table">
+        <thead>
+          <tr>
+            <th>💳 Bank Amount Reimbursed</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Final reimbursement credited to employee account</td>
+            <td>
+              ${
+                isReimbursed === true 
+                  ? `<span class="reimb-status reimbursed">Yes</span>`
+                  : isReimbursed === false 
+                    ? `<span class="reimb-status not-reimbursed">No</span>`
+                    : `<span class="reimb-status not-confirmed">Not Confirmed</span>`
+              }
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
   } catch (err) {
     console.error("Error fetching employee reimbursement status:", err);
-    statusHtml = `<div style="color:#f44336;">Error loading bank reimbursement status.</div>`;
+    html = `<div style="color:#f44336;">Error loading bank reimbursement status.</div>`;
   }
 
-  statusDiv.innerHTML = statusHtml;
+  statusDiv.innerHTML = html;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
