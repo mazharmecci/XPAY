@@ -217,15 +217,13 @@
     <!-- 📦 Scripts -->
     <script>
       const dateInput = document.getElementById("date");
-      const today = new Date();
-      const formatDate = d => d.toISOString().split('T')[0];
-      const maxDate = formatDate(today);
-      const twoDaysBack = new Date();
-      twoDaysBack.setDate(today.getDate() - 2);
-      const minDate = formatDate(twoDaysBack);
-      dateInput.min = minDate;
-      dateInput.max = maxDate;
+      if (dateInput) {
+        // Ensure no min / max restrictions
+        dateInput.removeAttribute("min");
+        dateInput.removeAttribute("max");
+      }
     </script>
+      
     <script type="module" src="firebase.js"></script>
     <script type="module" src="employee.js"></script>
 
