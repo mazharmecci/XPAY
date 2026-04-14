@@ -500,57 +500,66 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 🔹 Auth state check
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      showToast("You must be logged in.", "error");
-      setTimeout(() => (window.location.href = "login.html"), 1500);
+// 🔹 Auth state check
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    showToast("You must be logged in.", "error");
+    setTimeout(() => (window.location.href = "login.html"), 1500);
+    return;
+  }
+
+  const currentUserId = user.uid;
+
+  try {
+    const userDocRef = doc(db, "users", currentUserId);
+    const userSnap = await getDoc(userDocRef);
+    const userData = userSnap.exists() ? userSnap.data() : {};
+
+    const role = (userData.role || "").toLowerCase();
+    if (role !== "employee") {
+      alert("Access denied. Employee role required.");
+      window.location.href = "login.html";
       return;
     }
 
-    const currentUserId = user.uid;
+    // 🔹 Display name for banner (keep original case)
+    const displayName =
+      (userData.name && userData.name.toString().trim()) ||
+      (user.email ? user.email.split("@")[0] : "Employee");
 
-    try {
-      const userDoc = await getDoc(doc(db, "users", currentUserId));
-      const role = (userDoc.exists() ? userDoc.data().role : "").toLowerCase();
-
-      if (role !== "employee") {
-        alert("Access denied. Employee role required.");
-        window.location.href = "login.html";
-        return;
-      }
-
-      // 🔹 Retrieve employee name, normalized
-      const employeeName = userDoc.exists()
-        ? (userDoc.data().name || "").toLowerCase().trim()
-        : "";
-
-      // 🔹 Get initial month
-      const monthPicker = document.getElementById("monthPicker");
-      const getSelectedMonth = () =>
-        monthPicker?.value || new Date().toISOString().slice(0, 7);
-
-      const selectedMonth = getSelectedMonth();
-
-      // 🔹 Expense form logic (if present)
-      const form = document.getElementById("expenseForm");
-      if (form) form.onsubmit = createSubmitExpense(currentUserId);
-
-      // 🔹 Render expenses + bank status on load
-      await renderExpenses(currentUserId);
-      await showEmployeeReimbursementStatus(currentUserId, selectedMonth);
-
-      // 🔹 Update both when month changes (single listener)
-      if (monthPicker) {
-        monthPicker.addEventListener("change", async () => {
-          const updatedMonth = getSelectedMonth();
-          await renderExpenses(currentUserId);
-          await showEmployeeReimbursementStatus(currentUserId, updatedMonth);
-        });
-      }
-    } catch (err) {
-      console.error("❌ Error loading user/role:", err);
-      showToast("Failed to load user profile.", "error");
+    const welcomeBanner = document.getElementById("welcomeBanner");
+    if (welcomeBanner) {
+      welcomeBanner.textContent = `🧑‍💼 Welcome ${displayName}!`;
     }
-  });
+
+    // 🔹 Normalized name used for lookups elsewhere if needed
+    const employeeName = displayName.toLowerCase();
+
+    // 🔹 Initial month helper
+    const monthPicker = document.getElementById("monthPicker");
+    const getSelectedMonth = () =>
+      monthPicker?.value || new Date().toISOString().slice(0, 7);
+
+    const selectedMonth = getSelectedMonth();
+
+    // 🔹 Expense form submit handler
+    const form = document.getElementById("expenseForm");
+    if (form) form.onsubmit = createSubmitExpense(currentUserId);
+
+    // 🔹 Initial render
+    await renderExpenses(currentUserId);
+    await showEmployeeReimbursementStatus(currentUserId, selectedMonth, employeeName);
+
+    // 🔹 Re-render on month change
+    if (monthPicker) {
+      monthPicker.addEventListener("change", async () => {
+        const updatedMonth = getSelectedMonth();
+        await renderExpenses(currentUserId);
+        await showEmployeeReimbursementStatus(currentUserId, updatedMonth, employeeName);
+      });
+    }
+  } catch (err) {
+    console.error("❌ Error loading user/role:", err);
+    showToast("Failed to load user profile.", "error");
+  }
 });
