@@ -502,7 +502,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 🔹 Auth state check
 onAuthStateChanged(auth, async (user) => {
+  const welcomeBanner = document.getElementById("welcomeBanner");
+
   if (!user) {
+    if (welcomeBanner) {
+      welcomeBanner.textContent = "🧑‍💼 Please log in...";
+    }
     showToast("You must be logged in.", "error");
     setTimeout(() => (window.location.href = "login.html"), 1500);
     return;
@@ -511,6 +516,13 @@ onAuthStateChanged(auth, async (user) => {
   const currentUserId = user.uid;
 
   try {
+    // 1️⃣ Prefer the welcome message set during login
+    const storedWelcome = localStorage.getItem("welcomeMessage");
+    if (welcomeBanner && storedWelcome) {
+      welcomeBanner.textContent = storedWelcome;
+    }
+
+    // 2️⃣ Load user profile & role from Firestore
     const userDocRef = doc(db, "users", currentUserId);
     const userSnap = await getDoc(userDocRef);
     const userData = userSnap.exists() ? userSnap.data() : {};
@@ -522,35 +534,31 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
 
-    // 🔹 Display name for banner (keep original case)
+    // 3️⃣ If we don't have a stored message, build one from profile/email
+    if (welcomeBanner && !storedWelcome) {
+      const name =
+        (userData.name && userData.name.toString().trim()) ||
+        (user.email ? user.email.split("@")[0] : "Employee");
+      welcomeBanner.textContent = `🧑‍💼 Welcome ${name}, ISTOS employee.`;
+    }
+
     const displayName =
       (userData.name && userData.name.toString().trim()) ||
       (user.email ? user.email.split("@")[0] : "Employee");
-
-    const welcomeBanner = document.getElementById("welcomeBanner");
-    if (welcomeBanner) {
-      welcomeBanner.textContent = `🧑‍💼 Welcome ${displayName}!`;
-    }
-
-    // 🔹 Normalized name used for lookups elsewhere if needed
     const employeeName = displayName.toLowerCase();
 
-    // 🔹 Initial month helper
     const monthPicker = document.getElementById("monthPicker");
     const getSelectedMonth = () =>
       monthPicker?.value || new Date().toISOString().slice(0, 7);
 
     const selectedMonth = getSelectedMonth();
 
-    // 🔹 Expense form submit handler
     const form = document.getElementById("expenseForm");
     if (form) form.onsubmit = createSubmitExpense(currentUserId);
 
-    // 🔹 Initial render
     await renderExpenses(currentUserId);
     await showEmployeeReimbursementStatus(currentUserId, selectedMonth, employeeName);
 
-    // 🔹 Re-render on month change
     if (monthPicker) {
       monthPicker.addEventListener("change", async () => {
         const updatedMonth = getSelectedMonth();
